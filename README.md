@@ -2,7 +2,7 @@
 <br>
 <p align="center">
   <a href="https://github.com/enriquetomasmb/fedstellar">
-    <img src="assets/fedstellar-logo.jpg" alt="fedstellar" width="300" height="160">
+    <img src="assets/fedstellar-logo.jpg" alt="fedstellar">
   </a>
   <h3 align="center">Fedstellar</h3>
 
