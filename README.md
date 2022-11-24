@@ -2,7 +2,7 @@
 <br>
 <p align="center">
   <a href="https://github.com/enriquetomasmb/fedstellar">
-    <img src="assets/fedstellar-logo.jpg" alt="fedstellar">
+    <img src="docs/_static/fedstellar-logo.jpg" alt="fedstellar">
   </a>
   <h3 align="center">Fedstellar</h3>
 
@@ -15,9 +15,9 @@
 ## About the project
 
 <a href="https://um.es">
-  <img src="assets/umu.jpg" alt="fedstellar" width="195" height="60">
+  <img src="docs/_static/umu.jpg" alt="fedstellar" width="200" height="60">
 </a>
 <a href="#">
-  <img src="assets/armasuisse.jpg" alt="fedstellar" width="195" height="60">
+  <img src="docs/_static/armasuisse.jpg" alt="fedstellar" width="200" height="60">
 </a>
 <br>
