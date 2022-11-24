@@ -17,7 +17,7 @@ jobs:
       uses: sphinx-notes/pages@v2
     - name: Add domain
       run: |
-          echo "enriquetomasmb.com" > CNAME
+          echo "fedstellar.enriquetomasmb.com" > CNAME
           git add CNAME
           git commit --amend --no-edit
     - name: Push changes
