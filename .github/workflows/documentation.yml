@@ -15,12 +15,22 @@ jobs:
         fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
     - name: Build and Commit
       uses: sphinx-notes/pages@v2
-    - name: Add domain
-      run: echo "enriquetomasmb.com" > CNAME
-    - name: List
-      run: ls
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: gh-pages
+    - name: Add domain
+      run: echo "enriquetomasmb.com" > CNAME
+    - name: List
+      run: ls
+    - name: Push domain
+      env: 
+        CI_COMMIT_MESSAGE: Add domain
+        CI_COMMIT_AUTHOR: enriquetomasmb
+      run: |
+        git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+        git config --global user.email "enriquetomasmb@gmail.com"
+        git add CNAME
+        git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
+        git push origin gh-pages
