@@ -1,4 +1,4 @@
-name: Pages
+name: Update documentation.yml
 on:
   push:
     branches:
