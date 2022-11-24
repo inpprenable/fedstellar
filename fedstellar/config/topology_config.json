@@ -1,7 +1,7 @@
 {
   "general": {
-    "name": "DFL Framework",
-    "description": "Framework for deploying DFL approaches",
+    "name": "Fedstellar framework",
+    "description": "A Framework for Decentralized Federated Learning",
     "version": "0.1",
     "author": "Enrique Tomás Martínez Beltrán",
     "author_email": "enriquetomas@um.es"

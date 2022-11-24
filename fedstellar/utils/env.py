@@ -5,8 +5,8 @@ from fedstellar import __version__
 
 
 def collect_env():
-    logging.debug("\n======== DFL framework ========")
-    logging.debug("DFL framework version: " + str(__version__))
+    logging.debug("\n======== Fedstellar framework ========")
+    logging.debug("Fedstellar framework version: " + str(__version__))
     logging.debug("Execution path:" + str(os.path.abspath(__file__)))
 
     logging.debug("\n======== Running Environment ========")

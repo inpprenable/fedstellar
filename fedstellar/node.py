@@ -1,5 +1,5 @@
 # 
-# This file is part of the dfl framework (see https://github.com/enriquetomasmb/fedstellar).
+# This file is part of the fedstellar framework (see https://github.com/enriquetomasmb/fedstellar).
 # Copyright (c) 2022 Enrique Tomás Martínez Beltrán.
 # 
 
