@@ -3,6 +3,8 @@ import os
 from typing import List
 
 import requests
+import logging
+import base64
 
 
 class Mender:
@@ -12,21 +14,22 @@ class Mender:
         self.user = os.environ.get("MENDER_USER")
         self.password = os.environ.get("MENDER_PASSWORD")
         self.token = os.environ.get("MENDER_TOKEN")
-        print("Mender server: {}".format(self.server))
+        logging.info("Mender server: {}".format(self.server))
 
     def get_token(self):
         return self.token
 
     def renew_token(self):
+        string = self.user + ":" + self.password
+        base64string = base64.b64encode(string.encode('utf-8'))
         headers = {
             'Accept': 'application/json',
-            'Authorization': 'Basic {}'.format((self.user + ":" + self.password).encode('base64')),
-            'Content-Type': 'application/form-data'
+            'Authorization': 'Basic {}'.format(str(base64string, 'utf-8')),
+            'Content-Type': 'application/json'
         }
 
         r = requests.post(f'{self.server}/api/management/v1/useradm/auth/login', headers=headers)
         self.token = r.text
-        print(json.dumps(r.json(), indent=2))
 
     @staticmethod
     def generate_artifact(type_artifact, artifact_name, device_type, file_path):
@@ -40,7 +43,7 @@ class Mender:
 
         r = requests.get(f'{self.server}/api/management/v1/deployments/artifacts', headers=headers)
 
-        print(json.dumps(r.json(), indent=2))
+        logging.info(json.dumps(r.json(), indent=2))
 
     def upload_artifact(self, artifact_path, description):
         headers = {
@@ -54,7 +57,7 @@ class Mender:
         }
 
         r = requests.post(f'{self.server}/api/management/v1/deployments/artifacts', files=multipart_form_data, headers=headers)
-        print(r.text)
+        logging.info(r.text)
 
     def deploy_artifact_device(self, artifact_name, device):
         headers = {
@@ -74,7 +77,7 @@ class Mender:
 
         r = requests.post(f'{self.server}/api/management/v1/deployments/deployments', json=json_req, headers=headers)
 
-        print(r.text)
+        logging.info(r.text)
 
     def deploy_artifact_list(self, artifact_name, devices: List[str]):
         headers = {
@@ -91,7 +94,7 @@ class Mender:
 
         r = requests.post(f'{self.server}/api/management/v1/deployments/deployments', json=json_req, headers=headers)
 
-        print(r.text)
+        logging.info(r.text)
 
     def get_info_deployment(self, deployment_id):
         headers = {
@@ -101,7 +104,7 @@ class Mender:
 
         r = requests.get(f'{self.server}/api/management/v1/deployments/deployments/{deployment_id}', headers=headers)
 
-        print(json.dumps(r.json(), indent=2))
+        logging.info(json.dumps(r.json(), indent=2))
 
     def get_my_info(self):
         headers = {
@@ -111,7 +114,7 @@ class Mender:
 
         r = requests.get(f'{self.server}/api/management/v1/useradm/users/me', headers=headers)
 
-        print(json.dumps(r.json(), indent=2))
+        logging.info(json.dumps(r.json(), indent=2))
 
     def get_devices(self):
         headers = {
@@ -123,7 +126,7 @@ class Mender:
             'per_page': '300'
         }, headers=headers)
 
-        print(json.dumps(r.json(), indent=2))
+        logging.info(json.dumps(r.json(), indent=2))
 
     def get_devices_by_group(self, group):
         headers = {
@@ -191,7 +194,7 @@ class Mender:
 
         r = requests.post(f'{self.server}/api/management/v2/inventory/filters/search', json=json_req, headers=headers)
 
-        print(json.dumps(r.json(), indent=2))
+        logging.info(json.dumps(r.json(), indent=2))
 
         # json to file
         with open('devices_{}.json'.format(group), 'w') as outfile:
@@ -205,7 +208,7 @@ class Mender:
 
         r = requests.get(f'{self.server}/api/management/v1/inventory/devices/{device_id}', headers=headers)
 
-        print(json.dumps(r.json(), indent=2))
+        logging.info(json.dumps(r.json(), indent=2))
 
     def get_connected_device(self, device_id):
         headers = {
@@ -215,4 +218,4 @@ class Mender:
 
         r = requests.get(f'{self.server}/api/management/v1/deviceconnect/devices/{device_id}', headers=headers)
 
-        print(json.dumps(r.json(), indent=2))
+        logging.info(json.dumps(r.json(), indent=2))

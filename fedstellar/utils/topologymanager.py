@@ -1,3 +1,4 @@
+import logging
 import os
 
 import matplotlib.pyplot as plt
@@ -63,8 +64,10 @@ class TopologyManager:
         # If not exist a folder with the name of the experiment, create it
         if not os.path.exists(f"logs/{self.experiment_name}"):
             os.makedirs(f"logs/{self.experiment_name}")
-        plt.savefig(f"logs/{self.experiment_name}/topology.png", dpi=300, bbox_inches="tight", pad_inches=0)
-        plt.show()
+        logging.info(f"Saving topology graph to logs/{self.experiment_name}/topology.png")
+        import sys
+        print(sys.path)
+        plt.savefig(f"logs/{self.experiment_name}/topology.png", dpi=100, bbox_inches="tight", pad_inches=0)
 
     def generate_topology(self):
         if self.server:
@@ -98,6 +101,9 @@ class TopologyManager:
         return self.nodes
 
     def add_nodes(self, nodes):
+        self.nodes = nodes
+
+    def set_nodes(self, nodes):
         self.nodes = nodes
 
     def get_node(self, node_idx):

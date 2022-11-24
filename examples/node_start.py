@@ -40,10 +40,11 @@ def main():
     experiment_name = sys.argv[2]
     ip = sys.argv[3]
     port = int(sys.argv[4])
-    n_nodes = int(sys.argv[5])
-    start_node = sys.argv[6] == "True"
-    role = sys.argv[7]
-    neighbors = sys.argv[8:]
+    ipdemo = sys.argv[5]
+    n_nodes = int(sys.argv[6])
+    start_node = sys.argv[7] == "True"
+    role = sys.argv[8]
+    neighbors = sys.argv[9:]
 
     config = Config(participant_config_file="/Users/enrique/Documents/PhD/fedstellar/fedstellar/config/participant_config.yaml")
 
@@ -52,6 +53,7 @@ def main():
         experiment_name,
         MLP(),
         MnistFederatedDM(sub_id=idx, number_sub=n_nodes, iid=True),
+        hostdemo=ipdemo,
         host=ip,
         port=port,
         config=config,

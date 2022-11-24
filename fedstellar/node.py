@@ -53,6 +53,7 @@ class Node(BaseNode):
             experiment_name,
             model,
             data,
+            hostdemo=None,
             host="127.0.0.1",
             port=None,
             config=Config,
@@ -61,7 +62,7 @@ class Node(BaseNode):
             simulation=True,
     ):
         # Super init
-        BaseNode.__init__(self, experiment_name, host, port, simulation, config)
+        BaseNode.__init__(self, experiment_name, hostdemo, host, port, simulation, config)
         Observer.__init__(self)
 
         self.idx = idx
@@ -81,13 +82,16 @@ class Node(BaseNode):
         # log_model="all" to log model
         # mode="disabled" to disable wandb
         logging.getLogger("wandb").setLevel(logging.ERROR)
-        wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=self.get_name(), mode="disabled")
+        if self.hostdemo:
+            wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=self.get_name_demo())
+        else:
+            wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=self.get_name())
         wandblogger.watch(model, log="all")
         import wandb
         img_topology = wandb.Image(f"logs/{self.experiment_name}/topology.png", caption="Topology")
         if self.idx == 0:
             wandblogger.log_image(key="topology", images=[img_topology])
-        self.learner = learner(model, data, logger=wandblogger, log_name=self.get_name())
+        self.learner = learner(model, data, logger=wandblogger)
 
         self.role = role
         logging.info("[NODE] Role: " + str(self.role))

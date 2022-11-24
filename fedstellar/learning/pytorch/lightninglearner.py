@@ -27,15 +27,13 @@ class LightningLearner(NodeLearner):
     Atributes:
         model: Model to train.
         data: Data to train the model.
-        log_name: Name of the log.
         epochs: Number of epochs to train.
         logger: Logger.
     """
 
-    def __init__(self, model, data, logger=None, log_name=None):
+    def __init__(self, model, data, logger=None):
         self.model = model
         self.data = data
-        self.log_name = log_name
         self.logger = logger
         self.__trainer = None
         self.epochs = 1

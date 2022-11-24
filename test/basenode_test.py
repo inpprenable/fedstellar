@@ -1,9 +1,8 @@
 # 
 # This file is part of the fedstellar framework (see https://github.com/enriquetomasmb/fedstellar).
 # Copyright (c) 2022 Enrique Tomás Martínez Beltrán.
-# 
-
-
+#
+import socket
 import time
 
 import pytest
@@ -47,6 +46,15 @@ def four_nodes():
 #  Tests Infraestructure  #
 ###########################
 
+def test_socket():
+    host = socket.gethostbyname("192.168.0.7")
+    port = 45001
+    # Setting Up Node Socket (listening)
+    __node_socket = socket.socket(
+        socket.AF_INET, socket.SOCK_STREAM
+    )  # TCP Socket
+    __node_socket.bind((host, port))
+    __node_socket.listen(50)  # no more than 50 connections at queue
 
 def test_node_paring(two_nodes):
     n1, n2 = two_nodes

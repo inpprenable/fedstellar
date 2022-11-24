@@ -133,4 +133,4 @@ dmypy.json
 .idea/
 _build/
 *.DS_Store
-
+app/

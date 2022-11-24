@@ -55,10 +55,10 @@ class Config:
             self.participant_config['BLOCK_SIZE'] = new_value
 
     def get_topology_config(self):
-        return self.topology_config
+        return json.dumps(self.topology_config, indent=2)
 
     def get_participant_config(self):
-        return self.participant_config
+        return yaml.dump(self.participant_config, indent=2)
 
     def _set_default_config(self):
         """

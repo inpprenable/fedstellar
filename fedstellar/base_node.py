@@ -39,9 +39,10 @@ class BaseNode(threading.Thread, Observer):
     #     Node Init     #
     #####################
 
-    def __init__(self, experiment_name, host="127.0.0.1", port=None, simulation=True, config=None):
+    def __init__(self, experiment_name, hostdemo=None, host="127.0.0.1", port=None, simulation=True, config=None):
         self.experiment_name = experiment_name
         # Node Attributes
+        self.hostdemo = hostdemo
         self.host = socket.gethostbyname(host)
         self.port = port
         self.simulation = simulation
@@ -69,7 +70,7 @@ class BaseNode(threading.Thread, Observer):
         # Logging
         # logging.basicConfig(stream=sys.stdout, level=logging.INFO)
         # self.experiment_init_time = str(datetime.now().strftime('%d_%m_%Y_%H_%M'))
-        log_filename = f"logs/{self.experiment_name}/{self.get_name()}"
+        log_filename = f"logs/{self.experiment_name}/{self.get_name_demo()}" if self.hostdemo else f"logs/{self.experiment_name}/{self.get_name()}"
         os.makedirs(os.path.dirname(log_filename), exist_ok=True)
         console_handler, file_handler, file_handler_only_debug, exp_errors_file_handler = self.setup_logging(log_filename)
 
@@ -99,11 +100,18 @@ class BaseNode(threading.Thread, Observer):
         """
         return str(self.get_addr()[0]) + ":" + str(self.get_addr()[1])
 
+    def get_name_demo(self):
+        """
+        Returns:
+            str: The name of the node.
+        """
+        return str(self.hostdemo) + ":" + str(self.get_addr()[1])
+
     def setup_logging(self, log_dir):
         CYAN = "\x1b[0;36m"
         RESET = "\x1b[0m"
-        log_file_format = f"[%(levelname)s] - %(asctime)s - {self.get_name()} - : %(message)s [in %(pathname)s:%(lineno)d]"
-        log_console_format = f"{CYAN}[%(levelname)s] - %(asctime)s - {self.get_name()} -{RESET} %(message)s"
+        log_file_format = f"[%(levelname)s] - %(asctime)s - {self.get_name_demo()} - : %(message)s [in %(pathname)s:%(lineno)d]" if self.hostdemo else f"[%(levelname)s] - %(asctime)s - {self.get_name()} - : %(message)s [in %(pathname)s:%(lineno)d]"
+        log_console_format = f"{CYAN}[%(levelname)s] - %(asctime)s - {self.get_name_demo()} -{RESET} %(message)s" if self.hostdemo else f"{CYAN}[%(levelname)s] - %(asctime)s - {self.get_name()} -{RESET} %(message)s"
 
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
