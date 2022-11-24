@@ -17,6 +17,8 @@ jobs:
       uses: sphinx-notes/pages@v2
     - name: Add domain
       run: echo "enriquetomasmb.com" > CNAME
+    - name: List
+      run: ls
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
