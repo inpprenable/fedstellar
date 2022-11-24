@@ -27,10 +27,7 @@ jobs:
     - name: Push domain
       env: 
         CI_COMMIT_MESSAGE: Add domain
-        CI_COMMIT_AUTHOR: enriquetomasmb
       run: |
-        git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
-        git config --global user.email "enriquetomasmb@gmail.com"
         git add CNAME
         git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
         git push origin gh-pages
