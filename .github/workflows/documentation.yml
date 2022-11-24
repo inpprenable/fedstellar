@@ -5,6 +5,19 @@ on:
     - main
     paths:
     - docs/**
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'manual'
+        type: choice
+        options:
+        - manual
+        - info
+        - warning
+        - debug
+
 jobs:
   build:
     runs-on: ubuntu-latest
