@@ -21,3 +21,5 @@
   <img src="docs/_static/armasuisse.jpg" alt="fedstellar" width="200" height="60">
 </a>
 <br>
+For any questions, please contact Enrique Tomás Martínez Beltrán <a href="mailto:enriquetomas@um.es">enriquetomas@um.es</a>.
+

@@ -132,4 +132,5 @@ dmypy.json
 *.txt
 .idea/
 _build/
+.DS_Store
 
