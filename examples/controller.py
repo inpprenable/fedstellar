@@ -46,7 +46,7 @@ def main():
     """
     print("\x1b[0;36m" + banner + "\x1b[0m")
 
-    experiment_name = "fedstellar{}".format(str(datetime.now().strftime('%d_%m_%Y_%H_%M')))
+    experiment_name = "fedstellar_{}".format(str(datetime.now().strftime('%d_%m_%Y_%H_%M')))
 
     # Load the environment variables
     envpath = os.path.join(os.path.dirname(__file__), '../fedstellar/.env')
