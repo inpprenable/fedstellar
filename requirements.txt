@@ -9,3 +9,5 @@ numpy
 requests
 torchmetrics
 torchvision
+pycryptodome
+pytorch-lightning
