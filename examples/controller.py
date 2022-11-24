@@ -136,7 +136,7 @@ def main():
     # Assign nodes to topology
     nodes_ip_port = []
     for i in config.topology_config['nodes']:
-        nodes_ip_port.append((i['ip'], i['port'], i['role']))
+        nodes_ip_port.append((i['ip'], i['port'], i['role'], i['ipdemo']))
 
     topologymanager.add_nodes(nodes_ip_port)
     topologymanager.draw_graph()
@@ -148,7 +148,7 @@ def main():
         logging.info("[Mender.module] Getting a pool of devices: 5 devices")
         logging.info("Generating topology configuration file\n{}".format(config.get_topology_config()))
         for i in config.topology_config['nodes']:
-            logging.info("[Mender.module] Device {} | IP: {} | MAC: {}".format(i['id'], i['ip'], i['mac']))
+            logging.info("[Mender.module] Device {} | IP: {} | MAC: {}".format(i['id'], i['ipdemo'], i['mac']))
             logging.info("[Mender.module] \tCreating artifacts...")
             logging.info("[Mender.module] \tSending Fedstellar framework...")
             logging.info("[Mender.module] \tSending configuration...")

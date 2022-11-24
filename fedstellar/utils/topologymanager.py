@@ -49,7 +49,10 @@ class TopologyManager:
                 color_map.append("green")
             else:
                 color_map.append("#6182bd")
-            labels[k] = f"N{k}\n" + str(self.nodes[k][0]) + ":" + str(self.nodes[k][1])
+            if self.nodes[k][3] is not None and self.nodes[k][3] != "127.0.0.1":
+                labels[k] = f"N{k}\n" + str(self.nodes[k][3]) + ":" + str(self.nodes[k][1])
+            else:
+                labels[k] = f"N{k}\n" + str(self.nodes[k][0]) + ":" + str(self.nodes[k][1])
         # nx.draw_networkx_nodes(g, pos_shadow, node_color='k', alpha=0.5)
         nx.draw_networkx_nodes(g, pos, node_color=color_map, linewidths=2)
         nx.draw_networkx_labels(g, pos, labels, font_size=10, font_weight='bold')
@@ -65,8 +68,6 @@ class TopologyManager:
         if not os.path.exists(f"logs/{self.experiment_name}"):
             os.makedirs(f"logs/{self.experiment_name}")
         logging.info(f"Saving topology graph to logs/{self.experiment_name}/topology.png")
-        import sys
-        print(sys.path)
         plt.savefig(f"logs/{self.experiment_name}/topology.png", dpi=100, bbox_inches="tight", pad_inches=0)
 
     def generate_topology(self):
