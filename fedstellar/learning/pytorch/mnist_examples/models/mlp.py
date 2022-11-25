@@ -70,7 +70,7 @@ class MLP(pl.LightningModule):
         out = torch.argmax(logits, dim=1)
         metric = self.metric(out, y)
         self.log("val_loss", loss, prog_bar=True)
-        self.log("val_metric", metric, prog_bar=True)
+        self.log("val_accuracy", metric, prog_bar=True)
         return loss
 
     def test_step(self, batch, batch_idx):

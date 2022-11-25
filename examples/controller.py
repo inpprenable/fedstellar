@@ -39,7 +39,7 @@ argparser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
 args = argparser.parse_args()
 
 # Setup controller logger
-log_console_format = "\x1b[0;36m[%(levelname)s] - %(asctime)s - Controller -\x1b[0m %(message)s"
+log_console_format = "\x1b[0;35m[%(levelname)s] - %(asctime)s - Controller -\x1b[0m %(message)s"
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)
 console_handler.setFormatter(logging.Formatter(log_console_format))
@@ -141,8 +141,6 @@ def main():
 
     topologymanager.add_nodes(nodes_ip_port)
     topologymanager.draw_graph()
-
-    sys.exit(0)
 
     if args.mender:
         mender = Mender()

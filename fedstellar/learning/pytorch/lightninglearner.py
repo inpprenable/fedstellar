@@ -125,7 +125,7 @@ class LightningLearner(NodeLearner):
             return None
 
     def log_validation_metrics(self, loss, metric, round=None, name=None):
-        self.logger.log_metrics({"test_loss": loss, "test_metric": metric}, step=round)
+        self.logger.log_metrics({"test_loss": loss, "test_accuracy": metric}, step=round)
         pass
 
     def get_num_samples(self):
@@ -154,7 +154,7 @@ class LightningLearner(NodeLearner):
             max_epochs=self.epochs,
             accelerator="auto",
             logger=self.logger,
-            log_every_n_steps=50,
+            log_every_n_steps=20,
             enable_checkpointing=False,
             enable_model_summary=False,
             enable_progress_bar=False,

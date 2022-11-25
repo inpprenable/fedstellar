@@ -66,10 +66,11 @@ class TopologyManager:
         plt.scatter([], [], c="#6182bd", label='Trainer')
         plt.legend()
         # If not exist a folder with the name of the experiment, create it
-        if not os.path.exists(f"logs/{self.experiment_name}"):
-            os.makedirs(f"logs/{self.experiment_name}")
+        import sys
+        if not os.path.exists(f"{sys.path[0]}/logs/{self.experiment_name}"):
+            os.makedirs(f"{sys.path[0]}/logs/{self.experiment_name}")
         logging.info(f"Saving topology graph to logs/{self.experiment_name}/topology.png")
-        plt.savefig(f"logs/{self.experiment_name}/topology.png", dpi=100, bbox_inches="tight", pad_inches=0)
+        plt.savefig(f"{sys.path[0]}/logs/{self.experiment_name}/topology.png", dpi=100, bbox_inches="tight", pad_inches=0)
 
     def generate_topology(self):
         if self.server:

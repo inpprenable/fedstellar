@@ -83,9 +83,9 @@ class Node(BaseNode):
         # mode="disabled" to disable wandb
         logging.getLogger("wandb").setLevel(logging.ERROR)
         if self.hostdemo:
-            wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=self.get_name_demo(), mode="disabled")
+            wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=self.get_name_demo())
         else:
-            wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=self.get_name(), mode="disabled")
+            wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=self.get_name())
         wandblogger.watch(model, log="all")
         import wandb
         img_topology = wandb.Image(f"logs/{self.experiment_name}/topology.png", caption="Topology")
