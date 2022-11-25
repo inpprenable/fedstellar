@@ -161,7 +161,7 @@ def main():
             logging.info("[Mender.module] \tCreating artifacts...")
             logging.info("[Mender.module] \tSending Fedstellar framework...")
             logging.info("[Mender.module] \tSending configuration...")
-            time.sleep(2)
+            time.sleep(5)
     else:
         logging.info("Generating topology configuration file\n{}".format(config.get_topology_config()))
 
@@ -170,7 +170,7 @@ def main():
     start_node = False
 
     for idx in range(1, n_nodes):
-        logging.info("Neighbors of node " + str(idx) + ": " + str(topologymanager.get_neighbors_string(idx)))
+        # logging.info("Neighbors of node " + str(idx) + ": " + str(topologymanager.get_neighbors_string(idx)))
         command = 'cd /Users/enrique/Documents/PhD/fedstellar/examples' + '; ' + python_path + ' -u node_start.py ' + str(idx) + ' ' + str(experiment_name) + ' ' + str(topologymanager.get_node(idx)[0]) + ' ' + str(topologymanager.get_node(idx)[1]) + ' ' + str(config.topology_config['nodes'][idx]['ipdemo']) + ' ' + str(n_nodes) + ' ' + str(start_node) + ' ' + str(
             config.topology_config['nodes'][idx]['role']) + ' ' + str(topologymanager.get_neighbors_string(idx)) + ' 2>&1'
         if sys.platform == "darwin":
@@ -190,7 +190,7 @@ def main():
                 + ' 2>&1 &')
 
     start_node = True
-    logging.info("Neighbors of node " + str(0) + ": " + str(topologymanager.get_neighbors_string(0)))
+    # logging.info("Neighbors of node " + str(0) + ": " + str(topologymanager.get_neighbors_string(0)))
     if sys.platform == "darwin":
         command = 'cd /Users/enrique/Documents/PhD/fedstellar/examples' + '; ' + python_path + ' -u node_start.py ' + str(0) + ' ' + str(experiment_name) + ' ' + str(topologymanager.get_node(0)[0]) + ' ' + str(topologymanager.get_node(0)[1]) + ' ' + str(config.topology_config['nodes'][0]['ipdemo']) + ' ' + str(n_nodes) + ' ' + str(start_node) + ' ' + str(
             config.topology_config['nodes'][0]['role']) + ' ' + str(topologymanager.get_neighbors_string(0)) + ' 2>&1'

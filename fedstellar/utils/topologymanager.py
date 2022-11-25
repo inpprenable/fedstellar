@@ -69,7 +69,6 @@ class TopologyManager:
         import sys
         if not os.path.exists(f"{sys.path[0]}/logs/{self.experiment_name}"):
             os.makedirs(f"{sys.path[0]}/logs/{self.experiment_name}")
-        logging.info(f"Saving topology graph to logs/{self.experiment_name}/topology.png")
         plt.savefig(f"{sys.path[0]}/logs/{self.experiment_name}/topology.png", dpi=100, bbox_inches="tight", pad_inches=0)
 
     def generate_topology(self):
