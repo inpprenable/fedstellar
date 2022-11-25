@@ -79,7 +79,5 @@ def main():
 
 
 if __name__ == "__main__":
-    # print(args.ip)
-    # print(args.port)
-    # print(args.neighbors)
+    os.system("clear")
     main()

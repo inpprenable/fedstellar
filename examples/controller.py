@@ -25,7 +25,7 @@ argparser.add_argument('-n', '--name', dest='name',
                     help='Experiment name')
 argparser.add_argument('-c', '--config', dest='participant_config_file', default="/Users/enrique/Documents/PhD/fedstellar/fedstellar/config/participant_config.yaml",
                     help='Path to the configuration file')
-argparser.add_argument('-t', '--topology', dest='topology_config_file', default="/Users/enrique/Documents/PhD/fedstellar/fedstellar/config/topology_config_mender_cfl.json",
+argparser.add_argument('-t', '--topology', dest='topology_config_file', default="/Users/enrique/Documents/PhD/fedstellar/fedstellar/config/topology_config_mender_dfl.json",
                     help='Path to the topology file')
 argparser.add_argument('-m', '--no-mender', action='store_false', dest='mender', help='Mender for deployment')
 argparser.add_argument('-v', '--version', action='version',
@@ -115,12 +115,13 @@ def main():
 
     # Create a partially connected network (ring-structured network)
     # topologymanager = TopologyManager(experiment_name=experiment_name, n_nodes=n_nodes, b_symmetric=True)
-    # topologymanager.generate_ring_topology()
+    # topologymanager.generate_ring_topology(increase_convergence=True)
 
     if fed_architecture == 'dfl':
         # Create a fully connected network
         topologymanager = TopologyManager(experiment_name=experiment_name, n_nodes=n_nodes, b_symmetric=True, undirected_neighbor_num=n_nodes - 1)
         topologymanager.generate_topology()
+        # topologymanager.generate_ring_topology(increase_convergence=True)
     elif fed_architecture == 'cfl':
         # Create a centralized network
         topologymanager = TopologyManager(experiment_name=experiment_name, n_nodes=n_nodes, b_symmetric=True, server=True)
@@ -140,6 +141,8 @@ def main():
 
     topologymanager.add_nodes(nodes_ip_port)
     topologymanager.draw_graph()
+
+    sys.exit(0)
 
     if args.mender:
         mender = Mender()
@@ -164,7 +167,7 @@ def main():
         command = 'cd /Users/enrique/Documents/PhD/fedstellar/examples' + '; ' + python_path + ' -u node_start.py ' + str(idx) + ' ' + str(experiment_name) + ' ' + str(topologymanager.get_node(idx)[0]) + ' ' + str(topologymanager.get_node(idx)[1]) + ' ' + str(config.topology_config['nodes'][idx]['ipdemo']) + ' ' + str(n_nodes) + ' ' + str(start_node) + ' ' + str(
             config.topology_config['nodes'][idx]['role']) + ' ' + str(topologymanager.get_neighbors_string(idx)) + ' 2>&1'
         if sys.platform == "darwin":
-            os.system("""osascript -e 'tell application "Terminal" to activate' -e 'tell application "Terminal" to do script "{}"' -e 'tell application "System Events" to tell process "Terminal" to keystroke "k" using command down'""".format(command))
+            os.system("""osascript -e 'tell application "Terminal" to activate' -e 'tell application "Terminal" to do script "{}"'""".format(command))
         else:
             os.system(
                 'cd /Users/enrique/Documents/PhD/fedstellar/examples' + ';nohup  ' + python_path + ' -u node_start.py '
@@ -184,7 +187,7 @@ def main():
     if sys.platform == "darwin":
         command = 'cd /Users/enrique/Documents/PhD/fedstellar/examples' + '; ' + python_path + ' -u node_start.py ' + str(0) + ' ' + str(experiment_name) + ' ' + str(topologymanager.get_node(0)[0]) + ' ' + str(topologymanager.get_node(0)[1]) + ' ' + str(config.topology_config['nodes'][0]['ipdemo']) + ' ' + str(n_nodes) + ' ' + str(start_node) + ' ' + str(
             config.topology_config['nodes'][0]['role']) + ' ' + str(topologymanager.get_neighbors_string(0)) + ' 2>&1'
-        os.system("""osascript -e 'tell application "Terminal" to activate' -e 'tell application "Terminal" to do script "{}"' -e 'tell application "System Events" to tell process "Terminal" to keystroke "k" using command down'""".format(command))
+        os.system("""osascript -e 'tell application "Terminal" to activate' -e 'tell application "Terminal" to do script "{}"'""".format(command))
     else:
         os.system(
             'cd /Users/enrique/Documents/PhD/fedstellar/examples' + ';nohup  ' + python_path + ' -u node_start.py '

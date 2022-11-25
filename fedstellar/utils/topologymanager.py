@@ -1,5 +1,6 @@
 import logging
 import os
+import random
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -86,8 +87,8 @@ class TopologyManager:
         else:
             self.__randomly_pick_neighbors_asymmetric()
 
-    def generate_ring_topology(self):
-        self.__ring_topology()
+    def generate_ring_topology(self, increase_convergence=False):
+        self.__ring_topology(increase_convergence=increase_convergence)
 
     def generate_custom_topology(self, topology):
         self.topology = topology
@@ -135,10 +136,19 @@ class TopologyManager:
 
         return neighbors_data_string
 
-    def __ring_topology(self):
+    def __ring_topology(self, increase_convergence=False):
         topology_ring = np.array(
             nx.to_numpy_matrix(nx.watts_strogatz_graph(self.n_nodes, 2, 0)), dtype=np.float32
         )
+
+        if increase_convergence:
+            # Create random links between nodes in topology_ring
+            for i in range(self.n_nodes):
+                for j in range(self.n_nodes):
+                    if topology_ring[i][j] == 0:
+                        if random.random() < 0.1:
+                            topology_ring[i][j] = 1
+                            topology_ring[j][i] = 1
 
         np.fill_diagonal(topology_ring, 0)
         self.topology = topology_ring

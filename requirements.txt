@@ -50,7 +50,7 @@ MarkupSafe==2.1.1
 matplotlib==3.6.2
 mpmath==1.2.1
 multidict==6.0.2
-networkx==3.0rc1
+networkx==2.8.8
 numpy==1.23.5
 ordered-set==4.1.0
 orjson==3.8.2
