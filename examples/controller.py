@@ -21,7 +21,7 @@ os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 argparser = argparse.ArgumentParser(description='Controller of Fedstellar framework', add_help=False)
 
 argparser.add_argument('-n', '--name', dest='name',
-                    default="fedstellar_{}".format(datetime.now().strftime("%d_%m_%Y_%H_%M_%S")),
+                    default="{}".format(datetime.now().strftime("%d_%m_%Y_%H_%M_%S")),
                     help='Experiment name')
 argparser.add_argument('-c', '--config', dest='participant_config_file', default="/Users/enrique/Documents/PhD/fedstellar/fedstellar/config/participant_config.yaml",
                     help='Path to the configuration file')
@@ -82,8 +82,6 @@ def main():
     """
     print("\x1b[0;36m" + banner + "\x1b[0m")
 
-    experiment_name = args.name
-
     # Load the environment variables
     envpath = os.path.join(os.path.dirname(__file__), '../fedstellar/.env')
     envpath = os.path.abspath(envpath)
@@ -95,15 +93,18 @@ def main():
     # Import configuration file
     config = Config(topology_config_file=args.topology_config_file, participant_config_file=args.participant_config_file)
     logging.info("Loading participant configuration files")
+    time.sleep(2)
     logging.info("Participant configuration file\n{}".format(config.get_participant_config()))
 
     n_nodes = len(config.topology_config['nodes'])
 
-    fed_architecture = 'dfl'
+    fed_architecture = 'DFL'
     for n in config.topology_config['nodes']:
         if n['role'] == "server":
-            fed_architecture = 'cfl'
+            fed_architecture = 'CFL'
             break
+
+    experiment_name = f"fedstellar_{fed_architecture}_{args.name}"
 
     logging.info("Federated architecture: {}".format(fed_architecture))
 
@@ -117,12 +118,12 @@ def main():
     # topologymanager = TopologyManager(experiment_name=experiment_name, n_nodes=n_nodes, b_symmetric=True)
     # topologymanager.generate_ring_topology(increase_convergence=True)
 
-    if fed_architecture == 'dfl':
+    if fed_architecture == 'DFL':
         # Create a fully connected network
         topologymanager = TopologyManager(experiment_name=experiment_name, n_nodes=n_nodes, b_symmetric=True, undirected_neighbor_num=n_nodes - 1)
         topologymanager.generate_topology()
         # topologymanager.generate_ring_topology(increase_convergence=True)
-    elif fed_architecture == 'cfl':
+    elif fed_architecture == 'CFL':
         # Create a centralized network
         topologymanager = TopologyManager(experiment_name=experiment_name, n_nodes=n_nodes, b_symmetric=True, server=True)
         topologymanager.generate_topology()
@@ -143,16 +144,24 @@ def main():
     topologymanager.draw_graph()
 
     if args.mender:
+        logging.info("[Mender.module] Mender module initialized")
+        time.sleep(2)
         mender = Mender()
+        logging.info("[Mender.module] Getting token from Mender server: {}".format(os.getenv("MENDER_SERVER")))
         mender.renew_token()
+        time.sleep(2)
+        logging.info("[Mender.module] Getting devices from {} with group Cluster_Thun".format(os.getenv("MENDER_SERVER")))
+        time.sleep(2)
         mender.get_devices_by_group("Cluster_Thun")
         logging.info("[Mender.module] Getting a pool of devices: 5 devices")
         logging.info("Generating topology configuration file\n{}".format(config.get_topology_config()))
+        time.sleep(5)
         for i in config.topology_config['nodes']:
             logging.info("[Mender.module] Device {} | IP: {} | MAC: {}".format(i['id'], i['ipdemo'], i['mac']))
             logging.info("[Mender.module] \tCreating artifacts...")
             logging.info("[Mender.module] \tSending Fedstellar framework...")
             logging.info("[Mender.module] \tSending configuration...")
+            time.sleep(2)
     else:
         logging.info("Generating topology configuration file\n{}".format(config.get_topology_config()))
 
