@@ -27,7 +27,7 @@ argparser.add_argument('-c', '--config', dest='participant_config_file', default
                     help='Path to the configuration file')
 argparser.add_argument('-t', '--topology', dest='topology_config_file', default="/Users/enrique/Documents/PhD/fedstellar/fedstellar/config/topology_config_mender_dfl.json",
                     help='Path to the topology file')
-argparser.add_argument('-m', '--no-mender', action='store_false', dest='mender', help='Mender for deployment')
+argparser.add_argument('-s', '--simulation', action='store_true', dest='simulation', help='Run simulation')
 argparser.add_argument('-v', '--version', action='version',
                     version='%(prog)s ' + fedstellar.__version__, help="Show version")
 argparser.add_argument('-a', '--about', action='version',
@@ -90,6 +90,15 @@ def main():
     # Get some info about the backend
     # collect_env()
 
+    from netifaces import AF_INET, AF_INET6, AF_LINK
+    import netifaces as ni
+    ip_address = ni.ifaddresses('en0')[AF_INET][0]['addr']
+    import ipaddress
+    network = ipaddress.IPv4Network(f"{ip_address}/24", strict=False)
+
+    logging.info("Controller network: {}".format(network))
+    logging.info("Controller IP address: {}".format(ip_address))
+
     # Import configuration file
     config = Config(topology_config_file=args.topology_config_file, participant_config_file=args.participant_config_file)
     logging.info("Loading participant configuration files")
@@ -129,6 +138,7 @@ def main():
         topologymanager.generate_topology()
     else:
         raise ValueError("Not supported federated architecture yet")
+
     # topology = topologymanager.get_topology()
     # logging.info(topology)
 
@@ -143,7 +153,7 @@ def main():
     topologymanager.add_nodes(nodes_ip_port)
     topologymanager.draw_graph()
 
-    if args.mender:
+    if not args.simulation:
         logging.info("[Mender.module] Mender module initialized")
         time.sleep(2)
         mender = Mender()
@@ -165,12 +175,13 @@ def main():
     else:
         logging.info("Generating topology configuration file\n{}".format(config.get_topology_config()))
 
+    # sys.exit(0)
+
     # Create nodes
     python_path = '/Users/enrique/miniforge3/envs/phd-workspace/bin/python'
     start_node = False
 
     for idx in range(1, n_nodes):
-        # logging.info("Neighbors of node " + str(idx) + ": " + str(topologymanager.get_neighbors_string(idx)))
         command = 'cd /Users/enrique/Documents/PhD/fedstellar/examples' + '; ' + python_path + ' -u node_start.py ' + str(idx) + ' ' + str(experiment_name) + ' ' + str(topologymanager.get_node(idx)[0]) + ' ' + str(topologymanager.get_node(idx)[1]) + ' ' + str(config.topology_config['nodes'][idx]['ipdemo']) + ' ' + str(n_nodes) + ' ' + str(start_node) + ' ' + str(
             config.topology_config['nodes'][idx]['role']) + ' ' + str(topologymanager.get_neighbors_string(idx)) + ' 2>&1'
         if sys.platform == "darwin":
@@ -190,7 +201,6 @@ def main():
                 + ' 2>&1 &')
 
     start_node = True
-    # logging.info("Neighbors of node " + str(0) + ": " + str(topologymanager.get_neighbors_string(0)))
     if sys.platform == "darwin":
         command = 'cd /Users/enrique/Documents/PhD/fedstellar/examples' + '; ' + python_path + ' -u node_start.py ' + str(0) + ' ' + str(experiment_name) + ' ' + str(topologymanager.get_node(0)[0]) + ' ' + str(topologymanager.get_node(0)[1]) + ' ' + str(config.topology_config['nodes'][0]['ipdemo']) + ' ' + str(n_nodes) + ' ' + str(start_node) + ' ' + str(
             config.topology_config['nodes'][0]['role']) + ' ' + str(topologymanager.get_neighbors_string(0)) + ' 2>&1'

@@ -10,48 +10,48 @@
     {
       "ip": "127.0.0.1",
       "port": 45001,
-      "user_name": "iot01",
-      "pass_wd": "iot01",
+      "username": "iot01",
+      "password": "iot01",
       "bandwidth": 0.1,
       "role": "aggregator"
     },
     {
       "ip": "127.0.0.1",
       "port": 45002,
-      "user_name": "iot02",
-      "pass_wd": "iot02",
+      "username": "iot02",
+      "password": "iot02",
       "bandwidth": 0.2,
       "role": "aggregator"
     },
     {
       "ip": "127.0.0.1",
       "port": 45003,
-      "user_name": "iot03",
-      "pass_wd": "iot03",
+      "username": "iot03",
+      "password": "iot03",
       "bandwidth": 0.05,
       "role": "aggregator"
     },
     {
       "ip": "127.0.0.1",
       "port": 45004,
-      "user_name": "iot04",
-      "pass_wd": "iot04",
+      "username": "iot04",
+      "password": "iot04",
       "bandwidth": 0.05,
       "role": "aggregator"
     },
     {
       "ip": "127.0.0.1",
       "port": 45005,
-      "user_name": "iot05",
-      "pass_wd": "iot05",
+      "username": "iot05",
+      "password": "iot05",
       "bandwidth": 0.05,
       "role": "aggregator"
     },
     {
       "ip": "127.0.0.1",
       "port": 45006,
-      "user_name": "iot06",
-      "pass_wd": "iot06",
+      "username": "iot06",
+      "password": "iot06",
       "bandwidth": 0.05,
       "role": "aggregator"
     }

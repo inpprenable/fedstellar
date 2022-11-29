@@ -36,7 +36,7 @@ class TopologyManager:
         # pos = nx.spring_layout(g, pos=pos, iterations=50)
         pos = nx.spring_layout(g, k=0.15, iterations=20)
 
-        fig = plt.figure(dpi=300, figsize=(6, 6), frameon=False)
+        fig = plt.figure(num="Network topology", dpi=100, figsize=(6, 6), frameon=False)
         ax = fig.add_axes([0, 0, 1, 1])
         ax.set_xlim([-1.3, 1.3])
         ax.set_ylim([-1.3, 1.3])
@@ -70,6 +70,8 @@ class TopologyManager:
         if not os.path.exists(f"{sys.path[0]}/logs/{self.experiment_name}"):
             os.makedirs(f"{sys.path[0]}/logs/{self.experiment_name}")
         plt.savefig(f"{sys.path[0]}/logs/{self.experiment_name}/topology.png", dpi=100, bbox_inches="tight", pad_inches=0)
+        # plt.gcf().canvas.draw()
+        plt.show()
 
     def generate_topology(self):
         if self.server:
