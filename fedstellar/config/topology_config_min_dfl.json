@@ -1,35 +1,49 @@
 {
-  "general": {
-    "name": "Fedstellar framework",
-    "description": "A Framework for Decentralized Federated Learning",
-    "version": "0.1",
-    "author": "Enrique Tomás Martínez Beltrán",
-    "author_email": "enriquetomas@um.es"
-  },
   "nodes": [
     {
+      "ipdemo": "127.0.0.1",
       "ip": "127.0.0.1",
       "port": 45001,
       "username": "iot01",
       "password": "iot01",
-      "bandwidth": 0.1,
-      "role": "aggregator"
+      "role": "aggregator",
+      "network": {
+        "interface": "eth0",
+        "rate": "1Mbps",
+        "loss": "0.1%",
+        "delay": "100ms",
+        "delay-distro": "5"
+      }
     },
     {
+      "ipdemo": "127.0.0.1",
       "ip": "127.0.0.1",
       "port": 45002,
       "username": "iot02",
       "password": "iot02",
-      "bandwidth": 0.2,
-      "role": "aggregator"
+      "role": "aggregator",
+      "network": {
+        "interface": "eth0",
+        "rate": "1Mbps",
+        "loss": "0%",
+        "delay": "0ms",
+        "delay-distro": "0"
+      }
     },
     {
+      "ipdemo": "127.0.0.1",
       "ip": "127.0.0.1",
       "port": 45003,
       "username": "iot03",
       "password": "iot03",
-      "bandwidth": 0.05,
-      "role": "aggregator"
+      "role": "aggregator",
+      "network": {
+        "interface": "eth0",
+        "rate": "1Mbps",
+        "loss": "0.1%",
+        "delay": "100ms",
+        "delay-distro": "0"
+      }
     }
   ]
 }

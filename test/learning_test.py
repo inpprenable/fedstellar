@@ -10,7 +10,7 @@ import torch
 
 from fedstellar.learning.aggregators.fedavg import FedAvg
 from fedstellar.learning.pytorch.lightninglearner import LightningLearner
-from fedstellar.learning.pytorch.mnist_examples.models.mlp import MLP
+from fedstellar.learning.pytorch.mnist.models.mlp import MLP
 from fedstellar.node import Node
 from test.utils import set_test_settings
 

@@ -39,12 +39,13 @@ class BaseNode(threading.Thread, Observer):
     #     Node Init     #
     #####################
 
-    def __init__(self, experiment_name, hostdemo=None, host="127.0.0.1", port=None, simulation=True, config=None):
+    def __init__(self, experiment_name, hostdemo=None, host="127.0.0.1", port=None, encrypt=False, simulation=True, config=None):
         self.experiment_name = experiment_name
         # Node Attributes
         self.hostdemo = hostdemo
         self.host = socket.gethostbyname(host)
         self.port = port
+        self.encrypt = encrypt
         self.simulation = simulation
         self.config = config
 
@@ -62,6 +63,12 @@ class BaseNode(threading.Thread, Observer):
         else:
             self.__node_socket.bind((host, port))
         self.__node_socket.listen(50)  # no more than 50 connections at queue
+
+        if not self.simulation and config.participant_config['network']:
+            logging.info("[BASENODE] Network parameters\n{}".format(config.participant_config['network']))
+            logging.info("[BASENODE] Running tcconfig to set network parameters")
+            os.system(f"tcset --device {config.participant_config['network']['interface']} --rate {config.participant_config['network']['rate']} --delay {config.participant_config['network']['delay']} --delay-distro {config.participant_config['network']['delay-distro']} --loss {config.participant_config['network']['loss']}")
+
 
         # Neighbors
         self.__neighbors = []  # private to avoid concurrency issues
@@ -222,7 +229,7 @@ class BaseNode(threading.Thread, Observer):
 
                 # Encryption
                 aes_cipher = None
-                if not self.simulation:
+                if self.encrypt:
                     # Asymmetric
                     rsa = RSACipher()
                     node_socket.sendall(rsa.get_key())

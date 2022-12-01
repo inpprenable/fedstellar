@@ -8,7 +8,7 @@ from fedstellar.communication_protocol import CommunicationProtocol
 from fedstellar.encrypter import AESCipher
 from fedstellar.encrypter import RSACipher
 from fedstellar.learning.pytorch.lightninglearner import LightningLearner
-from fedstellar.learning.pytorch.mnist_examples.models.mlp import MLP
+from fedstellar.learning.pytorch.mnist.models.mlp import MLP
 from test.utils import set_test_settings
 
 set_test_settings()

@@ -34,7 +34,8 @@ class Node(BaseNode):
         host (str): Host where the node will be listening.
         port (int): Port where the node will be listening.
         learner (NodeLearner): Learner to be used in the learning process. Default: LightningLearner.
-        simulation (bool): If False, node will share metrics and communication will be encrypted. Default: True.
+        simulation (bool): If True, the node will be simulated. Default: True.
+        encrypt (bool): If True, node will encrypt the communications. Default: False.
 
     Attributes:
         round (int): Round of the learning process.
@@ -60,9 +61,10 @@ class Node(BaseNode):
             learner=LightningLearner,
             role=None,
             simulation=True,
+            encrypt=False,
     ):
         # Super init
-        BaseNode.__init__(self, experiment_name, hostdemo, host, port, simulation, config)
+        BaseNode.__init__(self, experiment_name, hostdemo, host, port, encrypt, simulation, config)
         Observer.__init__(self)
 
         self.idx = idx
@@ -99,6 +101,8 @@ class Node(BaseNode):
         # Aggregator
         self.aggregator = FedAvg(node_name=self.get_name(), config=self.config, role=self.role)
         self.aggregator.add_observer(self)
+
+        self.shared_metrics = False
 
         # Train Set Votes
         self.__train_set = []
@@ -655,8 +659,8 @@ class Node(BaseNode):
                     results[0], results[1]
                 )
             )
-            # Send metrics
-            if not self.simulation:
+
+            if self.shared_metrics:
                 logging.info(
                     "[NODE] Broadcasting metrics.".format(
                         len(self.get_neighbors())

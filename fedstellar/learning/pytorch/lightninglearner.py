@@ -9,7 +9,7 @@ from collections import OrderedDict
 
 import torch
 from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks import ModelSummary
+from pytorch_lightning.callbacks import ModelSummary, TQDMProgressBar
 
 from fedstellar.learning.exceptions import DecodingParamsError, ModelNotMatchingError
 from fedstellar.learning.learner import NodeLearner
@@ -150,12 +150,12 @@ class LightningLearner(NodeLearner):
 
     def create_trainer(self):
         self.__trainer = Trainer(
-            callbacks=[ModelSummary(max_depth=1)],
+            callbacks=[ModelSummary(max_depth=1), TQDMProgressBar(refresh_rate=200)],
             max_epochs=self.epochs,
             accelerator="auto",
             logger=self.logger,
             log_every_n_steps=20,
             enable_checkpointing=False,
             enable_model_summary=False,
-            enable_progress_bar=False,
+            enable_progress_bar=True,
         )

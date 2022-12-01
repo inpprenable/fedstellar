@@ -3,15 +3,16 @@ import os
 import sys
 import time
 
+from fedstellar.learning.pytorch.femnist.femnist import FEMNISTDataModule
+
 # Add the path to the fedstellar folder
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from fedstellar.config.config import Config
-from fedstellar.learning.pytorch.mnist_examples.mnistfederated_dm import MnistFederatedDM
-from fedstellar.learning.pytorch.mnist_examples.models.mlp import MLP
+from fedstellar.learning.pytorch.mnist.mnist import MNISTDataModule
+from fedstellar.learning.pytorch.mnist.models.mlp import MLP
+from fedstellar.learning.pytorch.femnist.models.cnn import CNN as CNN_femnist
 from fedstellar.node import Node
-
-
 
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
@@ -44,7 +45,8 @@ def main():
     n_nodes = int(sys.argv[6])
     start_node = sys.argv[7] == "True"
     role = sys.argv[8]
-    neighbors = sys.argv[9:]
+    simulation = sys.argv[9] == "True"
+    neighbors = sys.argv[10:]
 
     config = Config(participant_config_file="/Users/enrique/Documents/PhD/fedstellar/fedstellar/config/participant_config.yaml")
 
@@ -52,13 +54,16 @@ def main():
         idx,
         experiment_name,
         MLP(),
-        MnistFederatedDM(sub_id=idx, number_sub=n_nodes, iid=True),
+        MNISTDataModule(sub_id=idx, number_sub=n_nodes, iid=True),
+        # CNN_femnist(),
+        # FEMNISTDataModule(sub_id=idx, number_sub=n_nodes, root_dir="data"),
         hostdemo=ipdemo,
         host=ip,
         port=port,
         config=config,
         role=role,
-        simulation=True,
+        simulation=simulation,
+        encrypt=False
     )
 
     node.start()

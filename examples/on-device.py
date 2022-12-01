@@ -2,8 +2,8 @@ import os
 import time
 
 from fedstellar.config.config import Config
-from fedstellar.learning.pytorch.mnist_examples.mnistfederated_dm import MnistFederatedDM
-from fedstellar.learning.pytorch.mnist_examples.models.mlp import MLP
+from fedstellar.learning.pytorch.mnist.mnist import MNISTDataModule
+from fedstellar.learning.pytorch.mnist.models.mlp import MLP
 from fedstellar.node import Node
 
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
@@ -26,7 +26,7 @@ def main():
 
     node = Node(
         MLP(),
-        MnistFederatedDM(sub_id=0, number_sub=1, iid=True),
+        MNISTDataModule(sub_id=0, number_sub=1, iid=True),
         config=config,
         rol="trainer",
         simulation=True,

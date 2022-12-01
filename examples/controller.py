@@ -6,7 +6,7 @@ import sys
 import time
 from datetime import datetime
 
-# Add contents root directory to path
+# Add contents root_dir directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dotenv import load_dotenv
@@ -25,9 +25,9 @@ argparser.add_argument('-n', '--name', dest='name',
                     help='Experiment name')
 argparser.add_argument('-c', '--config', dest='participant_config_file', default="/Users/enrique/Documents/PhD/fedstellar/fedstellar/config/participant_config.yaml",
                     help='Path to the configuration file')
-argparser.add_argument('-t', '--topology', dest='topology_config_file', default="/Users/enrique/Documents/PhD/fedstellar/fedstellar/config/topology_config_mender_dfl.json",
+argparser.add_argument('-t', '--topology', dest='topology_config_file', default="/Users/enrique/Documents/PhD/fedstellar/fedstellar/config/topology_config_min_dfl.json",
                     help='Path to the topology file')
-argparser.add_argument('-s', '--simulation', action='store_true', dest='simulation', help='Run simulation')
+argparser.add_argument('-s', '--simulation', action='store_false', dest='simulation', help='Run simulation')
 argparser.add_argument('-v', '--version', action='version',
                     version='%(prog)s ' + fedstellar.__version__, help="Show version")
 argparser.add_argument('-a', '--about', action='version',
@@ -183,7 +183,7 @@ def main():
 
     for idx in range(1, n_nodes):
         command = 'cd /Users/enrique/Documents/PhD/fedstellar/examples' + '; ' + python_path + ' -u node_start.py ' + str(idx) + ' ' + str(experiment_name) + ' ' + str(topologymanager.get_node(idx)[0]) + ' ' + str(topologymanager.get_node(idx)[1]) + ' ' + str(config.topology_config['nodes'][idx]['ipdemo']) + ' ' + str(n_nodes) + ' ' + str(start_node) + ' ' + str(
-            config.topology_config['nodes'][idx]['role']) + ' ' + str(topologymanager.get_neighbors_string(idx)) + ' 2>&1'
+            config.topology_config['nodes'][idx]['role']) + ' ' + str(args.simulation) + ' ' + str(topologymanager.get_neighbors_string(idx)) + ' 2>&1'
         if sys.platform == "darwin":
             os.system("""osascript -e 'tell application "Terminal" to activate' -e 'tell application "Terminal" to do script "{}"'""".format(command))
         else:
@@ -197,13 +197,14 @@ def main():
                 + ' ' + str(n_nodes)
                 + ' ' + str(start_node)
                 + ' ' + str(config.topology_config['nodes'][idx]['role'])
+                + ' ' + str(args.simulation)
                 + ' ' + str(topologymanager.get_neighbors_string(idx))
                 + ' 2>&1 &')
 
     start_node = True
     if sys.platform == "darwin":
         command = 'cd /Users/enrique/Documents/PhD/fedstellar/examples' + '; ' + python_path + ' -u node_start.py ' + str(0) + ' ' + str(experiment_name) + ' ' + str(topologymanager.get_node(0)[0]) + ' ' + str(topologymanager.get_node(0)[1]) + ' ' + str(config.topology_config['nodes'][0]['ipdemo']) + ' ' + str(n_nodes) + ' ' + str(start_node) + ' ' + str(
-            config.topology_config['nodes'][0]['role']) + ' ' + str(topologymanager.get_neighbors_string(0)) + ' 2>&1'
+            config.topology_config['nodes'][0]['role']) + ' ' + str(args.simulation) + ' ' + str(topologymanager.get_neighbors_string(0)) + ' 2>&1'
         os.system("""osascript -e 'tell application "Terminal" to activate' -e 'tell application "Terminal" to do script "{}"'""".format(command))
     else:
         os.system(
@@ -216,6 +217,7 @@ def main():
             + ' ' + str(n_nodes)
             + ' ' + str(start_node)
             + ' ' + str(config.topology_config['nodes'][0]['role'])
+            + ' ' + str(args.simulation)
             + ' ' + str(topologymanager.get_neighbors_string(0))
             + ' 2>&1 &')
 

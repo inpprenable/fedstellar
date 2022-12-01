@@ -1,9 +1,9 @@
 # 
 # This file is part of the fedstellar framework (see https://github.com/enriquetomasmb/fedstellar).
 # Copyright (c) 2022 Enrique Tomás Martínez Beltrán.
-# 
-
-
+#
+import os
+import sys
 from math import floor
 
 # To Avoid Crashes with a lot of nodes
@@ -21,9 +21,9 @@ torch.multiprocessing.set_sharing_strategy("file_system")
 #######################################
 
 
-class MnistFederatedDM(LightningDataModule):
+class MNISTDataModule(LightningDataModule):
     """
-    LightningDataModule of partitioned MNIST. It's used to generate **IID** distribucions over MNIS. Toy Problem.
+    LightningDataModule of partitioned MNIST.
 
     Args:
         sub_id: Subset id of partition. (0 <= sub_id < number_sub)
@@ -54,35 +54,38 @@ class MnistFederatedDM(LightningDataModule):
         self.val_percent = val_percent
 
         # Singletons of MNIST train and test datasets
-        if MnistFederatedDM.mnist_train is None:
-            MnistFederatedDM.mnist_train = MNIST(
-                "", train=True, download=True, transform=transforms.ToTensor()
+        if not os.path.exists(f"{sys.path[0]}/data"):
+            os.makedirs(f"{sys.path[0]}/data")
+
+        if MNISTDataModule.mnist_train is None:
+            MNISTDataModule.mnist_train = MNIST(
+                f"{sys.path[0]}/data", train=True, download=True, transform=transforms.ToTensor()
             )
             if not iid:
-                sorted_indexes = MnistFederatedDM.mnist_train.targets.sort()[1]
-                MnistFederatedDM.mnist_train.targets = (
-                    MnistFederatedDM.mnist_train.targets[sorted_indexes]
+                sorted_indexes = MNISTDataModule.mnist_train.targets.sort()[1]
+                MNISTDataModule.mnist_train.targets = (
+                    MNISTDataModule.mnist_train.targets[sorted_indexes]
                 )
-                MnistFederatedDM.mnist_train.data = MnistFederatedDM.mnist_train.data[
+                MNISTDataModule.mnist_train.data = MNISTDataModule.mnist_train.data[
                     sorted_indexes
                 ]
-        if MnistFederatedDM.mnist_val is None:
-            MnistFederatedDM.mnist_val = MNIST(
-                "", train=False, download=True, transform=transforms.ToTensor()
+        if MNISTDataModule.mnist_val is None:
+            MNISTDataModule.mnist_val = MNIST(
+                f"{sys.path[0]}/data", train=False, download=True, transform=transforms.ToTensor()
             )
             if not iid:
-                sorted_indexes = MnistFederatedDM.mnist_val.targets.sort()[1]
-                MnistFederatedDM.mnist_val.targets = MnistFederatedDM.mnist_val.targets[
+                sorted_indexes = MNISTDataModule.mnist_val.targets.sort()[1]
+                MNISTDataModule.mnist_val.targets = MNISTDataModule.mnist_val.targets[
                     sorted_indexes
                 ]
-                MnistFederatedDM.mnist_val.data = MnistFederatedDM.mnist_val.data[
+                MNISTDataModule.mnist_val.data = MNISTDataModule.mnist_val.data[
                     sorted_indexes
                 ]
         if self.sub_id + 1 > self.number_sub:
             raise ("Not exist the subset {}".format(self.sub_id))
 
         # Training / validation set
-        trainset = MnistFederatedDM.mnist_train
+        trainset = MNISTDataModule.mnist_train
         rows_by_sub = floor(len(trainset) / self.number_sub)
         tr_subset = Subset(
             trainset, range(self.sub_id * rows_by_sub, (self.sub_id + 1) * rows_by_sub)
@@ -96,7 +99,7 @@ class MnistFederatedDM(LightningDataModule):
         )
 
         # Test set
-        testset = MnistFederatedDM.mnist_val
+        testset = MNISTDataModule.mnist_val
         rows_by_sub = floor(len(testset) / self.number_sub)
         te_subset = Subset(
             testset, range(self.sub_id * rows_by_sub, (self.sub_id + 1) * rows_by_sub)
@@ -141,3 +144,10 @@ class MnistFederatedDM(LightningDataModule):
     def test_dataloader(self):
         """ """
         return self.test_loader
+
+
+if __name__ == "__main__":
+    dm = MNISTDataModule()
+    print(dm.train_dataloader())
+    print(dm.val_dataloader())
+    print(dm.test_dataloader())
