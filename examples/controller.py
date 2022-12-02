@@ -90,7 +90,7 @@ def main():
     # Get some info about the backend
     # collect_env()
 
-    from netifaces import AF_INET, AF_INET6, AF_LINK
+    from netifaces import AF_INET
     import netifaces as ni
     ip_address = ni.ifaddresses('en0')[AF_INET][0]['addr']
     import ipaddress
