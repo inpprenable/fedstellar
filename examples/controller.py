@@ -162,14 +162,16 @@ def main():
         time.sleep(2)
         logging.info("[Mender.module] Getting devices from {} with group Cluster_Thun".format(os.getenv("MENDER_SERVER")))
         time.sleep(2)
-        mender.get_devices_by_group("Cluster_Thun")
+        devices = mender.get_devices_by_group("Cluster_Thun")
         logging.info("[Mender.module] Getting a pool of devices: 5 devices")
+        # devices = devices[:5]
         logging.info("Generating topology configuration file\n{}".format(config.get_topology_config()))
         time.sleep(5)
         for i in config.topology_config['nodes']:
             logging.info("[Mender.module] Device {} | IP: {} | MAC: {}".format(i['id'], i['ipdemo'], i['mac']))
             logging.info("[Mender.module] \tCreating artifacts...")
             logging.info("[Mender.module] \tSending Fedstellar framework...")
+            # mender.deploy_artifact_device("my-update-2.0.mender", i['id'])
             logging.info("[Mender.module] \tSending configuration...")
             time.sleep(5)
     else:

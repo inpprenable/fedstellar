@@ -77,7 +77,7 @@ def test_node_paring(two_nodes):
 def test_connect_invalid_node():
     n = BaseNode()
     n.connect_to("google.es", "80")
-    n.connect_to("holadani.holaenrique", "666")
+    n.connect_to("um.es", "80")
     assert len(n.get_neighbors()) == 0
 
 
