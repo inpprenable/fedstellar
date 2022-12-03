@@ -17,52 +17,43 @@ from fedstellar.node import Node
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
 
-# This script can be called with a different arguments
-# 1. Host IP
-# 2. Host Port
-# 3. Neighbors IP
-# parser = argparse.ArgumentParser(description='Distributed node')
-# parser.add_argument("ip", help="Host IP")
-# parser.add_argument("port", help="Host Port")
-# parser.add_argument("neighbors", help="Neighbors")
-# args = parser.parse_args()
-
-def main_process(ip, port, neighbors):
-    # IP
-    print(ip)
-    # Port
-    print(port)
-    # Neighbors
-    print(neighbors)
-
-
 def main():
     idx = int(sys.argv[1])
-    experiment_name = sys.argv[2]
-    ip = sys.argv[3]
-    port = int(sys.argv[4])
-    ipdemo = sys.argv[5]
-    n_nodes = int(sys.argv[6])
-    start_node = sys.argv[7] == "True"
-    role = sys.argv[8]
-    simulation = sys.argv[9] == "True"
-    neighbors = sys.argv[10:]
 
-    config = Config(participant_config_file="/Users/enrique/Documents/PhD/fedstellar/fedstellar/config/participant_config.yaml")
+    config = Config(entity="participant", participant_config_file=f"config/participant_{idx}.yaml")
+    n_nodes = len(config.participant["network_args"]["neighbors"].split()) + 1
+    experiment_name = config.participant["scenario_args"]["name"]
+    model = config.participant["model_args"]["model"]
+    if model == "MLP":
+        model = MLP()
+    elif model == "CNN":
+        model = CNN_femnist()
+    else:
+        raise ValueError(f"Model {model} not supported")
+
+    dataset = config.participant["data_args"]["dataset"]
+    if dataset == "MNIST":
+        dataset = MNISTDataModule(sub_id=idx, number_sub=n_nodes, iid=True)
+    elif dataset == "FEMNIST":
+        dataset = FEMNISTDataModule(sub_id=idx, number_sub=n_nodes, root_dir="data")
+    else:
+        raise ValueError(f"Dataset {dataset} not supported")
+
+    hostdemo = config.participant["network_args"]["ipdemo"]
+    host = config.participant["network_args"]["ip"]
+    port = config.participant["network_args"]["port"]
+
+    neighbors = config.participant["network_args"]["neighbors"].split()
 
     node = Node(
-        idx,
-        experiment_name,
-        MLP(),
-        MNISTDataModule(sub_id=idx, number_sub=n_nodes, iid=True),
-        # CNN_femnist(),
-        # FEMNISTDataModule(sub_id=idx, number_sub=n_nodes, root_dir="data"),
-        hostdemo=ipdemo,
-        host=ip,
+        idx=idx,
+        experiment_name=experiment_name,
+        model=model,
+        data=dataset,
+        hostdemo=hostdemo,
+        host=host,
         port=port,
         config=config,
-        role=role,
-        simulation=simulation,
         encrypt=False
     )
 
@@ -71,6 +62,7 @@ def main():
 
     # Node Connection
     for i in neighbors:
+        print(f"Connecting to {i}")
         node.connect_to(i.split(':')[0], int(i.split(':')[1]), full=False)
         time.sleep(1)
 
@@ -78,6 +70,8 @@ def main():
     logging.info(f"Network nodes: {node.get_network_nodes()}")
 
     time.sleep(1)
+
+    start_node = config.participant["device_args"]["start"]
 
     if start_node:
         node.set_start_learning(rounds=10, epochs=5)

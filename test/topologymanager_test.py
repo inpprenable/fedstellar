@@ -41,7 +41,7 @@ def test_ring_topology():
 
 def test_ring_topology2():
     # Import configuration file
-    with open("/fedstellar/config/topology_config.json") as json_file:
+    with open("/fedstellar/config/topology.json.example") as json_file:
         config = json.load(json_file)
     n_nodes = len(config['nodes'])
 

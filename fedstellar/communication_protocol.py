@@ -137,9 +137,9 @@ class CommunicationProtocol:
         self.__last_messages_lock.acquire()
         self.last_messages = self.last_messages + messages
         # Remove oldest messages
-        if len(self.last_messages) > self.config.participant_config["AMOUNT_LAST_MESSAGES_SAVED"]:
+        if len(self.last_messages) > self.config.participant["AMOUNT_LAST_MESSAGES_SAVED"]:
             self.last_messages = self.last_messages[
-                                 len(self.last_messages) - self.config.participant_config["AMOUNT_LAST_MESSAGES_SAVED"]:
+                                 len(self.last_messages) - self.config.participant["AMOUNT_LAST_MESSAGES_SAVED"]:
                                  ]
         self.__last_messages_lock.release()
 

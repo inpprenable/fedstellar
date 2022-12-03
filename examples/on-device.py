@@ -22,7 +22,7 @@ os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
 def main():
 
-    config = Config(participant_config_file="/Users/enrique/Documents/PhD/fedstellar/fedstellar/config/participant_config.yaml")
+    config = Config(entity="participant", participant_config_file="/fedstellar/config/participant_config_server.yaml")
 
     node = Node(
         MLP(),

@@ -6,6 +6,10 @@
 
 import logging
 import math
+import os
+
+os.environ['WANDB_SILENT'] = 'true'
+
 import random
 import threading
 import time
@@ -24,7 +28,7 @@ from fedstellar.utils.observer import Events, Observer
 
 class Node(BaseNode):
     """
-    Class based on a base node that allows **p2p Federated Learning**.
+    Class based on a base node that allows **FEDERATED LEARNING**.
 
     Metrics will be saved under a folder with the name of the node.
 
@@ -59,12 +63,10 @@ class Node(BaseNode):
             port=None,
             config=Config,
             learner=LightningLearner,
-            role=None,
-            simulation=True,
             encrypt=False,
     ):
         # Super init
-        BaseNode.__init__(self, experiment_name, hostdemo, host, port, encrypt, simulation, config)
+        BaseNode.__init__(self, experiment_name, hostdemo, host, port, encrypt, config)
         Observer.__init__(self)
 
         self.idx = idx
@@ -95,7 +97,7 @@ class Node(BaseNode):
             wandblogger.log_image(key="topology", images=[img_topology])
         self.learner = learner(model, data, logger=wandblogger)
 
-        self.role = role
+        self.role = config.participant["device_args"]["role"]
         logging.info("[NODE] Role: " + str(self.role))
 
         # Aggregator
@@ -258,7 +260,7 @@ class Node(BaseNode):
             self.__gossip_model_difusion(initialization=True)
 
             # Wait to guarantee new connection heartbeats convergence and fix neighbors
-            wait_time = self.config.participant_config["WAIT_HEARTBEATS_CONVERGENCE"] - (time.time() - begin)
+            wait_time = self.config.participant["WAIT_HEARTBEATS_CONVERGENCE"] - (time.time() - begin)
             if wait_time > 0:
                 time.sleep(wait_time)
             # TODO: Check this parameter
@@ -500,7 +502,7 @@ class Node(BaseNode):
             candidates.append(self.get_name())
 
         # Send vote
-        samples = min(self.config.participant_config["TRAIN_SET_SIZE"], len(candidates))
+        samples = min(self.config.participant["TRAIN_SET_SIZE"], len(candidates))
         nodes_voted = random.sample(candidates, samples)
         weights = [
             math.floor(random.randint(0, 1000) / (i + 1)) for i in range(samples)
@@ -536,7 +538,7 @@ class Node(BaseNode):
             # Update time counters (timeout)
             count = count + (time.time() - begin)
             begin = time.time()
-            timeout = count > self.config.participant_config["VOTE_TIMEOUT"]
+            timeout = count > self.config.participant["VOTE_TIMEOUT"]
 
             # Clear non candidate votes
             self.__train_set_votes_lock.acquire()
@@ -571,7 +573,7 @@ class Node(BaseNode):
                     results.items(), key=lambda x: x[0], reverse=True
                 )  # to equal solve of draw
                 results = sorted(results, key=lambda x: x[1], reverse=True)
-                top = min(len(results), self.config.participant_config["TRAIN_SET_SIZE"])
+                top = min(len(results), self.config.participant["TRAIN_SET_SIZE"])
                 results = results[0:top]
                 results = {k: v for k, v in results}
                 votes = list(results.keys())
@@ -628,7 +630,7 @@ class Node(BaseNode):
         begin = time.time()
         while True:
             count = count + (time.time() - begin)
-            if count > self.config.participant_config["TRAIN_SET_CONNECT_TIMEOUT"]:
+            if count > self.config.participant["TRAIN_SET_CONNECT_TIMEOUT"]:
                 logging.info("[NODE] Timeout for train set connections.")
                 break
             if (len(self.__train_set) == len(
@@ -779,11 +781,11 @@ class Node(BaseNode):
                 return
 
             # Save state of neighbors. If nodes are not responding gossip will stop
-            if len(last_x_status) != self.config.participant_config["GOSSIP_EXIT_ON_X_EQUAL_ROUNDS"]:
+            if len(last_x_status) != self.config.participant["GOSSIP_EXIT_ON_X_EQUAL_ROUNDS"]:
                 last_x_status.append([status_function(nc) for nc in nei])
             else:
                 last_x_status[j] = str([status_function(nc) for nc in nei])
-                j = (j + 1) % self.config.participant_config["GOSSIP_EXIT_ON_X_EQUAL_ROUNDS"]
+                j = (j + 1) % self.config.participant["GOSSIP_EXIT_ON_X_EQUAL_ROUNDS"]
 
                 # Check if las messages are the same
                 for i in range(len(last_x_status) - 1):
@@ -791,13 +793,13 @@ class Node(BaseNode):
                         break
                     logging.info(
                         "[NODE] Gossiping exited for {} equal rounds.".format(
-                            self.config.participant_config["GOSSIP_EXIT_ON_X_EQUAL_ROUNDS"]
+                            self.config.participant["GOSSIP_EXIT_ON_X_EQUAL_ROUNDS"]
                         )
                     )
                     return
 
             # Select a random subset of neighbors
-            samples = min(self.config.participant_config["GOSSIP_MODELS_PER_ROUND"], len(nei))
+            samples = min(self.config.participant["GOSSIP_MODELS_PER_ROUND"], len(nei))
             nei = random.sample(nei, samples)
 
             # Generate and Send Model Partial Aggregations (model, node_contributors)
@@ -814,7 +816,7 @@ class Node(BaseNode):
                         params=model, contributors=contributors, weight=weights
                     )
                     logging.info("[NODE.__gossip_model] Building params message | Contributors: {}".format(contributors))
-                    encoded_msgs = CommunicationProtocol.build_params_msg(encoded_model, self.config.participant_config["BLOCK_SIZE"])
+                    encoded_msgs = CommunicationProtocol.build_params_msg(encoded_model, self.config.participant["BLOCK_SIZE"])
                     # Send Fragments
                     for msg in encoded_msgs:
                         nc.send(msg)
@@ -822,7 +824,7 @@ class Node(BaseNode):
                     logging.info("[NODE.__gossip_model] Model returned by model_function is None")
             # Wait to guarantee the frequency of gossipping
             time_diff = time.time() - begin
-            time_sleep = 1 / self.config.participant_config["GOSSIP_MODELS_FREC"] - time_diff
+            time_sleep = 1 / self.config.participant["GOSSIP_MODELS_FREC"] - time_diff
             if time_sleep > 0:
                 time.sleep(time_sleep)
 

@@ -63,11 +63,11 @@ class Heartbeater(threading.Thread, Observable):
                 self.notify(Events.SEND_ROLE_EVENT, None)
 
             # Wait and refresh node list
-            for _ in range(self.config.participant_config["HEARTBEATER_REFRESH_NEIGHBORS_BY_PERIOD"]):
+            for _ in range(self.config.participant["HEARTBEATER_REFRESH_NEIGHBORS_BY_PERIOD"]):
                 self.clear_nodes()
                 time.sleep(
-                    self.config.participant_config["HEARTBEAT_PERIOD"]
-                    / self.config.participant_config["HEARTBEATER_REFRESH_NEIGHBORS_BY_PERIOD"]
+                    self.config.participant["HEARTBEAT_PERIOD"]
+                    / self.config.participant["HEARTBEATER_REFRESH_NEIGHBORS_BY_PERIOD"]
                 )
 
     def clear_nodes(self):
@@ -77,7 +77,7 @@ class Heartbeater(threading.Thread, Observable):
         for n in [
             node
             for node, t in list(self.__nodes.items())
-            if time.time() - t > self.config.participant_config["NODE_TIMEOUT"]
+            if time.time() - t > self.config.participant["NODE_TIMEOUT"]
         ]:
             logging.debug(
                 "[HEARTBEATER] Removed {} from the network ".format(n)

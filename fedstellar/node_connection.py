@@ -134,7 +134,7 @@ class NodeConnection(threading.Thread, Observable):
         """
         NodeConnection loop. Receive and process messages.
         """
-        self.__socket.settimeout(self.config.participant_config["NODE_TIMEOUT"])
+        self.__socket.settimeout(self.config.participant["NODE_TIMEOUT"])
         amount_pending_params = 0
         param_buffer = b""
         while not self.__terminate_flag.is_set():
@@ -142,7 +142,7 @@ class NodeConnection(threading.Thread, Observable):
                 # Receive message
                 og_msg = b""
                 if amount_pending_params == 0:
-                    og_msg = self.__socket.recv(self.config.participant_config["BLOCK_SIZE"])
+                    og_msg = self.__socket.recv(self.config.participant["BLOCK_SIZE"])
 
                 else:
                     pending_fragment = self.__socket.recv(amount_pending_params)
@@ -170,7 +170,7 @@ class NodeConnection(threading.Thread, Observable):
                     overflow = CommunicationProtocol.check_collapse(msg)
                     if overflow > 0:
                         param_buffer = og_msg[overflow:]
-                        amount_pending_params = self.config.participant_config["BLOCK_SIZE"] - len(param_buffer)
+                        amount_pending_params = self.config.participant["BLOCK_SIZE"] - len(param_buffer)
                         msg = msg[:overflow]
                         logging.debug(
                             "[NODE_CONNECTION] Collapse detected: {}".format(
@@ -181,7 +181,7 @@ class NodeConnection(threading.Thread, Observable):
                     else:
                         # Check if all bytes of param_buffer are received
                         amount_pending_params = (
-                            CommunicationProtocol.check_params_incomplete(msg, self.config.participant_config["BLOCK_SIZE"])
+                            CommunicationProtocol.check_params_incomplete(msg, self.config.participant["BLOCK_SIZE"])
                         )
                         if amount_pending_params != 0:
                             param_buffer = msg

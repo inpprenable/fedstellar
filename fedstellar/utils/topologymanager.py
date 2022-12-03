@@ -51,9 +51,9 @@ class TopologyManager:
             else:
                 color_map.append("#6182bd")
             if self.nodes[k][3] is not None and self.nodes[k][3] != "127.0.0.1":
-                labels[k] = f"N{k}\n" + str(self.nodes[k][3]) + ":" + str(self.nodes[k][1])
+                labels[k] = f"P{k}\n" + str(self.nodes[k][3]) + ":" + str(self.nodes[k][1])
             else:
-                labels[k] = f"N{k}\n" + str(self.nodes[k][0]) + ":" + str(self.nodes[k][1])
+                labels[k] = f"P{k}\n" + str(self.nodes[k][0]) + ":" + str(self.nodes[k][1])
         # nx.draw_networkx_nodes(g, pos_shadow, node_color='k', alpha=0.5)
         nx.draw_networkx_nodes(g, pos, node_color=color_map, linewidths=2)
         nx.draw_networkx_labels(g, pos, labels, font_size=10, font_weight='bold')
@@ -107,7 +107,10 @@ class TopologyManager:
     def add_nodes(self, nodes):
         self.nodes = nodes
 
-    def set_nodes(self, nodes):
+    def update_nodes(self, config_participants):
+        nodes = []
+        for i, node in enumerate(config_participants):
+            nodes.append((node["network_args"]["ip"], node["network_args"]["port"], node["device_args"]["role"], node["network_args"]["ipdemo"]))
         self.nodes = nodes
 
     def get_node(self, node_idx):
@@ -134,7 +137,9 @@ class TopologyManager:
 
         neighbors_data_string = ""
         for i in neighbors_data:
-            neighbors_data_string += str(i[0]) + ":" + str(i[1]) + " "
+            neighbors_data_string += str(i[0]) + ":" + str(i[1])
+            if neighbors_data[-1] != i:
+                neighbors_data_string += " "
 
         return neighbors_data_string
 

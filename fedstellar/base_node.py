@@ -39,14 +39,14 @@ class BaseNode(threading.Thread, Observer):
     #     Node Init     #
     #####################
 
-    def __init__(self, experiment_name, hostdemo=None, host="127.0.0.1", port=None, encrypt=False, simulation=True, config=None):
+    def __init__(self, experiment_name, hostdemo=None, host="127.0.0.1", port=None, encrypt=False, config=None):
         self.experiment_name = experiment_name
         # Node Attributes
         self.hostdemo = hostdemo
         self.host = socket.gethostbyname(host)
         self.port = port
         self.encrypt = encrypt
-        self.simulation = simulation
+        self.simulation = config.participant["scenario_args"]["simulation"]
         self.config = config
 
         # Super init
@@ -64,10 +64,10 @@ class BaseNode(threading.Thread, Observer):
             self.__node_socket.bind((host, port))
         self.__node_socket.listen(50)  # no more than 50 connections at queue
 
-        if not self.simulation and config.participant_config['network']:
-            logging.info("[BASENODE] Network parameters\n{}".format(config.participant_config['network']))
+        if not self.simulation and config.participant["network_args"]:
+            logging.info("[BASENODE] Network parameters\n{}".format(config.participant["network_args"]))
             logging.info("[BASENODE] Running tcconfig to set network parameters")
-            os.system(f"tcset --device {config.participant_config['network']['interface']} --rate {config.participant_config['network']['rate']} --delay {config.participant_config['network']['delay']} --delay-distro {config.participant_config['network']['delay-distro']} --loss {config.participant_config['network']['loss']}")
+            os.system(f"tcset --device {config.participant['network_args']['interface']} --rate {config.participant['network_args']['rate']} --delay {config.participant['network_args']['delay']} --delay-distro {config.participant['network_args']['delay-distro']} --loss {config.participant['network_args']['loss']}")
 
 
         # Neighbors
@@ -81,7 +81,8 @@ class BaseNode(threading.Thread, Observer):
         os.makedirs(os.path.dirname(log_filename), exist_ok=True)
         console_handler, file_handler, file_handler_only_debug, exp_errors_file_handler = self.setup_logging(log_filename)
 
-        logging.basicConfig(level=logging.DEBUG,
+        level = logging.DEBUG if config.participant["scenario_args"]["debug"] else logging.WARNING
+        logging.basicConfig(level=level,
                             handlers=[
                                 console_handler,
                                 file_handler,
@@ -187,7 +188,7 @@ class BaseNode(threading.Thread, Observer):
         while not self._terminate_flag.is_set():
             try:
                 (ns, _) = self.__node_socket.accept()
-                msg = ns.recv(self.config.participant_config["BLOCK_SIZE"])
+                msg = ns.recv(self.config.participant["BLOCK_SIZE"])
 
                 # Process new connection
                 if msg:

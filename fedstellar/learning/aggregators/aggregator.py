@@ -44,7 +44,7 @@ class Aggregator(threading.Thread, Observable):
 
         # Wait for all models to be added or TIMEOUT
         try:
-            self.__aggregation_lock.acquire(timeout=self.config.participant_config["AGGREGATION_TIMEOUT"])
+            self.__aggregation_lock.acquire(timeout=self.config.participant["AGGREGATION_TIMEOUT"])
         except Exception as e:
             logging.error("[Aggregator] Error waiting for aggregation: {}".format(e))
 
