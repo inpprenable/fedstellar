@@ -30,7 +30,6 @@ class TopologyManager:
             self.b_fully_connected = True
 
     def draw_graph(self):
-
         g = nx.from_numpy_array(self.topology)
         # pos = nx.layout.spectral_layout(g)
         # pos = nx.spring_layout(g, pos=pos, iterations=50)
@@ -94,6 +93,15 @@ class TopologyManager:
 
     def generate_custom_topology(self, topology):
         self.topology = topology
+
+    # TODO: fix this
+    def get_matrix_adjacency_from_neighbors(self, neighbors):
+        matrix_adjacency = np.zeros((self.n_nodes, self.n_nodes), dtype=np.float32)
+        for i in range(self.n_nodes):
+            for j in range(self.n_nodes):
+                if i in neighbors[j]:
+                    matrix_adjacency[i, j] = 1
+        return matrix_adjacency
 
     def get_topology(self):
         if self.b_symmetric:

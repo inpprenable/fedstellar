@@ -1,21 +1,28 @@
 {
   "name": "topology-1",
   "type": "fully",
+  "controller": {
+    "ip": "127.0.0.1",
+    "port": 6633
+  },
   "nodes": [
     {
       "ipdemo": "127.0.0.1",
       "ip": "127.0.0.1",
-      "port": 45001
+      "port": 45001,
+      "neigbors": []
     },
     {
       "ipdemo": "127.0.0.1",
       "ip": "127.0.0.1",
-      "port": 45002
+      "port": 45002,
+      "neigbors": []
     },
     {
       "ipdemo": "127.0.0.1",
       "ip": "127.0.0.1",
-      "port": 45003
+      "port": 45003,
+      "neigbors": []
     }
   ]
 }

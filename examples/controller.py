@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import os
 import shutil
@@ -6,7 +7,6 @@ import signal
 import sys
 import time
 from datetime import datetime
-
 import yaml
 
 # Add contents root_dir directory to path
@@ -173,6 +173,17 @@ def main():
 
     logging.info("Generating topology configuration file\n{}".format(config.get_topology_config()))
     topologymanager = create_topology(config, experiment_name, n_nodes)
+
+    # Update adjacency matrix in topology configuration file
+    with open('config/topology.json', 'r+') as f:
+        data = json.load(f)
+        for i, node in enumerate(data['nodes']):
+            neighbors = topologymanager.get_neighbors_string(i).split()
+            node['neighbors'] = neighbors
+        f.seek(0)
+        json.dump(data, f, indent=4)
+        f.truncate()
+    config.set_topology_config('config/topology.json')
 
     # Update neighbors in participants configuration
     is_start_node = False
