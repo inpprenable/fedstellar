@@ -80,7 +80,10 @@ class Events:
     """
     Used to notify when a node receives a role. (arg: node, role)
     """
-
+    REPORT_STATUS_TO_CONTROLLER_EVENT = "REPORT_STATUS_TO_CONTROLLER_EVENT"
+    """
+    Used to notify node status to controller.
+    """
 
 ##################################
 #    Generic Observable class    #

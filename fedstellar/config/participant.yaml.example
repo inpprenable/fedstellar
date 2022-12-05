@@ -1,11 +1,13 @@
 scenario_args:
   name: ""
   simulation: true
+  controller: "127.0.0.1:5000"
   random_seed: 0
   config_version: "development"
   debug: true
 
 device_args:
+  uid: ""
   idx: ""
   username: "pi"
   password: "pi"
@@ -13,6 +15,10 @@ device_args:
   start: false
   using_gpu: true
   gpu_id: 0
+
+geo_args:
+  latitude: "46.762520"
+  longitude: "7.600490"
 
 network_args:
   ip: ""

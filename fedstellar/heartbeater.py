@@ -59,8 +59,10 @@ class Heartbeater(threading.Thread, Observable):
             self.get_nodes()  # TODO: testing
             self.__count += 1
             # Send role notify each 10 beats
-            if self.__count % 2 == 0:
+            if self.__count % 10 == 0:
                 self.notify(Events.SEND_ROLE_EVENT, None)
+                # Report my status to the controller
+                self.notify(Events.REPORT_STATUS_TO_CONTROLLER_EVENT, None)
 
             # Wait and refresh node list
             for _ in range(self.config.participant["HEARTBEATER_REFRESH_NEIGHBORS_BY_PERIOD"]):

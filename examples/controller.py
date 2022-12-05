@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import logging
 import os
@@ -174,18 +175,7 @@ def main():
     logging.info("Generating topology configuration file\n{}".format(config.get_topology_config()))
     topologymanager = create_topology(config, experiment_name, n_nodes)
 
-    # Update adjacency matrix in topology configuration file
-    with open('config/topology.json', 'r+') as f:
-        data = json.load(f)
-        for i, node in enumerate(data['nodes']):
-            neighbors = topologymanager.get_neighbors_string(i).split()
-            node['neighbors'] = neighbors
-        f.seek(0)
-        json.dump(data, f, indent=4)
-        f.truncate()
-    config.set_topology_config('config/topology.json')
-
-    # Update neighbors in participants configuration
+    # Update participants configuration
     is_start_node = False
     for i in range(n_nodes):
         with open('config/participant_' + str(i) + '.yaml') as f:
@@ -196,6 +186,7 @@ def main():
         participant_config["network_args"]["ip"] = topologymanager.get_node(i)[0]
         participant_config["network_args"]["port"] = topologymanager.get_node(i)[1]
         participant_config["network_args"]["ipdemo"] = topologymanager.get_node(i)[3]
+        participant_config['device_args']['uid'] = hashlib.sha1((str(participant_config["network_args"]["ip"]) + str(participant_config["network_args"]["port"])).encode()).hexdigest()
         if participant_config["device_args"]["start"]:
             if not is_start_node:
                 is_start_node = True
