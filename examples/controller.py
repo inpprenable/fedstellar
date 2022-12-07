@@ -212,7 +212,7 @@ def main():
     topologymanager.update_nodes(config.participants)
     topologymanager.draw_graph(save=True)
 
-    webserver = True  # TODO: change it
+    webserver = False  # TODO: change it
     if webserver:
         from fedstellar.webserver.app import run_webserver
         logging.info("Starting webserver")
@@ -224,7 +224,6 @@ def main():
         topologymanager_serialized = pickle.dumps(topologymanager)
         config_serialized = pickle.dumps(config)
         import requests
-        url = f'http://{config.participants[0]["scenario_args"]["controller"]}/api/topology'
         requests.post(f'http://{config.participants[0]["scenario_args"]["controller"]}/api/topology', data=topologymanager_serialized)
         requests.post(f'http://{config.participants[0]["scenario_args"]["controller"]}/api/config', data=config_serialized)
 
