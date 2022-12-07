@@ -1,8 +1,9 @@
 import argparse
 import hashlib
-import json
 import logging
+import multiprocessing
 import os
+import pickle
 import shutil
 import signal
 import sys
@@ -85,8 +86,8 @@ def create_topology(config, experiment_name, n_nodes):
         topologymanager.generate_topology()
     elif config.topology['type'] == "star" and args.federation == "CFL":
         # Create a centralized network
-        topologymanager = TopologyManager(experiment_name=experiment_name, n_nodes=n_nodes, b_symmetric=True, server=True)
-        topologymanager.generate_topology()
+        topologymanager = TopologyManager(experiment_name=experiment_name, n_nodes=n_nodes, b_symmetric=True)
+        topologymanager.generate_server_topology()
     else:
         raise ValueError("Unknown topology type: {}".format(config.topology['type']))
 
@@ -209,12 +210,30 @@ def main():
 
     # Add role to the topology (visualization purposes)
     topologymanager.update_nodes(config.participants)
-    topologymanager.draw_graph()
+    topologymanager.draw_graph(save=True)
 
-    # sys.exit(0)
+    webserver = True  # TODO: change it
+    if webserver:
+        from fedstellar.webserver.app import run_webserver
+        logging.info("Starting webserver")
+
+        # multiprocessing.Process(target=run_webserver, args=(config, topologymanager)).start()
+        server_process = multiprocessing.Process(target=run_webserver, args=(config, topologymanager))
+        server_process.start()
+        time.sleep(2)
+        # Export the topology configuration and the participants configuration
+        topologymanager_serialized = pickle.dumps(topologymanager)
+        config_serialized = pickle.dumps(config)
+        import requests
+        url = f'http://{config.participants[0]["scenario_args"]["controller"]}/api/topology'
+        requests.post(f'http://{config.participants[0]["scenario_args"]["controller"]}/api/topology', data=topologymanager_serialized)
+        requests.post(f'http://{config.participants[0]["scenario_args"]["controller"]}/api/config', data=config_serialized)
+
+    while True:
+        time.sleep(1)
 
     # Change python path to the current environment (controller and participants)
-    python_path = '/Users/enrique/miniforge3/envs/phd-workspace/bin/python'
+    python_path = '/Users/enrique/miniforge3/envs/phd/bin/python'
 
     for idx in range(1, n_nodes):
         command = 'cd /Users/enrique/Documents/PhD/fedstellar/examples' + '; ' + python_path + ' -u node_start.py ' \
@@ -225,9 +244,9 @@ def main():
             os.system(command)
 
     start_node = True
+    command = 'cd /Users/enrique/Documents/PhD/fedstellar/examples' + '; ' + python_path + ' -u node_start.py ' \
+              + str(0) + ' 2>&1'
     if sys.platform == "darwin":
-        command = 'cd /Users/enrique/Documents/PhD/fedstellar/examples' + '; ' + python_path + ' -u node_start.py ' \
-                  + str(0) + ' 2>&1'
         os.system("""osascript -e 'tell application "Terminal" to activate' -e 'tell application "Terminal" to do script "{}"'""".format(command))
     else:
         os.system(command)

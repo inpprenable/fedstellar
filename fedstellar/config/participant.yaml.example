@@ -1,5 +1,6 @@
 scenario_args:
   name: ""
+  federation: DFL
   simulation: true
   controller: "127.0.0.1:5000"
   random_seed: 0

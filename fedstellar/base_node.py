@@ -411,6 +411,16 @@ class BaseNode(threading.Thread, Observer):
         self.__nei_lock.release()
         return n
 
+    def get_neighbors_names(self):
+        """
+        Returns:
+            list: The names of the neighbors of the node.
+        """
+        self.__nei_lock.acquire()
+        n = [nc.get_name() for nc in self.__neighbors]
+        self.__nei_lock.release()
+        return n
+
     def rm_neighbor(self, n):
         """
         Removes a neighbor from the neighbors list.
@@ -513,38 +523,3 @@ class BaseNode(threading.Thread, Observer):
         elif event == Events.BEAT_RECEIVED_EVENT:
             # Update the heartbeater with the active neighbor
             self.heartbeater.add_node(obj)
-
-        elif event == Events.REPORT_STATUS_TO_CONTROLLER_EVENT:
-            self.__report_status_to_controller()
-
-    def __report_status_to_controller(self):
-        # Import the requests module
-        import requests
-
-        # Set the URL for the POST request
-        url = f'http://{self.config.participant["scenario_args"]["controller"]}/nodes/{self.config.participant["device_args"]["uid"]}/'
-
-        # Set the node data for the POST request
-        data = {
-                "ip": f"{str(self.config.participant['network_args']['ip'])}",
-                "port": f"{str(self.config.participant['network_args']['port'])}",
-                "latitude": f"{str(self.config.participant['geo_args']['latitude'])}",
-                "longitude": f"{str(self.config.participant['geo_args']['longitude'])}",
-                "timestamp": f"{str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))}",
-        }
-
-        # Send the POST request if the controller is available
-        try:
-            response = requests.post(url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
-        except requests.exceptions.ConnectionError:
-            logging.error(f'Error connecting to the controller at {url}')
-            return
-
-        # If endpoint is not available, log the error
-        if response.status_code != 200:
-            logging.error(f'Error received from controller: {response.status_code}')
-            logging.error(response.text)
-        else:
-            # Print the response
-            logging.debug("[BASENODE.__report_status_to_controller] Response from controller: {}".format(response.status_code))
-

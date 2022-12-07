@@ -1,12 +1,12 @@
 # 
 # This file is part of the fedstellar framework (see https://github.com/enriquetomasmb/fedstellar).
 # Copyright (c) 2022 Enrique Tomás Martínez Beltrán.
-# 
-
-
+#
+import json
 import logging
 import math
 import os
+from datetime import datetime
 
 os.environ['WANDB_SILENT'] = 'true'
 
@@ -402,7 +402,7 @@ class Node(BaseNode):
         # TODO: Improve in the future
         # is_train_set = self.get_name() in self.__train_set
         is_train_set = True
-        if is_train_set and self.role != Role.TRAINER:
+        if is_train_set and (self.role == Role.AGGREGATOR or self.role == Role.SERVER):
 
             # Full connect train set
             if self.round is not None:
@@ -441,6 +441,7 @@ class Node(BaseNode):
                 )
 
                 self.__gossip_model_aggregation()
+
         elif self.role == Role.TRAINER:
             logging.info("[NODE.__train_step] Role.TRAINER process...")
             if self.round is not None:
@@ -470,7 +471,7 @@ class Node(BaseNode):
 
                 self.aggregator.set_waiting_aggregated_model()
 
-        else:
+        elif self.role == Role.IDLE:
             # Role.IDLE functionality
 
             # Set Models To Aggregate
@@ -478,6 +479,12 @@ class Node(BaseNode):
             # __waiting_aggregated_model = True
             # Then, when the node receives a PARAMS_RECEIVED_EVENT, it will run add_model, and it set parameters to the model
             self.aggregator.set_waiting_aggregated_model()
+
+        elif self.role == Role.PROXY:
+            return
+
+        else:
+            logging.warning("[NODE.__train_step] Role not implemented yet")
 
         # Gossip aggregated model
         if self.round is not None:
@@ -690,6 +697,10 @@ class Node(BaseNode):
         for nc in self.get_neighbors():
             nc.clear_models_aggregated()
 
+        # If the federation is SDFL and the node is the aggregator, the node can transfer the aggregation role to another node
+        if self.config.participant['scenario_args']["federation"] == "SDFL" and self.role == "aggregator":
+            self.__transfer_aggregator_role(schema="random")
+
         # Next Step or Finish
         logging.info(
             "[NODE] Round {} of {} finished.".format(
@@ -710,6 +721,19 @@ class Node(BaseNode):
                     self.round, self.totalrounds
                 )
             )
+
+    def __transfer_aggregator_role(self, schema):
+        # TODO: Fix
+        if schema == "random":
+            # Random
+            nc = random.choice(self.get_neighbors())
+            # self.role = "trainer"
+            # nc.role = "aggregator"
+            # self.aggregator.set_nodes_to_aggregate([nc.get_name()])
+            logging.info("[NODE] Aggregator role transfered to {}.".format(nc.get_name()))
+        logging.info("[NODE.__transfer_aggregator_role] Transferring aggregator role using schema {}".format(schema))
+        #
+        pass
 
     #########################
     #    Model Gossiping    #
@@ -903,5 +927,42 @@ class Node(BaseNode):
             except threading.ThreadError:
                 pass
 
+        elif event == Events.REPORT_STATUS_TO_CONTROLLER_EVENT:
+            self.__report_status_to_controller()
+
         # Execute BaseNode update
         super().update(event, obj)
+
+    def __report_status_to_controller(self):
+        # Import the requests module
+        import requests
+
+        # Set the URL for the POST request
+        url = f'http://{self.config.participant["scenario_args"]["controller"]}/nodes/{self.config.participant["device_args"]["uid"]}/'
+
+        # Set the node data for the POST request
+        data = {
+                "ip": f"{str(self.config.participant['network_args']['ip'])}",
+                "port": f"{str(self.config.participant['network_args']['port'])}",
+                "role": f"{str(self.role)}",
+                "neighbors": ','.join(self.get_neighbors_names()),
+                "latitude": f"{str(self.config.participant['geo_args']['latitude'])}",
+                "longitude": f"{str(self.config.participant['geo_args']['longitude'])}",
+                "timestamp": f"{str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))}",
+        }
+
+        # Send the POST request if the controller is available
+        try:
+            response = requests.post(url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
+        except requests.exceptions.ConnectionError:
+            logging.error(f'Error connecting to the controller at {url}')
+            return
+
+        # If endpoint is not available, log the error
+        if response.status_code != 200:
+            logging.error(f'Error received from controller: {response.status_code}')
+            logging.error(response.text)
+        else:
+            # Print the response
+            logging.debug("[NODE.__report_status_to_controller] Response from controller: {}".format(response.status_code))
+

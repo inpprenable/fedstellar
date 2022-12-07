@@ -43,6 +43,15 @@ class Config:
             """
             self.__adjust_block_size()
 
+    def __getstate__(self):
+        # Return the attributes of the class that should be serialized
+        return {'topology': self.topology, 'participant': self.participant}
+
+    def __setstate__(self, state):
+        # Set the attributes of the class from the serialized state
+        self.topology = state['topology']
+        self.participant = state['participant']
+
     def get_topology_config(self):
         return json.dumps(self.topology, indent=2)
 
