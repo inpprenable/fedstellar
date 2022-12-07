@@ -217,8 +217,7 @@ def main():
         from fedstellar.webserver.app import run_webserver
         logging.info("Starting webserver")
 
-        # multiprocessing.Process(target=run_webserver, args=(config, topologymanager)).start()
-        server_process = multiprocessing.Process(target=run_webserver, args=(config, topologymanager))
+        server_process = multiprocessing.Process(target=run_webserver)  # Also, webserver can be started manually
         server_process.start()
         time.sleep(2)
         # Export the topology configuration and the participants configuration
