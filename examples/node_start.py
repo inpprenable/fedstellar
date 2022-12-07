@@ -20,7 +20,7 @@ os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 def main():
     idx = int(sys.argv[1])
 
-    config = Config(entity="participant", participant_config_file=f"config/participant_{idx}.yaml")
+    config = Config(entity="participant", participant_config_file=f"config/participant_{idx}.json")
     n_nodes = len(config.participant["network_args"]["neighbors"].split()) + 1
     experiment_name = config.participant["scenario_args"]["name"]
     model = config.participant["model_args"]["model"]

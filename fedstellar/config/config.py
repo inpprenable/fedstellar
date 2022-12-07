@@ -9,7 +9,6 @@ Module to define constants for the DFL system.
 """
 import json
 import logging
-import yaml
 from fedstellar.encrypter import AESCipher
 
 
@@ -56,7 +55,7 @@ class Config:
         return json.dumps(self.topology, indent=2)
 
     def get_participant_config(self):
-        return yaml.dump(self.participant, indent=2)
+        return json.dumps(self.participant, indent=2)
 
     def _set_default_config(self):
         """
@@ -64,24 +63,18 @@ class Config:
         """
         pass
 
-    # Read the configuration file scenario_config.yaml, and return a dictionary with the configuration
+    # Read the configuration file scenario_config.json, and return a dictionary with the configuration
     def set_participant_config(self, participant_config):
-        with open(participant_config, 'r') as stream:
-            try:
-                self.participant = yaml.safe_load(stream)
-            except yaml.YAMLError as exc:
-                print(exc)
+        with open(participant_config) as json_file:
+            self.participant = json.load(json_file)
 
     def set_topology_config(self, topology_config_file):
         with open(topology_config_file) as json_file:
             self.topology = json.load(json_file)
 
     def add_participant_config(self, participant_config):
-        with open(participant_config, 'r') as stream:
-            try:
-                self.participants.append(yaml.safe_load(stream))
-            except yaml.YAMLError as exc:
-                print(exc)
+        with open(participant_config) as json_file:
+            self.participants.append(json.load(json_file))
 
     def __adjust_block_size(self):
         if self.entity == "participant":

@@ -10,7 +10,7 @@ import numpy as np
 
 class TopologyManager:
     def __init__(
-            self, experiment_name, n_nodes, b_symmetric, undirected_neighbor_num=5, topology=None
+            self, experiment_name=None, n_nodes=5, b_symmetric=True, undirected_neighbor_num=5, topology=None
     ):
         self.experiment_name = experiment_name
         if topology is None:
@@ -40,7 +40,7 @@ class TopologyManager:
         self.topology = state['topology']
         self.nodes = state['nodes']
 
-    def draw_graph(self, save=False):
+    def draw_graph(self, plot=False, path=None):
         g = nx.from_numpy_array(self.topology)
         # pos = nx.layout.spectral_layout(g)
         # pos = nx.spring_layout(g, pos=pos, iterations=50)
@@ -79,16 +79,24 @@ class TopologyManager:
         plt.legend()
         # If not exist a folder with the name of the experiment, create it
         import sys
-        if not os.path.exists(f"{sys.path[0]}/logs/{self.experiment_name}"):
-            os.makedirs(f"{sys.path[0]}/logs/{self.experiment_name}")
-        plt.savefig(f"{sys.path[0]}/logs/{self.experiment_name}/topology.png", dpi=100, bbox_inches="tight", pad_inches=0)
+        if path is None:
+            if not os.path.exists(f"{sys.path[0]}/logs/{self.experiment_name}"):
+                os.makedirs(f"{sys.path[0]}/logs/{self.experiment_name}")
+            plt.savefig(f"{sys.path[0]}/logs/{self.experiment_name}/topology.png", dpi=100, bbox_inches="tight", pad_inches=0)
+        else:
+            plt.savefig(f"{path}", dpi=100, bbox_inches="tight", pad_inches=0)
         # plt.gcf().canvas.draw()
-        plt.show()
-        if save:
-            json_data = nx.readwrite.json_graph.node_link_data(g)
-            with open('graph.json', 'w') as f:
-                json.dump(json_data,
-                          f, indent=4, )
+        if plot:
+            plt.show()
+
+    def get_topology_image_path(self):
+        import sys
+        image_path = f"{sys.path[0]}/logs/{self.experiment_name}/topology.png"
+        if os.path.exists(image_path):
+            return image_path
+        else:
+            return None
+
     def generate_topology(self):
         if self.b_fully_connected:
             self.__fully_connected()
@@ -275,5 +283,3 @@ class TopologyManager:
         np.fill_diagonal(topology_fully_connected, 0)
 
         self.topology = topology_fully_connected
-
-

@@ -1,5 +1,6 @@
 import argparse
 import hashlib
+import json
 import logging
 import multiprocessing
 import os
@@ -9,7 +10,6 @@ import signal
 import sys
 import time
 from datetime import datetime
-import yaml
 
 # Add contents root_dir directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -149,8 +149,8 @@ def main():
 
     # Generate a participant configuration file for each node in the topology
     for i, node in enumerate(config.topology['nodes']):
-        if not os.path.exists('config/participant_' + str(i) + '.yaml'):
-            shutil.copyfile(os.path.join(os.path.dirname(__file__), '../fedstellar/config/participant.yaml.example'), 'config/participant_' + str(i) + '.yaml')
+        if not os.path.exists('config/participant_' + str(i) + '.json'):
+            shutil.copyfile(os.path.join(os.path.dirname(__file__), '../fedstellar/config/participant.json.example'), 'config/participant_' + str(i) + '.json')
 
     input("Topology and participant configuration files generated. Check and press any key to continue...\n")
 
@@ -173,14 +173,17 @@ def main():
         logging.info("[Mender.module] Getting a pool of devices: 5 devices")
         # devices = devices[:5]
 
+    logging.info("Generation logs directory for experiment: {}".format(experiment_name))
+    os.makedirs(os.path.join(os.path.dirname(__file__), 'logs/' + experiment_name), exist_ok=True)
+
     logging.info("Generating topology configuration file\n{}".format(config.get_topology_config()))
     topologymanager = create_topology(config, experiment_name, n_nodes)
 
     # Update participants configuration
     is_start_node = False
     for i in range(n_nodes):
-        with open('config/participant_' + str(i) + '.yaml') as f:
-            participant_config = yaml.safe_load(f)
+        with open('config/participant_' + str(i) + '.json') as f:
+            participant_config = json.load(f)
         participant_config['network_args']['neighbors'] = topologymanager.get_neighbors_string(i)
         participant_config['scenario_args']['name'] = experiment_name
         participant_config['device_args']['idx'] = i
@@ -193,9 +196,9 @@ def main():
                 is_start_node = True
             else:
                 raise ValueError("Only one node can be start node")
-        with open('config/participant_' + str(i) + '.yaml', 'w') as f:
-            yaml.dump(participant_config, f, sort_keys=False, default_flow_style=False, allow_unicode=True, indent=2)
-        config.add_participant_config('config/participant_' + str(i) + '.yaml')
+        with open('config/participant_' + str(i) + '.json', 'w') as f:
+            json.dump(participant_config, f, sort_keys=False, indent=2)
+        config.add_participant_config('config/participant_' + str(i) + '.json')
     if not is_start_node:
         raise ValueError("No start node found")
 
@@ -210,25 +213,16 @@ def main():
 
     # Add role to the topology (visualization purposes)
     topologymanager.update_nodes(config.participants)
-    topologymanager.draw_graph(save=True)
+    topologymanager.draw_graph(plot=True)
 
-    webserver = False  # TODO: change it
+    webserver = True  # TODO: change it
     if webserver:
         from fedstellar.webserver.app import run_webserver
         logging.info("Starting webserver")
 
         server_process = multiprocessing.Process(target=run_webserver)  # Also, webserver can be started manually
         server_process.start()
-        time.sleep(2)
-        # Export the topology configuration and the participants configuration
-        topologymanager_serialized = pickle.dumps(topologymanager)
-        config_serialized = pickle.dumps(config)
-        import requests
-        requests.post(f'http://{config.participants[0]["scenario_args"]["controller"]}/api/topology', data=topologymanager_serialized)
-        requests.post(f'http://{config.participants[0]["scenario_args"]["controller"]}/api/config', data=config_serialized)
 
-    while True:
-        time.sleep(1)
 
     # Change python path to the current environment (controller and participants)
     python_path = '/Users/enrique/miniforge3/envs/phd/bin/python'

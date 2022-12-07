@@ -940,20 +940,9 @@ class Node(BaseNode):
         # Set the URL for the POST request
         url = f'http://{self.config.participant["scenario_args"]["controller"]}/nodes/{self.config.participant["device_args"]["uid"]}/'
 
-        # Set the node data for the POST request
-        data = {
-                "ip": f"{str(self.config.participant['network_args']['ip'])}",
-                "port": f"{str(self.config.participant['network_args']['port'])}",
-                "role": f"{str(self.role)}",
-                "neighbors": ','.join(self.get_neighbors_names()),
-                "latitude": f"{str(self.config.participant['geo_args']['latitude'])}",
-                "longitude": f"{str(self.config.participant['geo_args']['longitude'])}",
-                "timestamp": f"{str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))}",
-        }
-
         # Send the POST request if the controller is available
         try:
-            response = requests.post(url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
+            response = requests.post(url, data=json.dumps(self.config.participant), headers={'Content-Type': 'application/json'})
         except requests.exceptions.ConnectionError:
             logging.error(f'Error connecting to the controller at {url}')
             return
