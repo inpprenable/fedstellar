@@ -94,6 +94,7 @@ class NodeConnection(threading.Thread, Observable):
                 CommunicationProtocol.VOTE_TRAIN_SET: Vote_train_set_cmd(self),
                 CommunicationProtocol.MODELS_AGGREGATED: Models_aggregated_cmd(self),
                 CommunicationProtocol.MODEL_INITIALIZED: Model_initialized_cmd(self),
+                CommunicationProtocol.TRANSFER_LEADERSHIP: Transfer_leadership_cmd(self),
             },
             self.config,
         )
@@ -440,3 +441,15 @@ class NodeConnection(threading.Thread, Observable):
             round: The last ready round of the other node.
         """
         self.notify(Events.TRAIN_SET_VOTE_RECEIVED_EVENT, (node, votes))
+
+    def set_transfer_leadership(self, value):
+        """
+        Set the role of the node when the transfer leadership is received.
+
+        Args:
+            value: The role of the node when the transfer leadership is received.
+        """
+        logging.info("[NODE_CONNECTION] Transfer leadership received")
+        logging.info("[NODE_CONNECTION] Previous role: {}".format(self.config.participant['device_args']['role']))
+        self.config.participant['device_args']['role'] = value
+        logging.info("[NODE_CONNECTION] New role: {}".format(self.config.participant['device_args']['role']))

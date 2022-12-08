@@ -53,6 +53,10 @@ class CommunicationProtocol:
     """
 
     """
+        Transfer leadership header.
+    """
+    TRANSFER_LEADERSHIP = "TRANSFER_LEADERSHIP"
+    """
     Beat message header.
     """
     BEAT = "BEAT"
@@ -415,6 +419,14 @@ class CommunicationProtocol:
                         error = True
                         break
 
+                # Model Initialized
+                elif message[0] == CommunicationProtocol.TRANSFER_LEADERSHIP:
+                    if self.__exec(CommunicationProtocol.TRANSFER_LEADERSHIP, None, None):
+                        message = message[1:]
+                    else:
+                        error = True
+                        break
+
                 # Non Recognized message
                 else:
                     error = True
@@ -743,3 +755,11 @@ class CommunicationProtocol:
             data_msgs.append(header + end)
 
         return data_msgs
+
+    @staticmethod
+    def build_transfer_leadership_msg():
+        """
+        Returns:
+            An encoded leadership transfer message.
+        """
+        return (CommunicationProtocol.TRANSFER_LEADERSHIP + "\n").encode("utf-8")

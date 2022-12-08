@@ -28,7 +28,7 @@ argparser = argparse.ArgumentParser(description='Controller of Fedstellar framew
 argparser.add_argument('-n', '--name', dest='name',
                        default="{}".format(datetime.now().strftime("%d_%m_%Y_%H_%M_%S")),
                        help='Experiment name')
-argparser.add_argument('-f', '--federation', dest='federation', default="DFL",
+argparser.add_argument('-f', '--federation', dest='federation', default="SDFL",
                        help='Federation architecture: CFL, DFL, or SDFL (default: DFL)')
 argparser.add_argument('-s', '--simulation', action='store_false', dest='simulation', help='Run simulation')
 argparser.add_argument('-v', '--version', action='version',
@@ -219,7 +219,6 @@ def main():
     if webserver:
         from fedstellar.webserver.app import run_webserver
         logging.info("Starting webserver")
-
         server_process = multiprocessing.Process(target=run_webserver)  # Also, webserver can be started manually
         server_process.start()
 

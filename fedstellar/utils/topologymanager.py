@@ -44,7 +44,7 @@ class TopologyManager:
         g = nx.from_numpy_array(self.topology)
         # pos = nx.layout.spectral_layout(g)
         # pos = nx.spring_layout(g, pos=pos, iterations=50)
-        pos = nx.spring_layout(g, k=0.15, iterations=20)
+        pos = nx.spring_layout(g, k=0.15, iterations=20, seed=42)
 
         fig = plt.figure(num="Network topology", dpi=100, figsize=(6, 6), frameon=False)
         ax = fig.add_axes([0, 0, 1, 1])

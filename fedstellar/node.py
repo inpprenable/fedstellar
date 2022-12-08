@@ -6,7 +6,6 @@ import json
 import logging
 import math
 import os
-from datetime import datetime
 
 os.environ['WANDB_SILENT'] = 'true'
 
@@ -74,6 +73,8 @@ class Node(BaseNode):
 
         # Import configuration file
         self.config = config
+        # Report the configuration to the controller (first instance)
+        self.__report_status_to_controller()
 
         # Learning
         self.round = None
@@ -97,11 +98,10 @@ class Node(BaseNode):
             wandblogger.log_image(key="topology", images=[img_topology])
         self.learner = learner(model, data, logger=wandblogger)
 
-        self.role = config.participant["device_args"]["role"]
-        logging.info("[NODE] Role: " + str(self.role))
+        logging.info("[NODE] Role: " + str(self.config.participant["device_args"]["role"]))
 
         # Aggregator
-        self.aggregator = FedAvg(node_name=self.get_name(), config=self.config, role=self.role)
+        self.aggregator = FedAvg(node_name=self.get_name(), config=self.config, role=self.config.participant["device_args"]["role"])
         self.aggregator.add_observer(self)
 
         self.shared_metrics = False
@@ -373,7 +373,7 @@ class Node(BaseNode):
                 if n.get_name() not in self.__train_set:
                     self.__train_set.append(n.get_name())
             self.__train_set.append(self.get_name()) if self.get_name() not in self.__train_set else None
-            # if self.role != Role.TRAINER:
+            # if self.config.participant["device_args"]["role"] != Role.TRAINER:
             #     self.__train_set.append(self.get_name()) if self.get_name() not in self.__train_set else None
             # else:
             #     self.__train_set.remove(self.get_name()) if self.get_name() in self.__train_set else None
@@ -402,7 +402,7 @@ class Node(BaseNode):
         # TODO: Improve in the future
         # is_train_set = self.get_name() in self.__train_set
         is_train_set = True
-        if is_train_set and (self.role == Role.AGGREGATOR or self.role == Role.SERVER):
+        if is_train_set and (self.config.participant["device_args"]["role"] == Role.AGGREGATOR or self.config.participant["device_args"]["role"] == Role.SERVER):
 
             # Full connect train set
             if self.round is not None:
@@ -413,7 +413,7 @@ class Node(BaseNode):
                 self.__evaluate()
 
             # Train
-            if self.round is not None and self.role != Role.SERVER:  # El participante servidor no entrena (en CFL)
+            if self.round is not None and self.config.participant["device_args"]["role"] != Role.SERVER:  # El participante servidor no entrena (en CFL)
                 self.__train()
 
             # Aggregate Model
@@ -442,7 +442,7 @@ class Node(BaseNode):
 
                 self.__gossip_model_aggregation()
 
-        elif self.role == Role.TRAINER:
+        elif self.config.participant["device_args"]["role"] == Role.TRAINER:
             logging.info("[NODE.__train_step] Role.TRAINER process...")
             if self.round is not None:
                 self.__connect_and_set_aggregator()
@@ -471,7 +471,7 @@ class Node(BaseNode):
 
                 self.aggregator.set_waiting_aggregated_model()
 
-        elif self.role == Role.IDLE:
+        elif self.config.participant["device_args"]["role"] == Role.IDLE:
             # Role.IDLE functionality
 
             # Set Models To Aggregate
@@ -480,7 +480,7 @@ class Node(BaseNode):
             # Then, when the node receives a PARAMS_RECEIVED_EVENT, it will run add_model, and it set parameters to the model
             self.aggregator.set_waiting_aggregated_model()
 
-        elif self.role == Role.PROXY:
+        elif self.config.participant["device_args"]["role"] == Role.PROXY:
             return
 
         else:
@@ -698,7 +698,7 @@ class Node(BaseNode):
             nc.clear_models_aggregated()
 
         # If the federation is SDFL and the node is the aggregator, the node can transfer the aggregation role to another node
-        if self.config.participant['scenario_args']["federation"] == "SDFL" and self.role == "aggregator":
+        if self.config.participant['scenario_args']["federation"] == "SDFL" and self.config.participant["device_args"]["role"] == "aggregator":
             self.__transfer_aggregator_role(schema="random")
 
         # Next Step or Finish
@@ -725,15 +725,15 @@ class Node(BaseNode):
     def __transfer_aggregator_role(self, schema):
         # TODO: Fix
         if schema == "random":
+            logging.info("[NODE.__transfer_aggregator_role] Transferring aggregator role using schema {}".format(schema))
             # Random
             nc = random.choice(self.get_neighbors())
-            # self.role = "trainer"
-            # nc.role = "aggregator"
-            # self.aggregator.set_nodes_to_aggregate([nc.get_name()])
-            logging.info("[NODE] Aggregator role transfered to {}.".format(nc.get_name()))
-        logging.info("[NODE.__transfer_aggregator_role] Transferring aggregator role using schema {}".format(schema))
-        #
-        pass
+            msg = CommunicationProtocol.build_transfer_leadership_msg()
+            nc.send(msg)
+            self.config.participant['device_args']["role"] = "trainer"
+            logging.info("[NODE.__transfer_aggregator_role] Aggregator role transfered to {}.".format(nc.get_name()))
+        else:
+            logging.info("[NODE.__transfer_aggregator_role] Schema {} not found.".format(schema))
 
     #########################
     #    Model Gossiping    #
@@ -879,7 +879,7 @@ class Node(BaseNode):
                 return
 
         elif event == Events.SEND_ROLE_EVENT:
-            self.broadcast(CommunicationProtocol.build_role_msg(self.get_name(), self.role))
+            self.broadcast(CommunicationProtocol.build_role_msg(self.get_name(), self.config.participant["device_args"]["role"]))
 
         elif event == Events.ROLE_RECEIVED_EVENT:
             # Update the heartbeater with the role node

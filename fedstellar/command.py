@@ -42,6 +42,7 @@ class Beat_cmd(Command):
     def execute(self, node1):
         self.node_connection.notify_heartbeat(node1)
 
+
 class Role_cmd(Command):
     """
     Command that should be executed as a response to a **beat** message.
@@ -49,6 +50,7 @@ class Role_cmd(Command):
 
     def execute(self, node, role):
         self.node_connection.notify_role(node, role)
+
 
 class Stop_cmd(Command):
     """
@@ -142,3 +144,12 @@ class Model_initialized_cmd(Command):
 
     def execute(self):
         self.node_connection.set_model_initialized(True)
+
+
+class Transfer_leadership_cmd(Command):
+    """
+    Command that should be executed as a response to a **transfer_leadership** message.
+    """
+
+    def execute(self):
+        self.node_connection.set_transfer_leadership("aggregator")
