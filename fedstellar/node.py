@@ -938,7 +938,7 @@ class Node(BaseNode):
         import requests
 
         # Set the URL for the POST request
-        url = f'http://{self.config.participant["scenario_args"]["controller"]}/nodes/{self.config.participant["device_args"]["uid"]}/'
+        url = f'http://{self.config.participant["scenario_args"]["controller"]}/nodes/update/{self.config.participant["device_args"]["uid"]}'
 
         # Send the POST request if the controller is available
         try:

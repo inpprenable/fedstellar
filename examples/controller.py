@@ -1,11 +1,10 @@
 import argparse
+import glob
 import hashlib
 import json
 import logging
 import multiprocessing
 import os
-import pickle
-import shutil
 import signal
 import sys
 import time
@@ -30,6 +29,8 @@ argparser.add_argument('-n', '--name', dest='name',
                        help='Experiment name')
 argparser.add_argument('-f', '--federation', dest='federation', default="SDFL",
                        help='Federation architecture: CFL, DFL, or SDFL (default: DFL)')
+argparser.add_argument('-t', '--topology', dest='topology', default="fully",
+                          help='Topology: fully, ring, random, or star (default: fully)')
 argparser.add_argument('-s', '--simulation', action='store_false', dest='simulation', help='Run simulation')
 argparser.add_argument('-v', '--version', action='version',
                        version='%(prog)s ' + fedstellar.__version__, help="Show version")
@@ -71,25 +72,25 @@ def killports(term="python"):
 
 
 def create_topology(config, experiment_name, n_nodes):
-    if config.topology['type'] == "fully":
+    if args.topology == "fully":
         # Create a fully connected network
         topologymanager = TopologyManager(experiment_name=experiment_name, n_nodes=n_nodes, b_symmetric=True, undirected_neighbor_num=n_nodes - 1)
         topologymanager.generate_topology()
-    elif config.topology['type'] == "ring":
+    elif args.topology == "ring":
         # Create a partially connected network (ring-structured network)
         topologymanager = TopologyManager(experiment_name=experiment_name, n_nodes=n_nodes, b_symmetric=True)
         topologymanager.generate_ring_topology(increase_convergence=True)
-    elif config.topology['type'] == "random":
+    elif args.topology == "random":
         # Create network topology using topology manager (random)
         topologymanager = TopologyManager(experiment_name=experiment_name, n_nodes=n_nodes, b_symmetric=True,
                                           undirected_neighbor_num=3)
         topologymanager.generate_topology()
-    elif config.topology['type'] == "star" and args.federation == "CFL":
+    elif args.topology == "star" and args.federation == "CFL":
         # Create a centralized network
         topologymanager = TopologyManager(experiment_name=experiment_name, n_nodes=n_nodes, b_symmetric=True)
         topologymanager.generate_server_topology()
     else:
-        raise ValueError("Unknown topology type: {}".format(config.topology['type']))
+        raise ValueError("Unknown topology type: {}".format(args.topology))
 
     # topology = topologymanager.get_topology()
     # logging.info(topology)
@@ -99,8 +100,8 @@ def create_topology(config, experiment_name, n_nodes):
 
     # Assign nodes to topology
     nodes_ip_port = []
-    for i, node in enumerate(config.topology['nodes']):
-        nodes_ip_port.append((node['ip'], node['port'], "undefined", node['ipdemo']))
+    for i, node in enumerate(config.participants):
+        nodes_ip_port.append((node['network_args']['ip'], node['network_args']['port'], "undefined", node['network_args']['ipdemo']))
 
     topologymanager.add_nodes(nodes_ip_port)
     return topologymanager
@@ -138,27 +139,23 @@ def main():
     import ipaddress
     network = ipaddress.IPv4Network(f"{ip_address}/24", strict=False)
 
-    config = Config(entity="controller")
-
-    # Load the topology configuration
-    topology_path = "config/topology.json"
-    if not os.path.exists(topology_path):
-        shutil.copyfile(os.path.join(os.path.dirname(__file__), '../fedstellar/config/topology.json.example'), topology_path)
-
-    config.set_topology_config('config/topology.json')
-
-    # Generate a participant configuration file for each node in the topology
-    for i, node in enumerate(config.topology['nodes']):
-        if not os.path.exists('config/participant_' + str(i) + '.json'):
-            shutil.copyfile(os.path.join(os.path.dirname(__file__), '../fedstellar/config/participant.json.example'), 'config/participant_' + str(i) + '.json')
-
-    input("Topology and participant configuration files generated. Check and press any key to continue...\n")
-
-    n_nodes = len(config.topology['nodes'])
-
     logging.info("Controller network: {}".format(network))
     logging.info("Controller IP address: {}".format(ip_address))
     logging.info("Federated architecture: {}".format(args.federation))
+
+    config = Config(entity="controller")
+
+    participant_files = glob.glob(os.path.join(os.path.dirname(__file__), 'config/participant_*.json'))
+    participant_files.sort()
+    if len(participant_files) == 0:
+        raise ValueError("No participant files found in config folder")
+
+    config.set_participants_config(participant_files)
+
+    n_nodes = len(participant_files)
+    logging.info("Number of nodes: {}".format(n_nodes))
+
+    # input("Topology and participant configuration files generated. Check and press any key to continue...\n")
 
     if not args.simulation:
         logging.info("[Mender.module] Mender module initialized")
@@ -176,7 +173,7 @@ def main():
     logging.info("Generation logs directory for experiment: {}".format(experiment_name))
     os.makedirs(os.path.join(os.path.dirname(__file__), 'logs/' + experiment_name), exist_ok=True)
 
-    logging.info("Generating topology configuration file\n{}".format(config.get_topology_config()))
+    logging.info("Generating topology configuration file...")
     topologymanager = create_topology(config, experiment_name, n_nodes)
 
     # Update participants configuration
@@ -187,9 +184,6 @@ def main():
         participant_config['network_args']['neighbors'] = topologymanager.get_neighbors_string(i)
         participant_config['scenario_args']['name'] = experiment_name
         participant_config['device_args']['idx'] = i
-        participant_config["network_args"]["ip"] = topologymanager.get_node(i)[0]
-        participant_config["network_args"]["port"] = topologymanager.get_node(i)[1]
-        participant_config["network_args"]["ipdemo"] = topologymanager.get_node(i)[3]
         participant_config['device_args']['uid'] = hashlib.sha1((str(participant_config["network_args"]["ip"]) + str(participant_config["network_args"]["port"])).encode()).hexdigest()
         if participant_config["device_args"]["start"]:
             if not is_start_node:
@@ -198,22 +192,25 @@ def main():
                 raise ValueError("Only one node can be start node")
         with open('config/participant_' + str(i) + '.json', 'w') as f:
             json.dump(participant_config, f, sort_keys=False, indent=2)
-        config.add_participant_config('config/participant_' + str(i) + '.json')
     if not is_start_node:
         raise ValueError("No start node found")
+    config.set_participants_config(participant_files)
 
     if not args.simulation:
-        for i in config.topology['nodes']:
-            logging.info("[Mender.module] Device {} | IP: {} | MAC: {}".format(i['id'], i['ipdemo'], i['mac']))
+        for i in config.participants:
+            logging.info("[Mender.module] Device {} | IP: {}".format(i['device_args']['idx'], i['network_args']['ipdemo']))
             logging.info("[Mender.module] \tCreating artifacts...")
             logging.info("[Mender.module] \tSending Fedstellar framework...")
-            # mender.deploy_artifact_device("my-update-2.0.mender", i['id'])
+            # mender.deploy_artifact_device("my-update-2.0.mender", i['device_args']['idx'])
             logging.info("[Mender.module] \tSending configuration...")
             time.sleep(5)
 
     # Add role to the topology (visualization purposes)
     topologymanager.update_nodes(config.participants)
     topologymanager.draw_graph(plot=True)
+
+    json_path = "{}/config/topology.json".format(sys.path[0])
+    topologymanager.update_topology_3d_json(participants=config.participants, path=json_path)
 
     webserver = True  # TODO: change it
     if webserver:
@@ -222,6 +219,8 @@ def main():
         server_process = multiprocessing.Process(target=run_webserver)  # Also, webserver can be started manually
         server_process.start()
 
+    # while True:
+    #    time.sleep(1)
 
     # Change python path to the current environment (controller and participants)
     python_path = '/Users/enrique/miniforge3/envs/phd/bin/python'

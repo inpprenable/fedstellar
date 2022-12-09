@@ -113,7 +113,6 @@ class TopologyManager:
         self.topology[:, 0] = 1
         np.fill_diagonal(self.topology, 0)
 
-
     def generate_ring_topology(self, increase_convergence=False):
         self.__ring_topology(increase_convergence=increase_convergence)
 
@@ -168,13 +167,11 @@ class TopologyManager:
             if self.topology[node_idx][i] == 1:
                 neighbors_index.append(i)
                 neighbors_data.append(self.nodes[i])
-
         neighbors_data_string = ""
         for i in neighbors_data:
             neighbors_data_string += str(i[0]) + ":" + str(i[1])
             if neighbors_data[-1] != i:
                 neighbors_data_string += " "
-
         return neighbors_data_string
 
     def __ring_topology(self, increase_convergence=False):
@@ -283,3 +280,40 @@ class TopologyManager:
         np.fill_diagonal(topology_fully_connected, 0)
 
         self.topology = topology_fully_connected
+
+    @staticmethod
+    def update_topology_3d_json(participants, path):
+        json_data = {
+            "nodes": [],
+            "links": [],
+        }
+
+        for node in participants:
+            json_data["nodes"].append(
+                {
+                    "uid": node['device_args']['uid'],
+                    "idx": node['device_args']['idx'],
+                    "ipport": node['network_args']['ip'] + ":" + str(node['network_args']['port']),
+                    "role": node['device_args']['role'],
+                }
+            )
+
+        nodes = []
+        for node in participants:
+            nodes.append(node['network_args']['ip'] + ':' + str(node['network_args']['port']))
+        # Then, we create a matrix of zeros
+        # matrix = np.zeros((len(nodes), len(nodes)))
+        # Then, we fill the matrix with the neighbours
+        for node in participants:
+            for neighbour in node['network_args']['neighbors'].split(" "):
+                json_data["links"].append(
+                    {
+                        "source": node['network_args']['ip'] + ":" + str(node['network_args']['port']),
+                        "target": neighbour,
+                        "value": 1,  # TODO: improve this
+                    }
+                )
+                # matrix[nodes.index(node['network_args']['ip'] + ':' + str(node['network_args']['port']))][nodes.index(neighbour)] = 1
+
+        with open(path, "w") as f:
+            json.dump(json_data, f, sort_keys=False, indent=2)

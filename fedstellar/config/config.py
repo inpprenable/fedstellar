@@ -76,6 +76,11 @@ class Config:
         with open(participant_config) as json_file:
             self.participants.append(json.load(json_file))
 
+    def set_participants_config(self, participants_config):
+        self.participants = []
+        for participant in participants_config:
+            self.add_participant_config(participant)
+
     def __adjust_block_size(self):
         if self.entity == "participant":
             rest = self.participant['BLOCK_SIZE'] % AESCipher.get_block_size()
