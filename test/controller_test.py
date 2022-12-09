@@ -8,7 +8,7 @@ import os
 
 from dotenv import load_dotenv
 
-envpath = os.path.join(os.path.dirname(__file__), '../fedstellar/.env')
+envpath = os.path.join(os.path.dirname(__file__), '../app/.env')
 envpath = os.path.abspath(envpath)
 load_dotenv(envpath)
 
@@ -20,7 +20,7 @@ load_dotenv(envpath)
 
 def test_env():
     # Load the environment variables
-    envpath = os.path.join(os.path.dirname(__file__), '../fedstellar/.env')
+    envpath = os.path.join(os.path.dirname(__file__), '../app/.env')
     envpath = os.path.abspath(envpath)
     print(envpath)
     load_dotenv(envpath)
@@ -52,7 +52,7 @@ def test_mender_get_artifacts():
 def test_mender_upload_artifact():
     from fedstellar.config.mender import Mender
     mender = Mender()
-    # /Users/enrique/Documents/PhD/fedstellar/examples/my-update-2.0.mender
+    # /Users/enrique/Documents/PhD/fedstellar/app/my-update-2.0.mender
     # Load and execute the following script in the device
     # #!/bin/bash
     #
@@ -60,7 +60,7 @@ def test_mender_upload_artifact():
     # wget https://raw.githubusercontent.com/enriquetomasmb/mender/main/client.py -P /home/${USER}/fedstellar
     # python3 /home/${USER}/fedstellar/client.py
     # echo "DFL" > /tmp/dfl.txt
-    mender.upload_artifact(artifact_path="/Users/enrique/Documents/PhD/fedstellar/examples/my-update-2.0.mender", description="Artifact created from Fedstellar framework")
+    mender.upload_artifact(artifact_path="/app/my-update-2.0.mender", description="Artifact created from Fedstellar framework")
 
 def test_mender_deploy_artifact():
     from fedstellar.config.mender import Mender
