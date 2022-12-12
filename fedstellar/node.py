@@ -92,9 +92,9 @@ class Node(BaseNode):
         else:
             wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=self.get_name(), mode="disabled")
         wandblogger.watch(model, log="all")
-        import wandb
-        img_topology = wandb.Image(f"logs/{self.experiment_name}/topology.png", caption="Topology")
         if self.idx == 0:
+            import wandb
+            img_topology = wandb.Image(f"{self.log_dir}/topology.png", caption="Topology")
             wandblogger.log_image(key="topology", images=[img_topology])
         self.learner = learner(model, data, logger=wandblogger)
 
@@ -934,6 +934,13 @@ class Node(BaseNode):
         super().update(event, obj)
 
     def __report_status_to_controller(self):
+        """
+        Report the status of the node to the controller.
+        The configuration is the one that the node has at the memory.
+
+        Returns:
+
+        """
         # Import the requests module
         import requests
 

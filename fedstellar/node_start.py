@@ -5,9 +5,6 @@ import time
 
 from fedstellar.learning.pytorch.femnist.femnist import FEMNISTDataModule
 
-# Add the path to the fedstellar folder
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-
 from fedstellar.config.config import Config
 from fedstellar.learning.pytorch.mnist.mnist import MNISTDataModule
 from fedstellar.learning.pytorch.mnist.models.mlp import MLP
@@ -18,12 +15,18 @@ os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
 
 def main():
-    idx = int(sys.argv[1])
+    config_path = str(sys.argv[1])
+    config = Config(entity="participant", participant_config_file=config_path)
 
-    config = Config(entity="participant", participant_config_file=f"config/participant_{idx}.json")
-    n_nodes = len(config.participant["network_args"]["neighbors"].split()) + 1
+    n_nodes = config.participant["scenario_args"]["n_nodes"]
     experiment_name = config.participant["scenario_args"]["name"]
     model = config.participant["model_args"]["model"]
+    idx = config.participant["device_args"]["idx"]
+    hostdemo = config.participant["network_args"]["ipdemo"]
+    host = config.participant["network_args"]["ip"]
+    port = config.participant["network_args"]["port"]
+    neighbors = config.participant["network_args"]["neighbors"].split()
+
     if model == "MLP":
         model = MLP()
     elif model == "CNN":
@@ -38,12 +41,6 @@ def main():
         dataset = FEMNISTDataModule(sub_id=idx, number_sub=n_nodes, root_dir="data")
     else:
         raise ValueError(f"Dataset {dataset} not supported")
-
-    hostdemo = config.participant["network_args"]["ipdemo"]
-    host = config.participant["network_args"]["ip"]
-    port = config.participant["network_args"]["port"]
-
-    neighbors = config.participant["network_args"]["neighbors"].split()
 
     node = Node(
         idx=idx,

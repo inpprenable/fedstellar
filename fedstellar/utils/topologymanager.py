@@ -10,9 +10,10 @@ import numpy as np
 
 class TopologyManager:
     def __init__(
-            self, experiment_name=None, n_nodes=5, b_symmetric=True, undirected_neighbor_num=5, topology=None
+            self, experiment_name=None, log_dir="logs", n_nodes=5, b_symmetric=True, undirected_neighbor_num=5, topology=None
     ):
         self.experiment_name = experiment_name
+        self.log_dir = log_dir
         if topology is None:
             topology = []
         self.n_nodes = n_nodes
@@ -77,21 +78,19 @@ class TopologyManager:
             plt.scatter([], [], c="orange", label='Aggregator')
         plt.scatter([], [], c="#6182bd", label='Trainer')
         plt.legend()
-        # If not exist a folder with the name of the experiment, create it
-        import sys
-        if path is None:
-            if not os.path.exists(f"{sys.path[0]}/logs/{self.experiment_name}"):
-                os.makedirs(f"{sys.path[0]}/logs/{self.experiment_name}")
-            plt.savefig(f"{sys.path[0]}/logs/{self.experiment_name}/topology.png", dpi=100, bbox_inches="tight", pad_inches=0)
-        else:
-            plt.savefig(f"{path}", dpi=100, bbox_inches="tight", pad_inches=0)
+        # import sys
+        # if path is None:
+        #    if not os.path.exists(f"{sys.path[0]}/logs/{self.experiment_name}"):
+        #        os.makedirs(f"{sys.path[0]}/logs/{self.experiment_name}")
+        #    plt.savefig(f"{sys.path[0]}/logs/{self.experiment_name}/topology.png", dpi=100, bbox_inches="tight", pad_inches=0)
+        # else:
+        plt.savefig(f"{self.log_dir}/{self.experiment_name}/topology.png", dpi=100, bbox_inches="tight", pad_inches=0)
         # plt.gcf().canvas.draw()
         if plot:
             plt.show()
 
     def get_topology_image_path(self):
-        import sys
-        image_path = f"{sys.path[0]}/logs/{self.experiment_name}/topology.png"
+        image_path = f"{self.log_dir}/topology.png"
         if os.path.exists(image_path):
             return image_path
         else:

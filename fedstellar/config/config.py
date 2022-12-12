@@ -25,6 +25,7 @@ class Config:
     participant = {}
 
     participants = []  # Configuration of each participant (this information is stored only in the controller)
+    participants_path = []
 
     def __init__(self, entity, topology_config_file=None, participant_config_file=None):
 
@@ -78,6 +79,7 @@ class Config:
 
     def set_participants_config(self, participants_config):
         self.participants = []
+        self.participants_path = participants_config
         for participant in participants_config:
             self.add_participant_config(participant)
 

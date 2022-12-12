@@ -5,6 +5,7 @@
     "simulation": true,
     "controller": "127.0.0.1:5000",
     "random_seed": 0,
+    "n_nodes": 0,
     "config_version": "development",
     "debug": true
   },
@@ -49,7 +50,9 @@
     "frequency_of_the_test": 5
   },
   "tracking_args": {
-    "enable_tracking": false,
+    "enable_tracking": true,
+    "log_dir": "logs",
+    "config_dir": "config",
     "enable_wandb": false,
     "wandb_key": [
       "your wandb key"

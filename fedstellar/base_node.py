@@ -76,7 +76,10 @@ class BaseNode(threading.Thread, Observer):
         self.__nei_lock = threading.Lock()
 
         # Logging
-        log_filename = f"logs/{self.experiment_name}/{self.get_name_demo()}" if self.hostdemo else f"logs/{self.experiment_name}/{self.get_name()}"
+        self.log_dir = os.path.join(config.participant['tracking_args']["log_dir"], self.experiment_name)
+        if not os.path.exists(self.log_dir):
+            os.makedirs(self.log_dir)
+        log_filename = f"{self.log_dir}/{self.get_name_demo()}" if self.hostdemo else f"{self.log_dir}/{self.get_name()}"
         os.makedirs(os.path.dirname(log_filename), exist_ok=True)
         console_handler, file_handler, file_handler_only_debug, exp_errors_file_handler = self.setup_logging(log_filename)
 

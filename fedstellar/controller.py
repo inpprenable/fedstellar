@@ -54,7 +54,7 @@ class Controller:
         self.webserver = args.webserver
         self.simulation = args.simulation
         self.config_dir = args.config
-        self.logs_dir = args.logs
+        self.log_dir = args.logs
         self.env_path = args.env
 
         self.config = None
@@ -69,7 +69,7 @@ class Controller:
         self.inicialization()
 
         logging.info("Generation logs directory for experiment: {}".format(self.experiment_name))
-        os.makedirs(os.path.join(self.logs_dir, self.experiment_name), exist_ok=True)
+        os.makedirs(os.path.join(self.log_dir, self.experiment_name), exist_ok=True)
 
         self.config = Config(entity="controller")
         # Get participants configurations
@@ -89,10 +89,13 @@ class Controller:
         for i in range(self.n_nodes):
             with open(f'{self.config_dir}/participant_' + str(i) + '.json') as f:
                 participant_config = json.load(f)
+            participant_config['scenario_args']['n_nodes'] = self.n_nodes
             participant_config['network_args']['neighbors'] = self.topologymanager.get_neighbors_string(i)
             participant_config['scenario_args']['name'] = self.experiment_name
             participant_config['device_args']['idx'] = i
             participant_config['device_args']['uid'] = hashlib.sha1((str(participant_config["network_args"]["ip"]) + str(participant_config["network_args"]["port"])).encode()).hexdigest()
+            participant_config['tracking_args']['log_dir'] = self.log_dir
+            participant_config['tracking_args']['config_dir'] = self.config_dir
             if participant_config["device_args"]["start"]:
                 if not is_start_node:
                     is_start_node = True
@@ -114,11 +117,11 @@ class Controller:
         webserver = True  # TODO: change it
         if webserver:
             logging.info("Starting webserver")
-            server_process = multiprocessing.Process(target=run_webserver, args=(self.logs_dir, ))  # Also, webserver can be started manually
+            server_process = multiprocessing.Process(target=run_webserver)  # Also, webserver can be started manually
             server_process.start()
 
-        while True:
-            time.sleep(1)
+        # while True:
+        #    time.sleep(1)
 
         if self.mender:
             logging.info("[Mender.module] Mender module initialized")
@@ -188,20 +191,21 @@ class Controller:
     def create_topology(self):
         if self.topology == "fully":
             # Create a fully connected network
-            topologymanager = TopologyManager(experiment_name=self.experiment_name, n_nodes=self.n_nodes, b_symmetric=True, undirected_neighbor_num=self.n_nodes - 1)
+            print(self.log_dir)
+            topologymanager = TopologyManager(experiment_name=self.experiment_name, log_dir=self.log_dir, n_nodes=self.n_nodes, b_symmetric=True, undirected_neighbor_num=self.n_nodes - 1)
             topologymanager.generate_topology()
         elif self.topology == "ring":
             # Create a partially connected network (ring-structured network)
-            topologymanager = TopologyManager(experiment_name=self.experiment_name, n_nodes=self.n_nodes, b_symmetric=True)
+            topologymanager = TopologyManager(experiment_name=self.experiment_name, log_dir=self.log_dir, n_nodes=self.n_nodes, b_symmetric=True)
             topologymanager.generate_ring_topology(increase_convergence=True)
         elif self.topology == "random":
             # Create network topology using topology manager (random)
-            topologymanager = TopologyManager(experiment_name=self.experiment_name, n_nodes=self.n_nodes, b_symmetric=True,
+            topologymanager = TopologyManager(experiment_name=self.experiment_name, log_dir=self.log_dir, n_nodes=self.n_nodes, b_symmetric=True,
                                               undirected_neighbor_num=3)
             topologymanager.generate_topology()
         elif self.topology == "star" and self.federation == "CFL":
             # Create a centralized network
-            topologymanager = TopologyManager(experiment_name=self.experiment_name, n_nodes=self.n_nodes, b_symmetric=True)
+            topologymanager = TopologyManager(experiment_name=self.experiment_name, log_dir=self.log_dir, n_nodes=self.n_nodes, b_symmetric=True)
             topologymanager.generate_server_topology()
         else:
             raise ValueError("Unknown topology type: {}".format(self.topology))
@@ -225,8 +229,9 @@ class Controller:
         python_path = '/Users/enrique/miniforge3/envs/phd/bin/python'
 
         for idx in range(0, self.n_nodes):
+            logging.info("Starting node {} with configuration {}".format(idx, self.config.participants[idx]))
             command = 'cd /Users/enrique/Documents/PhD/fedstellar/fedstellar' + '; ' + python_path + ' -u node_start.py ' \
-                      + str(idx) + ' 2>&1'
+                      + str(self.config.participants_path[idx]) + ' 2>&1'
             if sys.platform == "darwin":
                 os.system("""osascript -e 'tell application "Terminal" to activate' -e 'tell application "Terminal" to do script "{}"'""".format(command))
             else:
