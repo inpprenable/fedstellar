@@ -78,15 +78,16 @@ class TopologyManager:
         nx.draw_networkx_labels(g, pos, labels, font_size=10, font_weight='bold')
         nx.draw_networkx_edges(g, pos, width=2)
         # plt.margins(0.0)
-        if Role.AGGREGATOR in self.nodes[:][2]:
+        roles = [str(i[2]) for i in self.nodes]
+        if Role.AGGREGATOR in roles:
             plt.scatter([], [], c="orange", label='Aggregator')
-        if Role.SERVER in self.nodes[:][2]:
+        if Role.SERVER in roles:
             plt.scatter([], [], c="green", label='Server')
-        if Role.TRAINER in self.nodes[:][2]:
+        if Role.TRAINER in roles:
             plt.scatter([], [], c="#6182bd", label='Trainer')
-        if Role.PROXY in self.nodes[:][2]:
+        if Role.PROXY in roles:
             plt.scatter([], [], c="purple", label='Proxy')
-        if Role.IDLE in self.nodes[:][2]:
+        if Role.IDLE in roles:
             plt.scatter([], [], c="red", label='Idle')
         # plt.scatter([], [], c="green", label='Central Server')
         # plt.scatter([], [], c="orange", label='Aggregator')
@@ -100,17 +101,10 @@ class TopologyManager:
         #        os.makedirs(f"{sys.path[0]}/logs/{self.experiment_name}")
         #    plt.savefig(f"{sys.path[0]}/logs/{self.experiment_name}/topology.png", dpi=100, bbox_inches="tight", pad_inches=0)
         # else:
-        plt.savefig(f"{self.log_dir}/{self.experiment_name}/topology.png", dpi=100, bbox_inches="tight", pad_inches=0)
+        plt.savefig(f"{path}", dpi=100, bbox_inches="tight", pad_inches=0)
         # plt.gcf().canvas.draw()
         if plot:
             plt.show()
-
-    def get_topology_image_path(self):
-        image_path = f"{self.log_dir}/topology.png"
-        if os.path.exists(image_path):
-            return image_path
-        else:
-            return None
 
     def generate_topology(self):
         if self.b_fully_connected:
@@ -156,6 +150,8 @@ class TopologyManager:
         self.nodes = nodes
 
     def update_nodes(self, config_participants):
+        print("Updating nodes")
+        print(config_participants)
         nodes = []
         for i, node in enumerate(config_participants):
             nodes.append((node["network_args"]["ip"], node["network_args"]["port"], node["device_args"]["role"], node["network_args"]["ipdemo"]))
@@ -321,14 +317,15 @@ class TopologyManager:
         # Then, we fill the matrix with the neighbours
         for node in participants:
             for neighbour in node['network_args']['neighbors'].split(" "):
-                json_data["links"].append(
-                    {
-                        "source": node['network_args']['ip'] + ":" + str(node['network_args']['port']),
-                        "target": neighbour,
-                        "value": 1,  # TODO: improve this
-                    }
-                )
-                # matrix[nodes.index(node['network_args']['ip'] + ':' + str(node['network_args']['port']))][nodes.index(neighbour)] = 1
+                if neighbour != '':
+                    json_data["links"].append(
+                        {
+                            "source": node['network_args']['ip'] + ":" + str(node['network_args']['port']),
+                            "target": neighbour,
+                            "value": 1,  # TODO: improve this
+                        }
+                    )
+                    # matrix[nodes.index(node['network_args']['ip'] + ':' + str(node['network_args']['port']))][nodes.index(neighbour)] = 1
 
         with open(path, "w") as f:
             json.dump(json_data, f, sort_keys=False, indent=2)

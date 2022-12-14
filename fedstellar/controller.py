@@ -1,4 +1,3 @@
-import argparse
 import glob
 import hashlib
 import json
@@ -12,10 +11,9 @@ from datetime import datetime
 
 from dotenv import load_dotenv
 
-import fedstellar
 from fedstellar.config.config import Config
-from fedstellar.utils.topologymanager import TopologyManager
 from fedstellar.config.mender import Mender
+from fedstellar.utils.topologymanager import TopologyManager
 from fedstellar.webserver.app import run_webserver
 
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
@@ -111,7 +109,7 @@ class Controller:
 
         # Add role to the topology (visualization purposes)
         self.topologymanager.update_nodes(self.config.participants)
-        self.topologymanager.draw_graph(plot=True)
+        self.topologymanager.draw_graph(path=f"{self.log_dir}/{self.experiment_name}/topology.png", plot=True)
 
         topology_json_path = "{}/topology.json".format(self.config_dir)
         self.topologymanager.update_topology_3d_json(participants=self.config.participants, path=topology_json_path)

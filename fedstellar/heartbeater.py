@@ -56,7 +56,8 @@ class Heartbeater(threading.Thread, Observable):
             #   - If the model is sending, a beat is not necessary
             #   - If the connection its down timeouts will destroy connections
             self.notify(Events.SEND_BEAT_EVENT, None)
-            self.get_nodes()  # TODO: testing
+            self.get_nodes(print=True)  # TODO: testing
+            self.update_config_with_neighbors()
             self.__count += 1
             # Send role notify each 10 beats
             if self.__count % 2 == 0:
@@ -108,24 +109,35 @@ class Heartbeater(threading.Thread, Observable):
         if node != self.__node_name:
             self.__nodes_role[node] = role
 
-    def get_nodes(self):
+    def get_nodes(self, print=False):
         """
-        Get the list of actual neighbors.
+        Print the list of actual neighbors.
 
         Returns:
-            list: List of neighbors.
+
         """
         node_list = list(self.__nodes.keys())
         if self.__node_name not in node_list:
             node_list.append(self.__node_name)
+        if print:
+            logging.info("[HEARTBEATER] Nodes heartbeater: {}".format(node_list))  # All nodes in the network
+            logging.info("[HEARTBEATER] Nodes role: {}".format(self.__nodes_role))  # All nodes in the network
+            logging.info("[HEARTBEATER] Nodes reference basenode: {}".format(self.__neighbors))  # NodeConnections only with the neighbors
 
-        logging.info("[HEARTBEATER] Nodes heartbeater: {}".format(node_list))
-        logging.info("[HEARTBEATER] Nodes role: {}".format(self.__nodes_role))
-        logging.info("[HEARTBEATER] Nodes reference basenode: {}".format(self.__neighbors))
         return node_list
-
     def stop(self):
         """
         Stop the heartbeater.
         """
         self.__terminate_flag.set()
+
+    def update_config_with_neighbors(self):
+        """
+        Update the config with the actual neighbors.
+        """
+        neigbors = ''
+        for node in self.__neighbors:
+            neigbors += node.get_addr()[0] + ":" + str(node.get_addr()[1])
+            if node != self.__neighbors[-1]:
+                neigbors += " "
+        self.config.participant["network_args"]['neighbors'] = neigbors
