@@ -81,7 +81,7 @@ class Controller:
         logging.info("Number of nodes: {}".format(self.n_nodes))
 
         # self.topologymanager = self.create_topology()
-        self.topologymanager = self.create_topology(matrix=[[0, 1, 0], [1, 0, 1], [0, 1, 0]])
+        self.topologymanager = self.create_topology(matrix=[[0, 0, 0], [0, 0, 0], [0, 0, 0]])
 
         # Update participants configuration
         is_start_node = False
