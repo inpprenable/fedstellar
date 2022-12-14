@@ -53,7 +53,7 @@
     "enable_tracking": true,
     "log_dir": "/Users/enrique/Documents/PhD/fedstellar/app/logs",
     "config_dir": "/Users/enrique/Documents/PhD/fedstellar/app/config",
-    "enable_wandb": false,
+    "enable_wandb": true,
     "wandb_key": [
       "your wandb key"
     ],
