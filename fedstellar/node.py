@@ -14,7 +14,7 @@ import random
 import threading
 import time
 
-from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.loggers import WandbLogger, CSVLogger
 
 from fedstellar.base_node import BaseNode
 from fedstellar.communication_protocol import CommunicationProtocol
@@ -87,17 +87,20 @@ class Node(BaseNode):
         # Learner and learner logger
         # log_model="all" to log model
         # mode="disabled" to disable wandb
-        logging.getLogger("wandb").setLevel(logging.ERROR)
-        if self.hostdemo:
-            wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=self.get_name_demo(), mode="disabled")
+        if self.config.participant['tracking_args']['enable_tracking']:
+            logging.getLogger("wandb").setLevel(logging.ERROR)
+            if self.hostdemo:
+                wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=self.get_name_demo(), mode="disabled")
+            else:
+                wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=self.get_name(), mode="disabled")
+            wandblogger.watch(model, log="all")
+            if self.idx == 0:
+                import wandb
+                img_topology = wandb.Image(f"{self.log_dir}/topology.png", caption="Topology")
+                wandblogger.log_image(key="topology", images=[img_topology])
+            self.learner = learner(model, data, logger=wandblogger)
         else:
-            wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=self.get_name(), mode="disabled")
-        wandblogger.watch(model, log="all")
-        if self.idx == 0:
-            import wandb
-            img_topology = wandb.Image(f"{self.log_dir}/topology.png", caption="Topology")
-            wandblogger.log_image(key="topology", images=[img_topology])
-        self.learner = learner(model, data, logger=wandblogger)
+            self.learner = learner(model, data, logger=CSVLogger(f"{self.log_dir}/{self.experiment_name}", name=self.get_name_demo()))
 
         logging.info("[NODE] Role: " + str(self.config.participant["device_args"]["role"]))
 
