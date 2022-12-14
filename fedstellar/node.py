@@ -87,7 +87,8 @@ class Node(BaseNode):
         # Learner and learner logger
         # log_model="all" to log model
         # mode="disabled" to disable wandb
-        if self.config.participant['tracking_args']['enable_tracking']:
+        if self.config.participant['tracking_args']['enable_remote_tracking']:
+            logging.info("[NODE] Tracking W&B enabled")
             logging.getLogger("wandb").setLevel(logging.ERROR)
             if self.hostdemo:
                 wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=self.get_name_demo(), mode="disabled")
@@ -100,7 +101,8 @@ class Node(BaseNode):
                 wandblogger.log_image(key="topology", images=[img_topology])
             self.learner = learner(model, data, logger=wandblogger)
         else:
-            self.learner = learner(model, data, logger=CSVLogger(f"{self.log_dir}/{self.experiment_name}", name=self.get_name_demo()))
+            logging.info("[NODE] Tracking CSV enabled")
+            self.learner = learner(model, data, logger=CSVLogger(f"{self.log_dir}", name=self.get_name_demo()))
 
         logging.info("[NODE] Role: " + str(self.config.participant["device_args"]["role"]))
 
@@ -411,7 +413,7 @@ class Node(BaseNode):
         # is_train_set = self.get_name() in self.__train_set
         is_train_set = True
         if is_train_set and (self.config.participant["device_args"]["role"] == Role.AGGREGATOR or self.config.participant["device_args"]["role"] == Role.SERVER):
-
+            logging.info("[NODE.__train_step] Role.AGGREGATOR/Role.SERVER process...")
             # Full connect train set
             if self.round is not None:
                 self.__connect_and_set_aggregator()
