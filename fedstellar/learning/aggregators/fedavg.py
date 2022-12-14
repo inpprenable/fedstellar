@@ -17,10 +17,10 @@ class FedAvg(Aggregator):
     Paper: https://arxiv.org/abs/1602.05629
     """
 
-    def __init__(self, node_name="unknown", config=None, role="aggregator"):
-        super().__init__(node_name, config, role)
+    def __init__(self, node_name="unknown", config=None):
+        super().__init__(node_name, config)
         self.config = config
-        self.role = role
+        self.role = self.config.participant["device_args"]["role"]
         logging.info("[FedAvg] My config is {}".format(self.config))
 
     def aggregate(self, models):

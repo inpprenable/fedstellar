@@ -6,6 +6,7 @@ import json
 import logging
 import math
 import os
+from datetime import datetime, timedelta
 
 os.environ['WANDB_SILENT'] = 'true'
 
@@ -101,10 +102,14 @@ class Node(BaseNode):
         logging.info("[NODE] Role: " + str(self.config.participant["device_args"]["role"]))
 
         # Aggregator
-        self.aggregator = FedAvg(node_name=self.get_name(), config=self.config, role=self.config.participant["device_args"]["role"])
+        self.aggregator = FedAvg(node_name=self.get_name(), config=self.config)
         self.aggregator.add_observer(self)
 
         self.shared_metrics = False
+
+        # Store the parameters of the model
+        self.__stored_model_parameters = []
+        self.__timeout = datetime.now()
 
         # Train Set Votes
         self.__train_set = []
@@ -471,6 +476,31 @@ class Node(BaseNode):
 
                 self.aggregator.set_waiting_aggregated_model()
 
+        elif self.config.participant["device_args"]["role"] == Role.PROXY:
+            # If the node is a proxy, it stores the parameters received from the neighbors.
+            # When the node reaches a timeout or the number of parameters received is equal to a specific number, it will send the parameters to all the neighbors.
+            logging.info("[NODE.__train_step] Role.PROXY process...")
+
+            # Aggregate Model
+            if self.round is not None:
+                # self.aggregator.add_model(
+                #    self.learner.get_parameters(),
+                #    [self.get_name()],
+                #    self.learner.get_num_samples()[0],
+                # )
+
+                self.broadcast(
+                    CommunicationProtocol.build_models_aggregated_msg([self.get_name()])
+                )
+                # Timeout to send the parameters to the neighbors?
+                if datetime.now() > self.__timeout:
+                    logging.info("[NODE.__train_step (PROXY)] Timeout reached. Sending parameters to neighbors...")
+                    self.__gossip_model_aggregation()
+                    self.__timeout = datetime.now() + timedelta(seconds=10)
+                # The proxy node sets the waiting aggregated model flag to True
+                # In this case, the proxy waits for params and add them to the local storage
+                self.aggregator.set_waiting_aggregated_model()
+
         elif self.config.participant["device_args"]["role"] == Role.IDLE:
             # Role.IDLE functionality
 
@@ -479,9 +509,6 @@ class Node(BaseNode):
             # __waiting_aggregated_model = True
             # Then, when the node receives a PARAMS_RECEIVED_EVENT, it will run add_model, and it set parameters to the model
             self.aggregator.set_waiting_aggregated_model()
-
-        elif self.config.participant["device_args"]["role"] == Role.PROXY:
-            return
 
         else:
             logging.warning("[NODE.__train_step] Role not implemented yet")
@@ -930,6 +957,22 @@ class Node(BaseNode):
         elif event == Events.REPORT_STATUS_TO_CONTROLLER_EVENT:
             self.__report_status_to_controller()
 
+        elif event == Events.STORE_MODEL_PARAMETERS_EVENT:
+            if obj is not None:
+                logging.info("[NODE.update] Store the model parameters received")
+                self.__store_model_parameters(obj)
+                # Share that aggregation is done
+                self.broadcast(CommunicationProtocol.build_models_ready_msg(self.round))
+            else:
+                logging.error(
+                    "[NODE] Error storing the model parameters"
+                )
+                self.stop()
+            try:
+                self.__finish_aggregation_lock.release()
+            except threading.ThreadError:
+                pass
+
         # Execute BaseNode update
         super().update(event, obj)
 
@@ -961,4 +1004,24 @@ class Node(BaseNode):
         else:
             # Print the response
             logging.debug("[NODE.__report_status_to_controller] Response from controller: {}".format(response.status_code))
+
+    def __store_model_parameters(self, obj):
+        """
+        Store the model parameters in the node.
+
+        Args:
+            obj: Model parameters.
+
+        Returns:
+
+        """
+        # TODO: FIX THIS
+        # (
+        #     decoded_model,
+        #     contributors,
+        #    weight,
+        # ) = self.learner.decode_parameters(obj)
+        # if self.learner.check_parameters(decoded_model):
+        self.__stored_model_parameters += obj
+        logging.info("[NODE.__store_model_parameters (PROXY)] Stored model parameters: {}".format(len(self.__stored_model_parameters)))
 

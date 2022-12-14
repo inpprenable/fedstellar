@@ -82,13 +82,15 @@ class Controller:
         self.n_nodes = len(participant_files)
         logging.info("Number of nodes: {}".format(self.n_nodes))
 
-        self.topologymanager = self.create_topology()
+        # self.topologymanager = self.create_topology()
+        self.topologymanager = self.create_topology(matrix=[[0, 1, 0], [1, 0, 1], [0, 1, 0]])
 
         # Update participants configuration
         is_start_node = False
         for i in range(self.n_nodes):
             with open(f'{self.config_dir}/participant_' + str(i) + '.json') as f:
                 participant_config = json.load(f)
+            participant_config['scenario_args']["federation"] = self.federation
             participant_config['scenario_args']['n_nodes'] = self.n_nodes
             participant_config['network_args']['neighbors'] = self.topologymanager.get_neighbors_string(i)
             participant_config['scenario_args']['name'] = self.experiment_name
@@ -188,10 +190,12 @@ class Controller:
         command = '''kill -9 $(lsof -i @localhost:1024-65545 | grep ''' + term + ''' | awk '{print $2}') > /dev/null 2>&1'''
         os.system(command)
 
-    def create_topology(self):
-        if self.topology == "fully":
+    def create_topology(self, matrix=None):
+        import numpy as np
+        if matrix is not None:
+            topologymanager = TopologyManager(topology=np.array(matrix), experiment_name=self.experiment_name, log_dir=self.log_dir, n_nodes=self.n_nodes, b_symmetric=True, undirected_neighbor_num=self.n_nodes - 1)
+        elif self.topology == "fully":
             # Create a fully connected network
-            print(self.log_dir)
             topologymanager = TopologyManager(experiment_name=self.experiment_name, log_dir=self.log_dir, n_nodes=self.n_nodes, b_symmetric=True, undirected_neighbor_num=self.n_nodes - 1)
             topologymanager.generate_topology()
         elif self.topology == "ring":

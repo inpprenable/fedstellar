@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 
+from fedstellar.role import Role
+
 
 class TopologyManager:
     def __init__(
@@ -56,13 +58,17 @@ class TopologyManager:
         color_map = []
         server = False
         for k in range(self.n_nodes):
-            if str(self.nodes[k][2]) == "aggregator":
+            if str(self.nodes[k][2]) == Role.AGGREGATOR:
                 color_map.append("orange")
-            elif str(self.nodes[k][2]) == "server":
+            elif str(self.nodes[k][2]) == Role.SERVER:
                 server = True
                 color_map.append("green")
-            else:
+            elif str(self.nodes[k][2]) == Role.TRAINER:
                 color_map.append("#6182bd")
+            elif str(self.nodes[k][2]) == Role.PROXY:
+                color_map.append("purple")
+            else:
+                color_map.append("red")
             if self.nodes[k][3] is not None and self.nodes[k][3] != "127.0.0.1":
                 labels[k] = f"P{k}\n" + str(self.nodes[k][3]) + ":" + str(self.nodes[k][1])
             else:
@@ -72,11 +78,21 @@ class TopologyManager:
         nx.draw_networkx_labels(g, pos, labels, font_size=10, font_weight='bold')
         nx.draw_networkx_edges(g, pos, width=2)
         # plt.margins(0.0)
-        if server:
-            plt.scatter([], [], c="green", label='Central Server')
-        else:
+        if Role.AGGREGATOR in self.nodes[:][2]:
             plt.scatter([], [], c="orange", label='Aggregator')
-        plt.scatter([], [], c="#6182bd", label='Trainer')
+        if Role.SERVER in self.nodes[:][2]:
+            plt.scatter([], [], c="green", label='Server')
+        if Role.TRAINER in self.nodes[:][2]:
+            plt.scatter([], [], c="#6182bd", label='Trainer')
+        if Role.PROXY in self.nodes[:][2]:
+            plt.scatter([], [], c="purple", label='Proxy')
+        if Role.IDLE in self.nodes[:][2]:
+            plt.scatter([], [], c="red", label='Idle')
+        # plt.scatter([], [], c="green", label='Central Server')
+        # plt.scatter([], [], c="orange", label='Aggregator')
+        # plt.scatter([], [], c="#6182bd", label='Trainer')
+        # plt.scatter([], [], c="purple", label='Proxy')
+        # plt.scatter([], [], c="red", label='Idle')
         plt.legend()
         # import sys
         # if path is None:

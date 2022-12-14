@@ -84,6 +84,10 @@ class Events:
     """
     Used to notify node status to controller.
     """
+    STORE_MODEL_PARAMETERS_EVENT = "STORE_MODEL_PARAMETERS_EVENT"
+    """
+    Used to notify that the model parameters must be stored.
+    """
 
 ##################################
 #    Generic Observable class    #

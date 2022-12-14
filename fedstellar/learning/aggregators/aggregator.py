@@ -7,6 +7,7 @@
 import logging
 import threading
 
+from fedstellar.role import Role
 from fedstellar.utils.observer import Events, Observable
 
 
@@ -19,10 +20,10 @@ class Aggregator(threading.Thread, Observable):
         node_name: (str): String with the name of the node.
     """
 
-    def __init__(self, node_name="unknown", config=None, role="aggregator"):
+    def __init__(self, node_name="unknown", config=None):
         self.node_name = node_name
         self.config = config
-        self.role = role
+        self.role = self.config.participant["device_args"]["role"]
         logging.info("[Aggregator] My config is {}".format(self.config))
         threading.Thread.__init__(self, name="aggregator-" + node_name)
         self.daemon = True
@@ -30,6 +31,7 @@ class Aggregator(threading.Thread, Observable):
         self.__train_set = []
         self.__waiting_aggregated_model = False
         self.__aggregated_waited_model = False
+        self.__stored_models = [] if self.role == Role.PROXY else None
         self.__models = {}
         self.__lock = threading.Lock()
         self.__aggregation_lock = threading.Lock()
@@ -104,8 +106,10 @@ class Aggregator(threading.Thread, Observable):
             weight: Number of samples used to get the model.
         """
         logging.info("[Aggregator.add_model] Entry point")
-        if self.__waiting_aggregated_model and not self.__aggregated_waited_model:
-            logging.info("[Aggregator] Received an aggregated model from {}".format(nodes))
+        if self.__waiting_aggregated_model and self.__stored_models is not None:
+            self.notify(Events.STORE_MODEL_PARAMETERS_EVENT, model)
+        elif self.__waiting_aggregated_model and not self.__aggregated_waited_model:
+            logging.info("[Aggregator (TRAINER)] Received an aggregated model from {}".format(nodes))
             self.__aggregated_waited_model = True
             self.notify(Events.AGGREGATION_FINISHED_EVENT, model)
         else:
@@ -223,6 +227,6 @@ class Aggregator(threading.Thread, Observable):
         Clear all for a new aggregation.
         """
         observers = self.get_observers()
-        self.__init__(node_name=self.node_name, config=self.config, role=self.role)
+        self.__init__(node_name=self.node_name, config=self.config)
         for o in observers:
             self.add_observer(o)
