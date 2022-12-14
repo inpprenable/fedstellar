@@ -109,3 +109,7 @@ websockets==10.4
 wrapt==1.14.1
 yarl==1.8.1
 netifaces==0.11.0
+pyyaml==6.0
+setuptools==65.5.1
+flask==2.2.2
+werkzeug==2.2.2
