@@ -54,6 +54,7 @@ class Controller:
         self.config_dir = args.config
         self.log_dir = args.logs
         self.env_path = args.env
+        self.python_path = args.python
 
         self.config = None
         self.topologymanager = None
@@ -228,13 +229,11 @@ class Controller:
         return topologymanager
 
     def start_nodes(self):
-        # Change python path to the current environment (controller and participants)
-        python_path = '/Users/enrique/miniforge3/envs/phd/bin/python'
-
+        # Start the nodes
+        # Get directory path of the current file
         for idx in range(0, self.n_nodes):
             logging.info("Starting node {} with configuration {}".format(idx, self.config.participants[idx]))
-            command = 'cd /Users/enrique/Documents/PhD/fedstellar/fedstellar' + '; ' + python_path + ' -u node_start.py ' \
-                      + str(self.config.participants_path[idx]) + ' 2>&1'
+            command = f'cd {os.path.dirname(os.path.realpath(__file__))}; {self.python_path} -u node_start.py {str(self.config.participants_path[idx])} 2>&1'
             if sys.platform == "darwin":
                 os.system("""osascript -e 'tell application "Terminal" to activate' -e 'tell application "Terminal" to do script "{}"'""".format(command))
             else:
