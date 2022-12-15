@@ -1,6 +1,6 @@
 {
   "scenario_args": {
-    "name": "fedstellar_DFL_14_12_2022_14_49_52",
+    "name": "fedstellar_DFL_15_12_2022_12_59_34",
     "federation": "DFL",
     "simulation": true,
     "controller": "127.0.0.1:5000",
@@ -50,10 +50,9 @@
     "frequency_of_the_test": 5
   },
   "tracking_args": {
-    "enable_tracking": true,
+    "enable_remote_tracking": false,
     "log_dir": "/Users/enrique/Documents/PhD/fedstellar/app/logs",
     "config_dir": "/Users/enrique/Documents/PhD/fedstellar/app/config",
-    "enable_wandb": true,
     "wandb_key": [
       "your wandb key"
     ],

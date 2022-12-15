@@ -36,5 +36,4 @@ args = argparser.parse_args()
 Code for deploying the controller 
 '''
 if __name__ == '__main__':
-    # Change python path to the current environment (controller and participants)
     Controller(args).start()
