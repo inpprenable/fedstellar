@@ -56,7 +56,7 @@ class Heartbeater(threading.Thread, Observable):
             #   - If the model is sending, a beat is not necessary
             #   - If the connection its down timeouts will destroy connections
             self.notify(Events.SEND_BEAT_EVENT, None)
-            self.get_nodes(print=True)  # TODO: testing
+            # self.get_nodes(print=True)
             self.update_config_with_neighbors()
             self.__count += 1
             # Send role notify each 10 beats

@@ -86,7 +86,7 @@ class Controller:
         self.topologymanager = self.create_topology(matrix=[[0, 1, 0], [1, 0, 1], [0, 1, 0]])
 
         # Update participants configuration
-        is_start_node = False
+        is_start_node, idx_start_node = False, 0
         for i in range(self.n_nodes):
             with open(f'{self.config_dir}/participant_' + str(i) + '.json') as f:
                 participant_config = json.load(f)
@@ -101,6 +101,7 @@ class Controller:
             if participant_config["device_args"]["start"]:
                 if not is_start_node:
                     is_start_node = True
+                    idx_start_node = i
                 else:
                     raise ValueError("Only one node can be start node")
             with open('config/participant_' + str(i) + '.json', 'w') as f:
@@ -145,7 +146,7 @@ class Controller:
                 logging.info("[Mender.module] \tSending configuration...")
                 time.sleep(5)
 
-        self.start_nodes()
+        self.start_nodes(idx_start_node)
 
         logging.info('Press Ctrl+C for exit')
         while True:
@@ -215,7 +216,7 @@ class Controller:
             raise ValueError("Unknown topology type: {}".format(self.topology))
 
         # topology = topologymanager.get_topology()
-        # logging.info(topology)
+        # logging.debug(topology)
 
         # Also, it is possible to use a custom topology using adjacency matrix
         # topologymanager = TopologyManager(experiment_name=experiment_name, n_nodes=n_nodes, topology=[[0, 1, 1, 1], [1, 0, 1, 1]. [1, 1, 0, 1], [1, 1, 1, 0]])
@@ -228,13 +229,24 @@ class Controller:
         topologymanager.add_nodes(nodes_ip_port)
         return topologymanager
 
-    def start_nodes(self):
+    def run_node(self, idx):
+        command = f'cd {os.path.dirname(os.path.realpath(__file__))}; {self.python_path} -u node_start.py {str(self.config.participants_path[idx])} 2>&1'
+        if sys.platform == "darwin":
+            os.system("""osascript -e 'tell application "Terminal" to activate' -e 'tell application "Terminal" to do script "{}"'""".format(command))
+        else:
+            os.system(command)
+
+    def start_nodes(self, idx_start_node):
         # Start the nodes
         # Get directory path of the current file
+        # TODO: Change 0 to 1 for debug purposes
         for idx in range(0, self.n_nodes):
+            if idx == idx_start_node:
+                continue
             logging.info("Starting node {} with configuration {}".format(idx, self.config.participants[idx]))
-            command = f'cd {os.path.dirname(os.path.realpath(__file__))}; {self.python_path} -u node_start.py {str(self.config.participants_path[idx])} 2>&1'
-            if sys.platform == "darwin":
-                os.system("""osascript -e 'tell application "Terminal" to activate' -e 'tell application "Terminal" to do script "{}"'""".format(command))
-            else:
-                os.system(command)
+            self.run_node(idx)
+
+        time.sleep(2)
+        # Start the node with start flag
+        logging.info("Starting node {} with configuration {}".format(idx_start_node, self.config.participants[idx_start_node]))
+        self.run_node(idx_start_node)

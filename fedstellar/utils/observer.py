@@ -89,6 +89,7 @@ class Events:
     Used to notify that the model parameters must be stored.
     """
 
+
 ##################################
 #    Generic Observable class    #
 ##################################
@@ -130,9 +131,9 @@ class Observable:
             obj: The object to pass to the observer. For each event, the object is different (check it at the ``Event`` class).
         """
         if len(str(obj)) > 300:
-            logging.info("[OBSERVABLE.notify] Observable: {} | Notifying event: ".format(self) + str(event) + " | Transmitted Obj: " + "Too long [...]" + " --> to observers: " + str(self.__observers))
+            logging.debug("[OBSERVABLE.notify] Observable: {} | Notifying event: ".format(self) + str(event) + " | Transmitted Obj: " + "Too long [...]" + " --> to observers: " + str(self.__observers))
         else:
-            logging.info("[OBSERVABLE.notify] Observable: {} | Notifying event: ".format(self) + str(event) + " | Transmitted Obj: " + str(obj) + " --> to observers: " + str(self.__observers))
+            logging.debug("[OBSERVABLE.notify] Observable: {} | Notifying event: ".format(self) + str(event) + " | Transmitted Obj: " + str(obj) + " --> to observers: " + str(self.__observers))
         [o.update(event, obj) for o in self.__observers]
 
 

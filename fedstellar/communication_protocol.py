@@ -543,7 +543,7 @@ class CommunicationProtocol:
         Returns:
             An encoded beat message.
         """
-        logging.info("[COMM_PROTOCOL.build_beat_msg] Sending beat message: {}".format(CommunicationProtocol.BEAT + " " + node))
+        logging.debug("[COMM_PROTOCOL.build_beat_msg] Sending beat message: {}".format(CommunicationProtocol.BEAT + " " + node))
         return CommunicationProtocol.generate_hased_message(
             CommunicationProtocol.BEAT + " " + node
         )
@@ -556,7 +556,7 @@ class CommunicationProtocol:
         Returns:
             An encoded role message.
         """
-        logging.info("[COMM_PROTOCOL.build_role_msg] Sending role message: {}".format(CommunicationProtocol.ROLE + " " + node + " " + role))
+        logging.debug("[COMM_PROTOCOL.build_role_msg] Sending role message: {}".format(CommunicationProtocol.ROLE + " " + node + " " + role))
         return CommunicationProtocol.generate_hased_message(
             CommunicationProtocol.ROLE + " " + node + " " + role
         )

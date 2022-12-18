@@ -66,7 +66,7 @@ class Gossiper(threading.Thread, Observable):
             # Send to all the nodes except the ones that the message was already sent to
             if len(self.__msgs) > 0:
                 msg_list = list(self.__msgs.items()).copy()
-                logging.info("[GOSSIPER] Message list: {}".format(msg_list))
+                logging.debug("[GOSSIPER] Message list: {}".format(msg_list))
                 nei = set(self.__neighbors.copy())  # copy to avoid concurrent problems
 
                 for msg, nodes in msg_list:
@@ -74,7 +74,7 @@ class Gossiper(threading.Thread, Observable):
                     sended = len(nei - nodes)
 
                     if messages_left - sended >= 0:
-                        logging.info("[GOSSIPER] Send msg: {} --> to {}".format(msg, list(nodes)))
+                        logging.debug("[GOSSIPER] Send msg: {} --> to {}".format(msg, list(nodes)))
                         self.notify(Events.GOSSIP_BROADCAST_EVENT, (msg, list(nodes)))
                         del self.__msgs[msg]
                         messages_left = messages_left - sended
@@ -83,7 +83,7 @@ class Gossiper(threading.Thread, Observable):
                     else:
                         # Lists to concatenate / Sets to difference
                         excluded = (list(nei - nodes))[: abs(messages_left - sended)]
-                        logging.info("[GOSSIPER] Send msg: {} --> to {} | Excluded: {}".format(msg, list(nodes) + excluded, excluded))
+                        logging.debug("[GOSSIPER] Send msg: {} --> to {} | Excluded: {}".format(msg, list(nodes) + excluded, excluded))
                         self.notify(
                             Events.GOSSIP_BROADCAST_EVENT, (msg, list(nodes) + excluded)
                         )

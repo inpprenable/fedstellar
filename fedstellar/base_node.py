@@ -120,8 +120,8 @@ class BaseNode(threading.Thread, Observer):
     def setup_logging(self, log_dir):
         CYAN = "\x1b[0;36m"
         RESET = "\x1b[0m"
-        log_file_format = f"[%(levelname)s] - %(asctime)s - {self.get_name_demo()} - : %(message)s [in %(pathname)s:%(lineno)d]" if self.hostdemo else f"[%(levelname)s] - %(asctime)s - {self.get_name()} - : %(message)s [in %(pathname)s:%(lineno)d]"
-        log_console_format = f"{CYAN}[%(levelname)s] - %(asctime)s - {self.get_name_demo()} -{RESET} %(message)s" if self.hostdemo else f"{CYAN}[%(levelname)s] - %(asctime)s - {self.get_name()} -{RESET} %(message)s"
+        log_file_format = f"[%(levelname)s] - %(asctime)s - {self.get_name_demo()}\n%(message)s\n[in %(pathname)s:%(lineno)d]\n" if self.hostdemo else f"[%(levelname)s] - %(asctime)s - {self.get_name()}\n%(message)s\n[in %(pathname)s:%(lineno)d]"
+        log_console_format = f"{CYAN}[%(levelname)s] - %(asctime)s - {self.get_name_demo()}{RESET}\n%(message)s" if self.hostdemo else f"{CYAN}[%(levelname)s] - %(asctime)s - {self.get_name()}{RESET}\n%(message)s"
 
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
@@ -464,7 +464,7 @@ class BaseNode(threading.Thread, Observer):
         if thread_safe:
             self.__nei_lock.acquire()
 
-        logging.info("[BASENODE.broadcast] {} --> to: {} | Excluded: {}".format(msg, self.__neighbors, exc))
+        logging.debug("[BASENODE.broadcast] {} --> to: {} | Excluded: {}".format(msg, self.__neighbors, exc))
 
         for n in self.__neighbors:
             if not (n in exc):
@@ -486,22 +486,21 @@ class BaseNode(threading.Thread, Observer):
             obj: Information about the change or event.
         """
         if len(str(obj)) > 300:
-            logging.info("[BASENODE.update (observer)] Event that has occurred: {} | Obj information: Too long [...]".format(event))
+            logging.debug("[BASENODE.update (observer)] Event that has occurred: {} | Obj information: Too long [...]".format(event))
         else:
-            logging.info("[BASENODE.update (observer)] Event that has occurred: {} | Obj information: {}".format(event, obj))
+            logging.debug("[BASENODE.update (observer)] Event that has occurred: {} | Obj information: {}".format(event, obj))
 
         if event == Events.END_CONNECTION_EVENT:
             self.rm_neighbor(obj)
 
         elif event == Events.NODE_CONNECTED_EVENT:
             # Este evento lo notifica NodeConnection. Previamente se ha tenido que conectar con el nodo.
-            logging.info("[BASENODE.update (observer) | Events.NODE_CONNECTED_EVENT] Connecting to: {}".format(obj[0]))
+            logging.debug("[BASENODE.update (observer) | Events.NODE_CONNECTED_EVENT] Connecting to: {}".format(obj[0]))
             n, _ = obj
             n.send(CommunicationProtocol.build_beat_msg(self.get_name()))
 
         elif event == Events.CONN_TO_EVENT:
-            logging.info("[BASENODE.update (observer) | Events.CONN_TO_EVENT] Connecting to: {} {}".format(obj[0], obj[1]))
-            logging.error("[BASENODE.update (observer) | Events.CONN_TO_EVENT] ?????")
+            logging.debug("[BASENODE.update (observer) | Events.CONN_TO_EVENT] Connecting to: {} {}".format(obj[0], obj[1]))
             self.connect_to(obj[0], obj[1], full=False)
 
         elif event == Events.SEND_BEAT_EVENT:
@@ -518,9 +517,9 @@ class BaseNode(threading.Thread, Observer):
                     nc.add_processed_messages(list(msgs.keys()))
             # Gossip the new messages
             if len(str(obj)) > 300:
-                logging.info("[BASENODE.update (observer) | Events.PROCESSED_MESSAGES_EVENT] Add messages to gossiper: Too long [...] | Node: {}".format(node))
+                logging.debug("[BASENODE.update (observer) | Events.PROCESSED_MESSAGES_EVENT] Add messages to gossiper: Too long [...] | Node: {}".format(node))
             else:
-                logging.info("[BASENODE.update (observer) | Events.PROCESSED_MESSAGES_EVENT] Add messages to gossiper: {} | Node: {}".format(list(msgs.values()), node))
+                logging.debug("[BASENODE.update (observer) | Events.PROCESSED_MESSAGES_EVENT] Add messages to gossiper: {} | Node: {}".format(list(msgs.values()), node))
             self.gossiper.add_messages(list(msgs.values()), node)
 
         elif event == Events.BEAT_RECEIVED_EVENT:

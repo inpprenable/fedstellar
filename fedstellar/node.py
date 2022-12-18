@@ -324,12 +324,13 @@ class Node(BaseNode):
                         contributors,
                         weight,
                     ) = self.learner.decode_parameters(m)
-                    logging.info("[NODE.add_model] Model received from {}, now I add the model using self.aggregator.add_model()".format(contributors))
+                    logging.info("[NODE.add_model] Model received from {} --using--> {} in the other node | Now I add the model using self.aggregator.add_model()".format(contributors, '__gossip_model_diffusion' if contributors is None and weight is None else '__gossip_model_aggregation'))
                     if self.learner.check_parameters(decoded_model):
                         models_added = self.aggregator.add_model(
                             decoded_model, contributors, weight
                         )
                         if models_added is not None:
+                            logging.info("[NODE.add_model] self.broadcast with MODELS_AGGREGATED = {}".format(models_added))
                             # TODO: Fix bug at MacBook. When CPU is high, only new nodes will be sent.
                             self.broadcast(
                                 CommunicationProtocol.build_models_aggregated_msg(
@@ -428,6 +429,7 @@ class Node(BaseNode):
 
             # Aggregate Model
             if self.round is not None:
+                logging.info("[NODE.__train_step] self.aggregator.add_model with MY MODEL")
                 # Add my model to aggregator. This will trigger the aggregation
                 # Proceso: recogida de modelos de los vecinos
                 # Objetivo: obtener un modelo agregado
@@ -446,6 +448,7 @@ class Node(BaseNode):
                 # Notifico a los vecinos que tengo un modelo agregado y posteriormente lo envío
                 # Los que reciben el mensaje únicamente añaden a __models_aggregated los nodos agregados
                 #   self.__models_aggregated = list(set(models + self.__models_aggregated))
+                logging.info("[NODE.__train_step] self.broadcast with MODELS_AGGREGATED = MY_NAME")
                 self.broadcast(
                     CommunicationProtocol.build_models_aggregated_msg([self.get_name()])
                 )
@@ -467,12 +470,14 @@ class Node(BaseNode):
 
             # Aggregate Model
             if self.round is not None:
+                logging.info("[NODE.__train_step] self.aggregator.add_model with MY MODEL")
                 self.aggregator.add_model(
                     self.learner.get_parameters(),
                     [self.get_name()],
                     self.learner.get_num_samples()[0],
                 )
 
+                logging.info("[NODE.__train_step] self.broadcast with MODELS_AGGREGATED = MY_NAME")
                 self.broadcast(
                     CommunicationProtocol.build_models_aggregated_msg([self.get_name()])
                 )
@@ -688,11 +693,12 @@ class Node(BaseNode):
     ############################
 
     def __train(self):
-        logging.info("[NODE] Training...")
+        logging.info("[NODE.__train] Start training...")
         self.learner.fit()
+        logging.info("[NODE.__train] Finish training...")
 
     def __evaluate(self):
-        logging.info("[NODE] Evaluating...")
+        logging.info("[NODE.__evaluate] Start evaluation...")
         results = self.learner.evaluate()
         if results is not None:
             logging.info(
@@ -700,6 +706,7 @@ class Node(BaseNode):
                     results[0], results[1]
                 )
             )
+            logging.info("[NODE.__evaluate] Finish evaluation...")
 
             if self.shared_metrics:
                 logging.info(
@@ -772,25 +779,26 @@ class Node(BaseNode):
     #########################
 
     def __gossip_model_aggregation(self):
+        logging.info("[NODE.__gossip_model_aggregation] Gossiping...")
         # Anonymous functions
         candidate_condition = lambda nc: nc.get_name() in self.__train_set and len(nc.get_models_aggregated()) < len(self.__train_set)
         status_function = lambda nc: (nc.get_name(), len(nc.get_models_aggregated()))
         model_function = lambda nc: self.aggregator.get_partial_aggregation(nc.get_models_aggregated())
 
         # Gossip
-        logging.info("[NODE.__gossip_model_aggregation] Gossiping model aggregation...")
         self.__gossip_model(candidate_condition, status_function, model_function)
 
     def __gossip_model_difusion(self, initialization=False):
+        logging.info("[NODE.__gossip_model_difusion] Gossiping...")
         # Send model parameters using gossiping
         # Wait a model (init or aggregated)
         if initialization:
-            logging.info("[NODE.__gossip_model_difusion] Initialization=True")
             self.__wait_init_model_lock.acquire()
+            logging.info("[NODE.__gossip_model_difusion] Initialization=True")
             candidate_condition = lambda nc: not nc.get_model_initialized()
         else:
-            logging.info("[NODE.__gossip_model_difusion] Initialization=False")
             self.__finish_aggregation_lock.acquire()
+            logging.info("[NODE.__gossip_model_difusion] Initialization=False")
             candidate_condition = lambda nc: nc.get_model_ready_status() < self.round
 
         # Anonymous functions
@@ -802,11 +810,10 @@ class Node(BaseNode):
         )  # At diffusion, contributors are not relevant
 
         # Gossip
-        logging.info("[NODE.__gossip_model_difusion] Gossiping model parameters...")
         self.__gossip_model(candidate_condition, status_function, model_function)
 
     def __gossip_model(self, candidate_condition, status_function, model_function):
-        logging.info("[NODE.__gossip_model] Traceback", stack_info=True)
+        logging.debug("[NODE.__gossip_model] Traceback", stack_info=True)
         # Initialize list with status of nodes in the last X iterations
         last_x_status = []
         j = 0
@@ -897,9 +904,9 @@ class Node(BaseNode):
             obj: Object that has been updated.
         """
         if len(str(obj)) > 300:
-            logging.info("[NODE.update (observer)] Event that has occurred: {} | Obj information: Too long [...]".format(event))
+            logging.debug("[NODE.update (observer)] Event that has occurred: {} | Obj information: Too long [...]".format(event))
         else:
-            logging.info("[NODE.update (observer)] Event that has occurred: {} | Obj information: {}".format(event, obj))
+            logging.debug("[NODE.update (observer)] Event that has occurred: {} | Obj information: {}".format(event, obj))
 
         if event == Events.NODE_CONNECTED_EVENT:
             n, force = obj
@@ -932,6 +939,7 @@ class Node(BaseNode):
                 self.stop()
             try:
                 self.__finish_aggregation_lock.release()
+                logging.info("[NODE.__finish_aggregation_lock] __finish_aggregation_lock.release()")
             except threading.ThreadError:
                 pass
 
@@ -975,6 +983,7 @@ class Node(BaseNode):
                 self.stop()
             try:
                 self.__finish_aggregation_lock.release()
+                logging.info("[NODE.__finish_aggregation_lock] __finish_aggregation_lock.release()")
             except threading.ThreadError:
                 pass
 
@@ -1029,4 +1038,3 @@ class Node(BaseNode):
         # if self.learner.check_parameters(decoded_model):
         self.__stored_model_parameters += obj
         logging.info("[NODE.__store_model_parameters (PROXY)] Stored model parameters: {}".format(len(self.__stored_model_parameters)))
-
