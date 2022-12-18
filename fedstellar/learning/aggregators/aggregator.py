@@ -106,11 +106,13 @@ class Aggregator(threading.Thread, Observable):
             weight: Number of samples used to get the model.
         """
         logging.info("[Aggregator.add_model] Entry point")
-        if self.__waiting_aggregated_model and self.__stored_models is not None:
-            self.notify(Events.STORE_MODEL_PARAMETERS_EVENT, model)
-        elif self.__waiting_aggregated_model and not self.__aggregated_waited_model:
+        # if self.__waiting_aggregated_model and self.__stored_models is not None:
+        #    self.notify(Events.STORE_MODEL_PARAMETERS_EVENT, model)
+        if self.__waiting_aggregated_model and not self.__aggregated_waited_model:
             logging.info("[Aggregator (TRAINER)] Received an aggregated model from {}".format(nodes))
             self.__aggregated_waited_model = True
+            # Check if a node aggregator is in the list of nodes
+            # if any([n.startswith("aggregator") for n in nodes.split()]):
             self.notify(Events.AGGREGATION_FINISHED_EVENT, model)
         else:
             if nodes is not None:
@@ -121,6 +123,7 @@ class Aggregator(threading.Thread, Observable):
                     self.start()
 
                 # Get a list of nodes added
+                logging.info("[Aggregator.add_model] self.__models = {}".format(self.__models.keys()))
                 models_added = [n.split() for n in list(self.__models.keys())]
                 models_added = [
                     element for sublist in models_added for element in sublist
@@ -133,7 +136,7 @@ class Aggregator(threading.Thread, Observable):
                 # Agrego
                 if len(self.__train_set) > len(models_added):
                     # Check if all nodes are in the train_set
-                    if all([n in self.__train_set for n in nodes]):
+                    #if all([n in self.__train_set for n in nodes]):
                         # Check if all nodes are not aggregated
                         if all([n not in models_added for n in nodes]):
                             # Aggregate model
@@ -161,13 +164,13 @@ class Aggregator(threading.Thread, Observable):
                             logging.debug(
                                 "[Aggregator] Can't add a model that has already been added {}".format(nodes)
                             )
-                    else:
-                        self.__lock.release()
-                        logging.debug(
-                            "[Aggregator] Can't add a model from a node ({}) that is not in the training test.".format(
-                                nodes
-                            )
-                        )
+                    # else:
+                    #     self.__lock.release()
+                    #     logging.debug(
+                    #         "[Aggregator] Can't add a model from a node ({}) that is not in the training test.".format(
+                    #             nodes
+                    #         )
+                    #     )
                 else:
                     self.__lock.release()
 
