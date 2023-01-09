@@ -12,10 +12,9 @@ from fedstellar.role import Role
 
 class TopologyManager:
     def __init__(
-            self, experiment_name=None, log_dir="logs", n_nodes=5, b_symmetric=True, undirected_neighbor_num=5, topology=None
+            self, experiment_name=None, n_nodes=5, b_symmetric=True, undirected_neighbor_num=5, topology=None
     ):
         self.experiment_name = experiment_name
-        self.log_dir = log_dir
         if topology is None:
             topology = []
         self.n_nodes = n_nodes
@@ -150,8 +149,6 @@ class TopologyManager:
         self.nodes = nodes
 
     def update_nodes(self, config_participants):
-        print("Updating nodes")
-        print(config_participants)
         nodes = []
         for i, node in enumerate(config_participants):
             nodes.append((node["network_args"]["ip"], node["network_args"]["port"], node["device_args"]["role"], node["network_args"]["ipdemo"]))
@@ -298,7 +295,7 @@ class TopologyManager:
             "nodes": [],
             "links": [],
         }
-
+        print(participants)
         for node in participants:
             json_data["nodes"].append(
                 {
@@ -309,9 +306,6 @@ class TopologyManager:
                 }
             )
 
-        nodes = []
-        for node in participants:
-            nodes.append(node['network_args']['ip'] + ':' + str(node['network_args']['port']))
         # Then, we create a matrix of zeros
         # matrix = np.zeros((len(nodes), len(nodes)))
         # Then, we fill the matrix with the neighbours

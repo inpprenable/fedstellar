@@ -79,9 +79,9 @@ class BaseNode(threading.Thread, Observer):
         self.log_dir = os.path.join(config.participant['tracking_args']["log_dir"], self.experiment_name)
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
-        log_filename = f"{self.log_dir}/{self.get_name_demo()}" if self.hostdemo else f"{self.log_dir}/{self.get_name()}"
-        os.makedirs(os.path.dirname(log_filename), exist_ok=True)
-        console_handler, file_handler, file_handler_only_debug, exp_errors_file_handler = self.setup_logging(log_filename)
+        self.log_filename = f"{self.log_dir}/{self.get_name_demo()}" if self.hostdemo else f"{self.log_dir}/{self.get_name()}"
+        os.makedirs(os.path.dirname(self.log_filename), exist_ok=True)
+        console_handler, file_handler, file_handler_only_debug, exp_errors_file_handler = self.setup_logging(self.log_filename)
 
         level = logging.DEBUG if config.participant["scenario_args"]["debug"] else logging.WARNING
         logging.basicConfig(level=level,
@@ -120,7 +120,8 @@ class BaseNode(threading.Thread, Observer):
     def setup_logging(self, log_dir):
         CYAN = "\x1b[0;36m"
         RESET = "\x1b[0m"
-        log_file_format = f"[%(levelname)s] - %(asctime)s - {self.get_name_demo()}\n%(message)s\n[in %(pathname)s:%(lineno)d]\n" if self.hostdemo else f"[%(levelname)s] - %(asctime)s - {self.get_name()}\n%(message)s\n[in %(pathname)s:%(lineno)d]"
+        info_file_format = f"{CYAN}%(asctime)s -{RESET} %(message)s"
+        debug_file_format = f"{CYAN}%(asctime)s -{RESET} %(message)s\n{CYAN}[in %(pathname)s:%(lineno)d]{RESET}"
         log_console_format = f"{CYAN}[%(levelname)s] - %(asctime)s - {self.get_name_demo()}{RESET}\n%(message)s" if self.hostdemo else f"{CYAN}[%(levelname)s] - %(asctime)s - {self.get_name()}{RESET}\n%(message)s"
 
         console_handler = logging.StreamHandler()
@@ -129,18 +130,17 @@ class BaseNode(threading.Thread, Observer):
 
         file_handler = FileHandler('{}.log'.format(log_dir), mode='w')
         file_handler.setLevel(logging.INFO)
-        file_handler.setFormatter(Formatter(log_file_format))
+        file_handler.setFormatter(Formatter(info_file_format))
 
-        file_handler_only_debug = RotatingFileHandler('{}_debug.log'.format(log_dir), maxBytes=500000, backupCount=40, mode='w')
+        file_handler_only_debug = FileHandler('{}_debug.log'.format(log_dir), mode='w')
         file_handler_only_debug.setLevel(logging.DEBUG)
         # Add filter to file_handler_only_debug for only add debug messages
         file_handler_only_debug.addFilter(lambda record: record.levelno == logging.DEBUG)
-        file_handler_only_debug.setFormatter(Formatter(log_file_format))
+        file_handler_only_debug.setFormatter(Formatter(debug_file_format))
 
-        exp_errors_file_handler = RotatingFileHandler('{}_error.log'.format(log_dir), maxBytes=500000,
-                                                      backupCount=5, mode='w')
+        exp_errors_file_handler = FileHandler('{}_error.log'.format(log_dir), mode='w')
         exp_errors_file_handler.setLevel(logging.WARNING)
-        exp_errors_file_handler.setFormatter(Formatter(log_file_format))
+        exp_errors_file_handler.setFormatter(Formatter(debug_file_format))
 
         return console_handler, file_handler, file_handler_only_debug, exp_errors_file_handler
 
@@ -269,7 +269,7 @@ class BaseNode(threading.Thread, Observer):
             self.__nei_lock.release()
 
         except Exception as e:
-            logging.debug(
+            logging.info(
                 "[BASENODE] Connection refused with {}:{}".format(h, p)
             )
             self.__nei_lock.release()

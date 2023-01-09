@@ -12,7 +12,6 @@ from fedstellar.config.config import Config
 
 
 def set_test_settings():
-    # TODO: Adapt
     Config.BLOCK_SIZE = 8192
     Config.NODE_TIMEOUT = 10
     Config.VOTE_TIMEOUT = 10

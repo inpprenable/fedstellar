@@ -71,7 +71,7 @@ def main():
     start_node = config.participant["device_args"]["start"]
 
     if start_node:
-        node.set_start_learning(rounds=10, epochs=5)
+        node.set_start_learning(rounds=3, epochs=5)  # rounds=10, epochs=5
 
 
 if __name__ == "__main__":

@@ -4,29 +4,29 @@
     "federation": "DFL",
     "simulation": true,
     "controller": "127.0.0.1:5000",
+    "n_nodes": 6,
     "random_seed": 0,
-    "n_nodes": 0,
     "config_version": "development",
     "debug": true
   },
   "device_args": {
     "uid": "",
-    "idx": "",
+    "idx": 0,
     "username": "pi",
     "password": "pi",
-    "role": "aggregator",
-    "start": false,
+    "role": "trainer",
+    "start": true,
     "using_gpu": true,
     "gpu_id": 0
   },
   "geo_args": {
-    "latitude": "46.762520",
-    "longitude": "7.600490"
+    "latitude": 46.76252,
+    "longitude": 7.60049
   },
   "network_args": {
-    "ip": "",
-    "ipdemo": "",
-    "port": "",
+    "ip": "127.0.0.1",
+    "ipdemo": "127.0.0.1",
+    "port": 45000,
     "neighbors": "",
     "interface": "eth0",
     "rate": "1Mbps",
@@ -50,10 +50,9 @@
     "frequency_of_the_test": 5
   },
   "tracking_args": {
-    "enable_tracking": true,
-    "log_dir": "logs",
-    "config_dir": "config",
-    "enable_wandb": false,
+    "enable_remote_tracking": false,
+    "log_dir": "/Users/enrique/Documents/PhD/fedstellar/app/logs",
+    "config_dir": "/Users/enrique/Documents/PhD/fedstellar/app/config",
     "wandb_key": [
       "your wandb key"
     ],

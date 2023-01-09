@@ -10,6 +10,13 @@ from datetime import datetime, timedelta
 
 os.environ['WANDB_SILENT'] = 'true'
 
+# Import the requests module
+import requests
+
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("fsspec").setLevel(logging.WARNING)
+
 import random
 import threading
 import time
@@ -127,6 +134,9 @@ class Node(BaseNode):
         self.__finish_aggregation_lock.acquire()
         self.__wait_init_model_lock = threading.Lock()
         self.__wait_init_model_lock.acquire()
+        # Grace period to wait for last transmission using Aggregator thread
+        self.__wait_finish_experiment_lock = threading.Lock()
+        self.__wait_finish_experiment_lock.acquire()
 
     #########################
     #    Node Management    #
@@ -282,6 +292,7 @@ class Node(BaseNode):
             self.learner.set_epochs(epochs)
             self.learner.create_trainer()
             self.__train_step()
+            logging.info("[NODE.__start_learning] Thread __start_learning finished in node {}".format(self.get_name()))
 
     def __stop_learning(self):
         """
@@ -391,25 +402,6 @@ class Node(BaseNode):
             logging.info("[NODE.__train_step] __train_set = {}".format(self.__train_set))
             self.__validate_train_set()
 
-        # Si estoy en el train set:
-        #   1. Me conecto a los vecinos
-        #   2. Evalúo el modelo (la primera vez es con el modelo recién inicializado)
-        #   3. Entreno el modelo
-        #   4. Agrego el modelo
-        #       4.1 aggregator.add_model(
-        #           modelo to add
-        #           nodos que colaboran para obtener el modelo = número de modelos necesarios para agregar
-        #           número de muestras para obtener el modelo
-        #           ) --> es una funcion padre que llama, en este caso, a fedavg
-        #       4.2 self.broadcast(
-        #             CommunicationProtocol.build_models_aggregated_msg([self.get_name()])
-        #           ) --> notifico MODELS_AGGREGATED (con mi nombre como parámetro) a los vecinos que tengo un modelo agregado y posteriormente lo envío
-        #           --> los que reciben el mensaje únicamente añaden a __models_aggregated los nodos agregados
-        #       4.3 __gossip_model_aggregation()
-        #       4.4 __gossip_model_difusion()
-        #       4.5 __on_round_finished()
-
-        # Si es servidor o agregador, siempre va a entrar aquí
         # TODO: Improve in the future
         # is_train_set = self.get_name() in self.__train_set
         is_train_set = True
@@ -430,29 +422,15 @@ class Node(BaseNode):
             # Aggregate Model
             if self.round is not None:
                 logging.info("[NODE.__train_step] self.aggregator.add_model with MY MODEL")
-                # Add my model to aggregator. This will trigger the aggregation
-                # Proceso: recogida de modelos de los vecinos
-                # Objetivo: obtener un modelo agregado
-                # Parámetros de la función:
-                #   - Parámetros del modelo
-                #   - Nodos que colaboran para obtener el modelo (yo)
-                #   - Número de muestras (len(train_dataset)) para obtener el modelo
-
-                # En concreto, añado mi modelo a la lista de modelos agregados
-                # Esto es necesario para poder enviar el modelo local a los vecinos
                 self.aggregator.add_model(
                     self.learner.get_parameters(),
                     [self.get_name()],
                     self.learner.get_num_samples()[0],
                 )
-                # Notifico a los vecinos que tengo un modelo agregado y posteriormente lo envío
-                # Los que reciben el mensaje únicamente añaden a __models_aggregated los nodos agregados
-                #   self.__models_aggregated = list(set(models + self.__models_aggregated))
                 logging.info("[NODE.__train_step] self.broadcast with MODELS_AGGREGATED = MY_NAME")
                 self.broadcast(
                     CommunicationProtocol.build_models_aggregated_msg([self.get_name()])
                 )
-
                 self.__gossip_model_aggregation()
 
         elif self.config.participant["device_args"]["role"] == Role.TRAINER:
@@ -530,108 +508,6 @@ class Node(BaseNode):
         # Finish round
         if self.round is not None:
             self.__on_round_finished()
-
-    ################
-    #    Voting    #
-    ################
-
-    def __vote_train_set(self):
-
-        # Vote
-        candidates = self.get_network_nodes()  # al least himself
-        logging.debug(
-            "[NODE] Candidates to train set: {}".format(candidates)
-        )
-        if self.get_name() not in candidates:
-            candidates.append(self.get_name())
-
-        # Send vote
-        samples = min(self.config.participant["TRAIN_SET_SIZE"], len(candidates))
-        nodes_voted = random.sample(candidates, samples)
-        weights = [
-            math.floor(random.randint(0, 1000) / (i + 1)) for i in range(samples)
-        ]
-        votes = list(zip(nodes_voted, weights))
-        logging.info("[NODE.__vote_train_set] Voting for train set: {}".format(votes))
-
-        # Adding votes
-        self.__train_set_votes_lock.acquire()
-        self.__train_set_votes[self.get_name()] = dict(votes)
-        self.__train_set_votes_lock.release()
-
-        # Send and wait for votes
-        logging.info("[NODE] Sending train set vote.")
-        logging.debug("[NODE] Self Vote: {}".format(votes))
-        self.broadcast(
-            CommunicationProtocol.build_vote_train_set_msg(self.get_name(), votes)
-        )
-        logging.debug("[NODE] Waiting other node votes.")
-
-        # Get time
-        count = 0
-        begin = time.time()
-
-        while True:
-            # If the trainning has been interrupted, stop waiting
-            if self.round is None:
-                logging.info(
-                    "[NODE] Stopping on_round_finished process."
-                )
-                return []
-
-            # Update time counters (timeout)
-            count = count + (time.time() - begin)
-            begin = time.time()
-            timeout = count > self.config.participant["VOTE_TIMEOUT"]
-
-            # Clear non candidate votes
-            self.__train_set_votes_lock.acquire()
-            nc_votes = {
-                k: v for k, v in self.__train_set_votes.items() if k in candidates
-            }
-            self.__train_set_votes_lock.release()
-
-            # Determine if all votes are received
-            votes_ready = set(candidates) == set(nc_votes.keys())
-            if votes_ready or timeout:
-
-                if timeout and not votes_ready:
-                    logging.info(
-                        "[NODE] Timeout for vote aggregation. Missing votes from {}".format(
-                            set(candidates) - set(nc_votes.keys())
-                        )
-                    )
-
-                results = {}
-                for node_vote in list(nc_votes.values()):
-                    for i in range(len(node_vote)):
-                        k = list(node_vote.keys())[i]
-                        v = list(node_vote.values())[i]
-                        if k in results:
-                            results[k] += v
-                        else:
-                            results[k] = v
-
-                # Order by votes and get TOP X
-                results = sorted(
-                    results.items(), key=lambda x: x[0], reverse=True
-                )  # to equal solve of draw
-                results = sorted(results, key=lambda x: x[1], reverse=True)
-                top = min(len(results), self.config.participant["TRAIN_SET_SIZE"])
-                results = results[0:top]
-                results = {k: v for k, v in results}
-                votes = list(results.keys())
-                logging.info("[NODE.__vote_train_set] Final results (train set): {}".format(votes))
-
-                # Clear votes
-                self.__train_set_votes = {}
-                logging.info(
-                    "[NODE] Computed {} votes.".format(len(nc_votes))
-                )
-                return votes
-
-            # Wait for votes or refresh every 2 seconds
-            self.__wait_votes_ready_lock.acquire(timeout=2)
 
     def __validate_train_set(self):
         # Verify if node set is valid (can happend that a node was down when the votes were being processed)
@@ -749,20 +625,22 @@ class Node(BaseNode):
         if self.round < self.totalrounds:
             self.__train_step()
         else:
+            logging.debug("[NODE] FL finished | Models aggregated = {}".format([nc.get_models_aggregated() for nc in self.get_neighbors()]))
             # At end, all nodes compute metrics
             self.__evaluate()
             # Finish
-            self.round = None
-            self.totalrounds = None
-            self.__model_initialized = False
             logging.info(
-                "[NODE] FL experiment finished".format(
+                "[NODE] FL experiment finished | Round: {} | Total rounds: {} | [!] Both to None".format(
                     self.round, self.totalrounds
                 )
             )
+            self.round = None
+            self.totalrounds = None
+            self.__model_initialized = False
+            # logging.info("[NODE] FL experiment finished | __stop_learning()")
+            # self.__stop_learning()  # TODO: 20-12-22 | This is a temporal fix to avoid the node to continue training after the FL experiment is finished
 
     def __transfer_aggregator_role(self, schema):
-        # TODO: Fix
         if schema == "random":
             logging.info("[NODE.__transfer_aggregator_role] Transferring aggregator role using schema {}".format(schema))
             # Random
@@ -936,7 +814,9 @@ class Node(BaseNode):
                 logging.error(
                     "[NODE] Aggregation finished with no parameters"
                 )
-                self.stop()
+                # TODO: Testing 20-12-2022 (remove stop and add broadcast)
+                # self.stop()
+                self.broadcast(CommunicationProtocol.build_models_ready_msg(self.round))
             try:
                 self.__finish_aggregation_lock.release()
                 logging.info("[NODE.__finish_aggregation_lock] __finish_aggregation_lock.release()")
@@ -969,6 +849,7 @@ class Node(BaseNode):
 
         elif event == Events.REPORT_STATUS_TO_CONTROLLER_EVENT:
             self.__report_status_to_controller()
+            self.__report_logs_to_controller()
 
         elif event == Events.STORE_MODEL_PARAMETERS_EVENT:
             if obj is not None:
@@ -998,9 +879,6 @@ class Node(BaseNode):
         Returns:
 
         """
-        # Import the requests module
-        import requests
-
         # Set the URL for the POST request
         url = f'http://{self.config.participant["scenario_args"]["controller"]}/nodes/update/{self.config.participant["device_args"]["uid"]}'
 
@@ -1015,9 +893,30 @@ class Node(BaseNode):
         if response.status_code != 200:
             logging.error(f'Error received from controller: {response.status_code}')
             logging.error(response.text)
-        else:
-            # Print the response
-            logging.debug("[NODE.__report_status_to_controller] Response from controller: {}".format(response.status_code))
+
+    def __report_logs_to_controller(self):
+        """
+        Report node logs to the controller.
+
+        Returns:
+
+        """
+
+        # Set the URL for the POST request
+        url = f'http://{self.config.participant["scenario_args"]["controller"]}/nodes/update/{self.config.participant["device_args"]["uid"]}/logs'
+
+        # Send the POST request if the controller is available
+        try:
+            with open(self.log_filename + ".log", 'r') as f:
+                response = requests.post(url, data=f, headers={'Content-Type': 'text/plain'})
+        except requests.exceptions.ConnectionError:
+            logging.error(f'Error connecting to the controller at {url}')
+            return
+
+        # If endpoint is not available, log the error
+        if response.status_code != 200:
+            logging.error(f'Error received from controller: {response.status_code}')
+            logging.error(response.text)
 
     def __store_model_parameters(self, obj):
         """

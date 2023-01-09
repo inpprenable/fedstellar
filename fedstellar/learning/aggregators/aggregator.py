@@ -24,7 +24,6 @@ class Aggregator(threading.Thread, Observable):
         self.node_name = node_name
         self.config = config
         self.role = self.config.participant["device_args"]["role"]
-        logging.info("[Aggregator] My config is {}".format(self.config))
         threading.Thread.__init__(self, name="aggregator-" + node_name)
         self.daemon = True
         Observable.__init__(self)
@@ -46,6 +45,7 @@ class Aggregator(threading.Thread, Observable):
 
         # Wait for all models to be added or TIMEOUT
         try:
+            logging.info("[Aggregator] __aggregation_lock.acquire() during {} seconds".format(self.config.participant["AGGREGATION_TIMEOUT"]))
             self.__aggregation_lock.acquire(timeout=self.config.participant["AGGREGATION_TIMEOUT"])
         except Exception as e:
             logging.error("[Aggregator] Error waiting for aggregation: {}".format(e))
@@ -64,8 +64,8 @@ class Aggregator(threading.Thread, Observable):
         )
         if n_model_aggregated != len(self.__train_set):
             logging.info(
-                "[Aggregator] Aggregating models, timeout reached. Missing models: {}".format(
-                    set(self.__train_set) - set(self.__models.keys())
+                "[Aggregator] Aggregating models, timeout reached. __models={} | __train_set={} || Missing models: {}".format(
+                    self.__models, self.__train_set, set(self.__train_set) - set(self.__models.keys())
                 )
             )
         else:
@@ -120,6 +120,7 @@ class Aggregator(threading.Thread, Observable):
 
                 # Start aggregation timeout
                 if self.__train_set != [] and not self.__thread_executed:
+                    logging.debug("[Aggregator] Starting aggregation thread (run -> timeout) | __train_set={} | __thread_executed={}".format(self.__train_set, self.__thread_executed))
                     self.start()
 
                 # Get a list of nodes added
@@ -138,39 +139,32 @@ class Aggregator(threading.Thread, Observable):
                     # Check if all nodes are in the train_set
                     #if all([n in self.__train_set for n in nodes]):
                         # Check if all nodes are not aggregated
-                        if all([n not in models_added for n in nodes]):
-                            # Aggregate model
-                            self.__models[" ".join(nodes)] = (model, weight)
-                            logging.info(
-                                "[Aggregator] Model added ({}/{}) from {}".format(
-                                    str(len(models_added) + len(nodes)),
-                                    str(len(self.__train_set)),
-                                    str(nodes),
-                                )
+                    if all([n not in models_added for n in nodes]):
+                        # Aggregate model
+                        self.__models[" ".join(nodes)] = (model, weight)
+                        logging.info(
+                            "[Aggregator] Model added ({}/{}) from {}".format(
+                                str(len(models_added) + len(nodes)),
+                                str(len(self.__train_set)),
+                                str(nodes),
                             )
-                            # Remove node from __models if I am in the list
-                            logging.info("[Aggregator] Models for aggregation: {}".format(self.__models.keys()))
-                            # Check if all models have been added
-                            # If all is ok, release the aggregation lock
-                            self.check_and_run_aggregation()
-                            # Build response
-                            response = models_added + nodes
-                            # Unloock
-                            self.__lock.release()
+                        )
+                        # Remove node from __models if I am in the list
+                        logging.info("[Aggregator] Models for aggregation: {}".format(self.__models.keys()))
+                        # Check if all models have been added
+                        # If all is ok, release the aggregation lock
+                        self.check_and_run_aggregation()
+                        # Build response
+                        response = models_added + nodes
+                        # Unloock
+                        self.__lock.release()
 
-                            return response
-                        else:
-                            self.__lock.release()
-                            logging.debug(
-                                "[Aggregator] Can't add a model that has already been added {}".format(nodes)
-                            )
-                    # else:
-                    #     self.__lock.release()
-                    #     logging.debug(
-                    #         "[Aggregator] Can't add a model from a node ({}) that is not in the training test.".format(
-                    #             nodes
-                    #         )
-                    #     )
+                        return response
+                    else:
+                        self.__lock.release()
+                        logging.debug(
+                            "[Aggregator] Can't add a model that has already been added {}".format(nodes)
+                        )
                 else:
                     self.__lock.release()
 
@@ -221,6 +215,7 @@ class Aggregator(threading.Thread, Observable):
             if (
                     force or len(models_added) >= len(self.__train_set)
             ) and self.__train_set != []:
+                logging.info("[Aggregator] __aggregation_lock.release() --> __models = {}".format(self.__models.keys()))
                 self.__aggregation_lock.release()
         except threading.ThreadError:
             pass
