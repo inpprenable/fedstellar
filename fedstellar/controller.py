@@ -2,7 +2,6 @@ import glob
 import hashlib
 import json
 import logging
-import multiprocessing
 import os
 import signal
 import subprocess
@@ -44,13 +43,13 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
-def run_webserver():
+def run_webserver(python_path):
     # Save the configuration in environment variables
     controller_env = os.environ.copy()
     current_dir = os.path.dirname(os.path.abspath(__file__))
     webserver_path = os.path.join(current_dir, "webserver")
     with open(f'logs/server.log', 'w', encoding='utf-8') as log_file:
-        subprocess.Popen(['flask', '--app', 'app', '--debug', 'run'], stdout=log_file, stderr=log_file, cwd=webserver_path, encoding='utf-8', env=controller_env)
+        subprocess.Popen([python_path, "app.py"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
 
 
 class Controller:
@@ -91,7 +90,7 @@ class Controller:
         webserver = True  # TODO: change it
         if webserver:
             logging.info("Starting webserver")
-            run_webserver()
+            run_webserver(self.python_path)
             logging.info('Press Ctrl+C for exit')
             while True:
                 time.sleep(1)

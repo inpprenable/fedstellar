@@ -33,6 +33,7 @@ class LightningLearner(NodeLearner):
 
     def __init__(self, model, data, logger=None):
         self.model = model
+        # self.model = torch.compile(model)  # PyTorch 2.0
         self.data = data
         self.logger = logger
         self.__trainer = None

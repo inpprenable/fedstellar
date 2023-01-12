@@ -1,4 +1,4 @@
-SECRET_KEY = ""
+SECRET_KEY = "eede8f3b-3f22-4d1a-9b5e-8f3b3f22ed1a"
 DEBUG = True
 UPLOAD_FOLDER = "images"
 LOG_FOLDER_WEBSERVER = "logs"
