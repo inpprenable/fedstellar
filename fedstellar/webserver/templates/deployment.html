@@ -1,0 +1,857 @@
+{% extends "layout.html" %}
+{% block page_title %}Scenario Deployment{% endblock %}
+{% block body %}
+{{ super() }}
+
+<h4>Deployment of scenarios using Fedstellar</h4>
+<hr>
+
+{% if scenario_name %}
+
+<h4>There is a scenario named <b>{{ scenario_name }}</b> already deployed... Click <a href="{{ url_for('fedstellar_monitoring') }}">here</a> to see it!</h4>
+
+{% elif not scenario_name %}
+
+<!-- Modal participant -->
+<div class="modal fade" id="participant-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="participant-modal-title">Modal title</h5>
+            </div>
+            <div class="modal-body" id="participant-modal-content"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" id="participant-modal-save" class="btn btn-primary" data-dismiss="modal">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal confirm -->
+<div class="modal fade" id="confirm-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm the deployment of the defined scenario</h5>
+            </div>
+            <div id="confirm-modal-body" class="modal-body"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                <button type="button" id="yes-button" class="btn btn-primary" data-dismiss="modal">Yes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="form-configurations">
+    <div class="col-md-4">
+        <div class="form-group">
+            <h4 class="step-number">Scenario description</h4>
+            <input type="text" class="form-control" id="scenario-description" placeholder="Write a description for the scenario">
+        </div>
+        <div class="form-group" id="deployment-group">
+            <h4 class="step-number">Deployment</h4>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="simulation-radio" value="simulation" checked>
+                <label class="form-check-label" for="simulation-radio">Simulation</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="real-radio" value="real" disabled>
+                <label class="form-check-label" for="real-radio">Real devices (under development)</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="datacenter-radio" value="datacenter" disabled>
+                <label class="form-check-label" for="datacenter-radio">Datacenter (disabled)</label>
+            </div>
+        </div>
+        <div id="deployment-options" style="margin-left: 10px">
+            <h4>Deployment options</h4>
+            <p class="text-muted">Select the deployment options for the scenario.</p>
+        </div>
+        <div class="form-group">
+            <h4 class="step-number">Participants</h4>
+            <div id="participant-items"></div>
+        </div>
+        <div class="form-group">
+            <h4 class="step-number">Network topology</h4>
+            <select class="form-control" id="networkTopology" style="display: inline; width: 50%">
+                <option value="default" selected>Choose an option</option>
+                <option>Fully</option>
+                <option>Ring</option>
+                <option>Star</option>
+                <option>Random</option>
+            </select>
+            <i id="networkTopologyRandom" class="fa fa-refresh"></i>
+            <small id="topologyHelp" class="form-text text-muted">
+                <i id="topologyHelpIcon" class="fa fa-info-circle"></i>
+            </small>
+        </div>
+        <div class="form-group">
+            <h4 class="step-number">Federation architecture</h4>
+            <select class="form-control" id="federationArchitecture" name="federation" style="display: inline; width: 50%">
+                <option value="default" selected>Choose an option</option>
+                <option>CFL</option>
+                <option>DFL</option>
+                <option>SDFL</option>
+            </select>
+            <small id="architectureHelp" class="form-text text-muted">
+                <i id="architectureHelpIcon" class="fa fa-info-circle"></i>
+            </small>
+        </div>
+    </div>
+    <div id="topology-container" class="col-md-8" style="border: 2px solid black">
+        <div id="info-container">
+            <div id="info-participants">Number of participants: <p id="info-participants-number" style="display: inline">5</p></div>
+        </div>
+        <div id="legend-container">
+            <div id="legend-label">LEGEND</div>
+            <div id="legend">
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: rgba(255,160,0,0.8);"></span>
+                    <span class="legend-text">Aggregator</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: rgba(0,120,255,0.6);"></span>
+                    <span class="legend-text">Trainer</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: rgba(230,0,255,0.6);"></span>
+                    <span class="legend-text">Server</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: rgba(255,0,0,0.6);"></span>
+                    <span class="legend-text">Selected node</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: rgba(0,255,140,0.8);"></span>
+                    <span class="legend-text">Node's neighbors</span>
+                </div>
+            </div>
+        </div>
+        <div id="3d-graph"></div>
+    </div>
+    <button id="run-btn" type="button" class="btn" style="margin-top: 10px">Run Fedstellar</button>
+</form>
+
+<style>
+    #form-configurations {
+        counter-reset: step;
+    }
+    .step-number::before {
+        content: counter(step);
+        counter-increment: step;
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
+        border-radius: 50%;
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        margin-right: 10px;
+    }
+
+    .participant-started {
+        border-radius: 40%;
+        border: orange 2px solid;
+
+    }
+
+    #info-container {
+        padding: 10px;
+        margin-top: 5px;
+        position: absolute;
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    #legend-container {
+        border: 2px solid black;
+        background-color: #f2f2f2;
+        padding: 10px;
+        margin-top: 5px;
+        width: 65%;
+        position: absolute;
+        z-index: 1;
+        right: 5px;
+        pointer-events: none;
+    }
+
+    #legend-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        font-weight: bold;
+        margin-bottom: 2px;
+    }
+
+    #legend {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-right: 5px;
+    }
+
+    .legend-color {
+        display: block;
+        width: 10px;
+        height: 10px;
+        border-radius: 10px;
+        margin-right: 5px;
+    }
+
+    .legend-text {
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .popover {
+        max-width: 800px;
+    }
+
+    #networkTopologyRandom {
+        margin-left: 5px;
+        margin-right: 5px;
+        font-size: 15px;
+        cursor: pointer;
+    }
+
+</style>
+
+<script>
+    // When click on architectureHelpIcon, show a popover on the bottom of the icon using Bootstrap and HTML code
+    contentTopologyHelp = '<ul>\n' +
+        '                    <li>Fully: All nodes are connected to all other nodes</li>\n' +
+        '                    <li>Ring: All nodes are connected to two other nodes</li>\n' +
+        '                    <li>Star: A central node is connected to all other nodes</li>\n' +
+        '                    <li>Random: Nodes are connected to random nodes</li>\n' +
+        '                </ul>';
+
+    contentArchitectureHelp = '<ul>\n' +
+        '                    <li>CFL: All nodes are connected to a central node</li>\n' +
+        '                    <li>DFL: Nodes are connected to each other</li>\n' +
+        '                    <li>SDFL: Nodes are connected to each other and the aggregator rotates</li>\n' +
+        '                </ul>'
+    $('#topologyHelpIcon').popover({
+        title: 'Network topology',
+        html: true,
+        placement: 'right',
+        content: contentTopologyHelp,
+        trigger: 'hover',
+        container: 'body',
+        delay: {show: 500, hide: 100},
+    });
+    $('#architectureHelpIcon').popover({
+        title: 'Federation architecture',
+        html: true,
+        placement: 'right',
+        content: contentArchitectureHelp,
+        trigger: 'hover',
+        container: 'body',
+        delay: {show: 500, hide: 100},
+    });
+</script>
+
+<script>
+    // Send configuration to the server for deployment
+
+    // When click "run-btn" button, create a POST request to /deployment/run with JSON data
+    document.getElementById("run-btn").addEventListener("click", function () {
+
+        // Show the modal
+        $('#confirm-modal').modal('show');
+
+        // TODO: check parameters related to the scenario
+        // Check if there a element with the class "participant-started" in the DOM
+        if (!$(".participant-started").length > 0) {
+            $('#confirm-modal-body').html('Please select one "start" participant for the scenario');
+            document.getElementById("yes-button").disabled = true;
+        } else {
+            $('#confirm-modal-body').html('Are you sure you want to run Fedstellar?');
+            document.getElementById("yes-button").disabled = false;
+
+            document.getElementById("yes-button").addEventListener("click", function () {
+
+                var nodes = {};
+                var n_nodes = document.getElementById("info-participants-number").innerHTML;
+                for (var i = 0; i < n_nodes; i++) {
+                    nodes[i] = {
+                        "id": i,
+                        "ip": Graph.graphData().nodes[i].ip,
+                        "ipdemo": Graph.graphData().nodes[i].ip,
+                        "port": Graph.graphData().nodes[i].port,
+                        "role": Graph.graphData().nodes[i].role,
+                        "start": Graph.graphData().nodes[i].start,
+                    }
+                }
+                var data = {
+                    "scenario_description": document.getElementById("scenario-description").value,
+                    "nodes": nodes,
+                    "n_nodes": getNumberOfNodes(),
+                    "matrix": getMatrix(Graph.graphData().nodes, Graph.graphData().links),
+                    "federation": document.getElementById("federationArchitecture").value,
+                    "simulation": true,
+                    "topology": document.getElementById("networkTopology").value,
+                };
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/deployment/run", true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.send(JSON.stringify(data));
+                setTimeout(function () {
+                    // Reload page
+                    window.location.reload();
+                }, 5000);
+
+            });
+        }
+    });
+
+</script>
+
+<script>
+    // Generate matrix for the topology (predefined network topology)
+
+    // If networkTopology is changed to Fully, gData is updated to a fully connected graph
+    $('#networkTopology').change(function () {
+
+        if ($(this).val() !== 'default') {
+            // Remove all links in gData
+            gData.links.splice(0, gData.links.length);
+            // Remove all neighbors in gData
+            gData.nodes.forEach(function (node) {
+                node.neighbors.splice(0, node.neighbors.length);
+            });
+        }
+
+        if ($(this).val() === 'Fully') {
+            // Update gData: create a link between each node
+            for (var i = 0; i < gData.nodes.length; i++) {
+                for (var j = 0; j < gData.nodes.length; j++) {
+                    if (i !== j) {
+                        // TODO: Se podría comprobar que si el source-target o target-source (misma pareja) está ya en links, no se mete
+                        // Lo mismo para los otros casos
+                        gData.links.push({source: i, target: j});
+                    }
+                }
+            }
+        }
+        // If networkTopology is changed to Ring, gData is updated to a ring graph
+        else if ($(this).val() === 'Ring') {
+            // Update gData: create a link between each node and its two neighbors
+            for (var i = 0; i < gData.nodes.length; i++) {
+                gData.links.push({source: i, target: (i + 1) % gData.nodes.length});
+                gData.links.push({source: i, target: (i + gData.nodes.length - 1) % gData.nodes.length});
+            }
+        }
+        // If networkTopology is changed to Star, gData is updated to a star graph
+        else if ($(this).val() === 'Star') {
+            // Update gData: create a link between each node and the central node
+            for (var i = 0; i < gData.nodes.length; i++) {
+                gData.links.push({source: i, target: 0});
+            }
+        } else if ($(this).val() === 'Random') {
+            // Update gData: create a link between each node and a random node
+            for (var i = 0; i < gData.nodes.length; i++) {
+                var randomNode = Math.floor(Math.random() * gData.nodes.length);
+                while (randomNode === i) {
+                    randomNode = Math.floor(Math.random() * gData.nodes.length);
+                }
+                gData.links.push({source: i, target: randomNode});
+            }
+        }
+
+        // Remove duplicated links
+        for (var i = 0; i < gData.links.length; i++) {
+            for (var j = i + 1; j < gData.links.length; j++) {
+                if ((gData.links[i].source === gData.links[j].source && gData.links[i].target === gData.links[j].target) ||
+                    gData.links[i].source === gData.links[j].target && gData.links[i].target === gData.links[j].source) {
+                    gData.links.splice(j, 1);
+                }
+            }
+        }
+        // Update neighbors of each node in gData
+        gData.links.forEach(function (link) {
+
+            for (var i = 0; i < gData.nodes.length; i++) {
+                if (gData.nodes[i].id === link.source.id) {
+                    gData.nodes[i].neighbors.push(link.target.id);
+                }
+                if (gData.nodes[i].id === link.target.id) {
+                    gData.nodes[i].neighbors.push(link.source.id);
+                }
+            }
+
+        });
+
+        // Update the graph
+        Graph.graphData(gData);
+
+    });
+
+    document.getElementById("networkTopologyRandom").addEventListener("click", function () {
+        $('#networkTopology').trigger('change');
+    });
+
+</script>
+
+<script>
+    // If federationArchitecture is changed to CFL, gData is updated to Star graph
+    $('#federationArchitecture').change(function () {
+        if ($(this).val() === 'CFL') {
+            $('#networkTopology').val('Star');
+            // Block networkTopology
+            $('#networkTopology').prop('disabled', true);
+
+            // Update gData: change the role of the central node to "server"
+            gData.nodes[0].role = "server";
+        } else {
+            // Unblock networkTopology
+            $('#networkTopology').prop('disabled', false);
+            // Update gData: change the role of the central node to "client"
+            gData.nodes[0].role = "trainer";
+        }
+
+        // Reload the graph
+        Graph.graphData(gData);
+        $('#networkTopology').trigger('change');
+
+    });
+</script>
+
+
+<script>
+    // Generate configuration for each participant. The configuration is generated when the user clicks on the "Generate" button.
+    // The configuration is generated according to the selected federation architecture and the selected network topology.
+    // It enables to modify the configuration before deploying it.
+
+    async function formConfigurations() {
+        let formConfigurations = document.getElementById("form-textareas");
+        let numberOfNodes = document.getElementById("nodes").value;
+        if (isNaN(numberOfNodes)) {
+            return;
+        }
+        let textAreas = "";
+        for (let i = 0; i < numberOfNodes; i++) {
+            textAreas += `<h4>Participant ${i}</h4>`;
+            let response = await fetch(`/deployment/participant/file`);
+            let json = await response.json();
+            textAreas += `<textarea class="form-control" rows="10" cols="50" style="width:100%;" name="participant${i}">${JSON.stringify(json, null, 4)}</textarea>`;
+            // textAreas += `<textarea class="form-control" rows="10" cols="50" name="scenario" id="scenario" style="width:100%;"></textarea>`;
+        }
+        formConfigurations.innerHTML = textAreas;
+    }
+
+    function setValue(newValue, htmlElement) {
+        htmlElement.innerHTML = newValue;
+    }
+</script>
+
+<script>
+    // Dynamically generate the configuration for each participant included in the graph
+
+    function getNumberOfNodes() {
+        return Graph.graphData().nodes.length;
+    }
+
+    function getNumberOfNodesAndUpdate() {
+        // Update the label of info-participants
+        let numberOfNodes = getNumberOfNodes();
+        document.getElementById("info-participants-number").innerHTML = numberOfNodes;
+
+        // For each node, add a label in the div with id "participant-items"
+        const participantItems = document.getElementById("participant-items");
+        participantItems.innerHTML = "";
+        for (let i = 0; i < getNumberOfNodes(); i++) {
+            const node = Graph.graphData().nodes[i];
+            // const participantItem = document.createElement("div");
+            // participantItem.classList.add("col-md-2");
+            // participantItem.classList.add("participant-item");
+            const participantItem_img = document.createElement("img");
+            participantItem_img.id = `participant-img-${i}`;
+            participantItem_img.src = "{{ url_for('static', filename='img/device.png') }}";
+            participantItem_img.width = 50
+            participantItem_img.height = 50
+            participantItem_img.style.marginRight = "10px";
+            // Add text when mouse is over the image
+            if (node.start) {
+                participantItem_img.classList.add("participant-started");
+                participantItem_img.title = `Participant ${i} (start node)`;
+            } else {
+                participantItem_img.title = `Participant ${i} (not start node)`;
+            }
+
+            participantItem_img.addEventListener("click", function () {
+                // If any other participant-item has started class, assign it
+
+                if (document.getElementsByClassName("participant-started").length > 0) {
+                    Graph.graphData().nodes[document.getElementsByClassName("participant-started")[0].id.split("-")[2]].start = false;
+                    document.getElementsByClassName("participant-started")[0].classList.remove("participant-started");
+                    participantItem_img.title = `Participant ${i} (not start node)`;
+                    // Remove the start node using node that I removed the class
+                }
+                // Assign started class to the clicked participant-item
+                participantItem_img.classList.add("participant-started");
+                participantItem_img.title = `Participant ${i} (start node)`;
+                // Update the start property of the node
+                Graph.graphData().nodes[i].start = true;
+
+            });
+
+            const label = document.createElement("label");
+            label.setAttribute("for", "participant-" + i);
+            label.innerHTML = "Participant " + i;
+            label.style.marginRight = "10px";
+
+            const info = document.createElement("button")
+            info.id = "participant-" + i + "-btn";
+            info.type = "button";
+            info.classList.add("btn");
+            info.innerHTML = "+INFO";
+            info.style.padding = "0";
+
+            // When click the button, show the modal with the information of the participant
+            info.addEventListener("click", function () {
+                // Get the participant information
+                const participant = Graph.graphData().nodes[i];
+                // Set the title of the modal
+                document.getElementById("participant-modal-title").innerHTML = "Participant " + i;
+                // Set the content of the modal
+                // Add the IP label with an input for write the IP
+                const ipLabel = document.createElement("label");
+                ipLabel.setAttribute("for", "participant-" + i + "-ip");
+                ipLabel.innerHTML = "IP";
+                const ipInput = document.createElement("input");
+                ipInput.id = "participant-" + i + "-ip";
+                ipInput.type = "text";
+                ipInput.defaultValue = participant.ip;
+
+                document.getElementById("participant-modal-content").innerHTML = "";
+                document.getElementById("participant-modal-content").appendChild(ipLabel);
+                document.getElementById("participant-modal-content").appendChild(document.createElement("br"));
+                document.getElementById("participant-modal-content").appendChild(ipInput);
+                // Add return line
+                document.getElementById("participant-modal-content").appendChild(document.createElement("br"));
+
+                // Add the port label with an input for write the port
+                const portLabel = document.createElement("label");
+                portLabel.setAttribute("for", "participant-" + i + "-port");
+                portLabel.innerHTML = "Port";
+                const portInput = document.createElement("input");
+                portInput.id = "participant-" + i + "-port";
+                portInput.type = "text";
+                portInput.defaultValue = participant.port;
+
+
+                document.getElementById("participant-modal-content").appendChild(portLabel);
+                document.getElementById("participant-modal-content").appendChild(document.createElement("br"));
+                document.getElementById("participant-modal-content").appendChild(portInput);
+
+                document.getElementById("participant-modal-content").innerHTML += "<br><b>Neighbors:</b> " + participant.neighbors.length + "<br><b>Role:</b> " + participant.role + "<br><b>Start:</b> " + participant.start;
+                // Show the modal
+                $('#participant-modal').modal('show');
+            });
+
+            document.getElementById("participant-modal-save").addEventListener("click", function () {
+                const participant = Graph.graphData().nodes[i];
+                participant.ip = document.getElementById("participant-" + i + "-ip").value;
+                participant.port = document.getElementById("participant-" + i + "-port").value;
+                Graph.graphData(Graph.graphData());
+            });
+
+
+            participantItems.appendChild(participantItem_img);
+            participantItems.appendChild(label);
+            participantItems.appendChild(info);
+            participantItems.appendChild(document.createElement("br"));
+        }
+    }
+</script>
+
+<script>
+    // Create the graph object
+
+    const width = document.getElementById('3d-graph').offsetWidth;
+
+    const N = 5;
+    const gData = {
+        nodes: [...Array(N).keys()].map(i => ({
+            id: i,
+            ip: "127.0.0.1",
+            port: "4500" + i.toString(),
+            role: 'trainer',
+            start: (i === 0),
+        })),
+        links: [...Array(N).keys()]
+            .filter(id => id)
+            .map(id => ({
+                source: id,
+                target: Math.round(Math.random() * (id - 1)),
+            }))
+    };
+
+    // cross-link node objects
+    gData.links.forEach(link => {
+        const a = gData.nodes[link.source];
+        const b = gData.nodes[link.target];
+        !a.neighbors && (a.neighbors = []);
+        !b.neighbors && (b.neighbors = []);
+        a.neighbors.push(b);
+        b.neighbors.push(a);
+
+        !a.links && (a.links = []);
+        !b.links && (b.links = []);
+        a.links.push(link);
+        b.links.push(link);
+    });
+
+    const highlightNodes = new Set();
+    let hoverNode = null;
+
+    let selectedNodes = new Set();
+    let aggregators = new Set();
+    let trainers = new Set();
+    // Add all nodes to the set of trainers
+    for (let i = 0; i < gData.nodes.length; i++) {
+        trainers.add(i);
+    }
+
+    const Graph = ForceGraph3D()
+    (document.getElementById('3d-graph'))
+        .showNavInfo(true)
+        .width(width)
+        .height(700)
+        .backgroundColor('#ffffff')
+        //.jsonUrl("/monitoring/topology/3d")
+        //.nodeId('id')
+        ////.nodeVal('id')
+        .nodeLabel(node => `<p style="color: black">ID: ${node.id} | Role: ${node.role}</p>`)
+
+        ///.onNodeClick(node => window.open(`https://bl.ocks.org/${node.user}/${node.id}`, '_blank'))
+        // .onNodeClick(removeNode)
+
+        .onNodeClick((node, event) => {
+            // event.stopPropagation();
+
+            if (event.ctrlKey) {
+                // Add a new node and link it to the node that was clicked
+                const newNode = {id: gData.nodes.length, ip: "127.0.0.1", port: "4500" + gData.nodes.length.toString(), role: 'trainer', start: false};
+                newNode.neighbors = [node];
+                newNode.links = [{source: node, target: newNode}];
+                node.neighbors.push(newNode);
+                node.links.push(newNode.links[0]);
+                // Update the graph
+                gData.nodes.push(newNode);
+                gData.links.push({source: newNode, target: node});
+
+            }
+            if (event.shiftKey) { // multi-selection
+                selectedNodes.has(node) ? selectedNodes.delete(node) : selectedNodes.add(node);
+            } else { // single-selection
+                // Selected is done by clicking on the same node again
+                const selected = selectedNodes.has(node) && selectedNodes.size === 1;
+                selectedNodes.clear();
+                // If the node was not selected, add it to the selection (create a red node)
+                if (!selected) {
+                    selectedNodes.add(node);
+                } else {
+                    // If the node is selected, change its color and role
+                    if (node.role === 'trainer') {
+                        node.role = 'aggregator';
+                        aggregators.add(node);
+                        trainers.delete(node);
+                    } else if (node.role === 'aggregator') {
+                        node.role = 'trainer';
+                        node.color = 'rgba(255,160,0,0.8)';
+                        aggregators.delete(node);
+                        trainers.add(node);
+                    }
+                }
+            }
+            // If there are two nodes selected, create a link between them
+            if (selectedNodes.size === 2) {
+                const [a, b] = selectedNodes;
+                const link = {source: a, target: b};
+                a.neighbors.push(b);
+                b.neighbors.push(a);
+                a.links.push(link);
+                b.links.push(link);
+                gData.links.push(link);
+                selectedNodes.clear();
+            }
+
+            // If click a node and the same time click on the key 'command' (remove node)
+            if (event.metaKey) {
+                // Delete the node from the graph
+                let {nodes, links} = gData;
+                console.log(links);
+                links = links.filter(l => l.source.id !== node.id && l.target.id !== node.id); // Remove links attached to node
+                console.log(links);
+                nodes.splice(node.id, 1); // Remove node
+                nodes.forEach((n, idx) => {
+                    // Remove links from node
+                    n.links = n.links.filter(l => l.source.id !== node.id && l.target.id !== node.id);
+                    // Remove neighbors from node
+                    n.neighbors = n.neighbors.filter(l => l.id !== node.id);
+                    n.id = idx; // Reset node ids to array index
+                    n.port = "4500" + n.id.toString();
+                });
+                // Graph.graphData({nodes, links});
+                gData.nodes = nodes;
+                gData.links = links;
+            }
+            // I get the following error: Computed radius is NaN. The "position" attribute is likely to have NaN values.
+            Graph.graphData(gData);
+            getNumberOfNodesAndUpdate();
+        })
+        .onLinkClick(link => {
+            // Remove link
+            const index = gData.links.indexOf(link);
+            if (index > -1) {
+                gData.links.splice(index, 1);
+            }
+            // Remove link from source and target
+            const sourceIndex = link.source.links.indexOf(link);
+            if (sourceIndex > -1) {
+                link.source.links.splice(sourceIndex, 1);
+            }
+            const targetIndex = link.target.links.indexOf(link);
+            if (targetIndex > -1) {
+                link.target.links.splice(targetIndex, 1);
+            }
+            Graph.graphData(gData);
+            getNumberOfNodesAndUpdate();
+        })
+        .onNodeHover(node => {
+            // no state change
+            if ((!node && !highlightNodes.size) || (node && hoverNode === node)) return;
+
+            highlightNodes.clear();
+            if (node) {
+                highlightNodes.add(node);
+                node.neighbors.forEach(neighbor => highlightNodes.add(neighbor));
+            }
+
+            hoverNode = node || null;
+
+            updateColorNodes();
+        })
+        ///.linkSource('source')
+        ///.linkTarget('target')
+        //.nodeAutoColorBy('id')  // role
+        .nodeColor(node => selectedNodes.has(node) ? 'rgba(255,0,0,0.6)'
+            : (highlightNodes.has(node) && node !== hoverNode ? 'rgba(0,255,140,0.8)'
+                : (node.role === "server" ? 'rgba(230,0,255,0.6)'
+                    : node.role === "trainer" ? 'rgba(0,120,255,0.6)'
+                        : (node.role === "aggregator" ? 'rgba(255,136,0,0.6)' : undefined))))
+        .linkColor(link => link.color ? 'red' : 'black')
+        .linkOpacity(0.6)
+        .linkWidth(1)
+        .graphData(gData);
+
+    getNumberOfNodesAndUpdate();
+
+    // Change text in div with class="scene-nav-info" to "Click on a node to select it. Press Ctrl to add a new node. Press Shift to select multiple nodes. Press Return to create a link between two selected nodes."
+    document.getElementsByClassName("scene-nav-info")[0].innerHTML = "Click on a node to select it. Press Ctrl to add a new node. Press Shift to select multiple nodes. Press Return to create a link between two selected nodes.";
+
+    // Open controls
+    const linkForce = Graph
+        .d3Force('link')
+        .distance(link => link.color ? settings.solidDistance : settings.weakDistance);
+
+    //Define GUI
+    const Settings = function () {
+        this.solidDistance = 20;
+        this.weakDistance = 20;
+    };
+
+    const settings = new Settings();
+    const gui = new dat.GUI();
+    document.getElementsByClassName("dg ac")[0].style.zIndex = 10;
+
+    const controllerOne = gui.add(settings, 'solidDistance', 0, 1000);
+    const controllerTwo = gui.add(settings, 'weakDistance', 0, 1000);
+
+    controllerOne.onChange(updateLinkDistance);
+    controllerTwo.onChange(updateLinkDistance);
+
+    function updateLinkDistance() {
+        linkForce.distance(link => link.color ? settings.solidDistance : settings.weakDistance);
+        Graph.numDimensions(3); // Re-heat simulation
+    }
+
+    function updateColorNodes() {
+        // trigger update of highlighted objects in scene
+        Graph.nodeColor(Graph.nodeColor())
+    }
+
+</script>
+
+<script>
+    // Adjacency matrix for the graph
+
+    // When the user clicks on gen-matrix, generate an adjacency matrix using the current graph
+    // document.getElementById("gen-matrix").addEventListener("click", function () {
+    //    // Get the adjacency matrix
+    //    const matrix = getAdjacencyMatrix_html(Graph.graphData().nodes, Graph.graphData().links);
+    //    // Display the matrix
+    //    document.getElementById("matrix").innerHTML = matrix;
+    //});
+
+    function getMatrix(nodes, links) {
+        // Create an empty matrix
+        const matrix = [];
+        for (let i = 0; i < nodes.length; i++) {
+            matrix[i] = [];
+            for (let j = 0; j < nodes.length; j++) {
+                matrix[i][j] = 0;
+            }
+        }
+        // Fill the matrix
+        for (let i = 0; i < links.length; i++) {
+            const source = links[i].source.id;
+            const target = links[i].target.id;
+            matrix[source][target] = 1;
+            matrix[target][source] = 1;
+        }
+        console.log(matrix);
+        return matrix;
+    }
+
+    function getAdjacencyMatrix_html(nodes, links) {
+        // Create an empty matrix
+        const matrix = [];
+        for (let i = 0; i < nodes.length; i++) {
+            matrix[i] = [];
+            for (let j = 0; j < nodes.length; j++) {
+                matrix[i][j] = 0;
+            }
+        }
+        // Fill the matrix
+        for (let i = 0; i < links.length; i++) {
+            const source = links[i].source.id;
+            const target = links[i].target.id;
+            matrix[source][target] = 1;
+            matrix[target][source] = 1;
+        }
+        // Convert the matrix to a string
+        let matrixString = "";
+        matrix.forEach(row => {
+            row.forEach(cell => {
+                matrixString += cell + " ";
+            });
+            matrixString += "<br>";
+        });
+        return matrixString;
+    }
+</script>
+
+{% endif %}
+
+{% endblock %}

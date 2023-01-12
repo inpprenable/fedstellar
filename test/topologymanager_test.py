@@ -31,7 +31,7 @@ def test_topology_6():
 
 
 def test_ring_topology():
-    topologymanager = TopologyManager(experiment_name="example", n_nodes=5, b_symmetric=True)
+    topologymanager = TopologyManager(scenario_name="example", n_nodes=5, b_symmetric=True)
     topologymanager.generate_ring_topology()
     topology = topologymanager.get_topology()
     topologymanager.draw_graph()

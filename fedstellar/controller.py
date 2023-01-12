@@ -32,8 +32,12 @@ logging.basicConfig(level=logging.DEBUG,
 # Detect ctrl+c and run killports
 def signal_handler(sig, frame):
     logging.info('You pressed Ctrl+C!')
+    logging.info('Finishing all scenarios and nodes...')
     Controller.killports()
     os.system("""osascript -e 'tell application "Terminal" to quit'""") if sys.platform == "darwin" else None
+    logging.info("Remove configuration and topology files...")
+    Controller.remove_config_files()
+    logging.info("Remove configuration and topology files... Done")
     sys.exit(0)
 
 
@@ -55,7 +59,8 @@ class Controller:
     """
 
     def __init__(self, args):
-        self.experiment_name = args.experiment_name if hasattr(args, 'experiment_name') else f'fedstellar_{args.federation}_{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}'
+        self.scenario_name = None
+        self.start_date_scenario = None
         self.federation = args.federation
         self.topology = args.topology
         self.webserver = args.webserver
@@ -77,17 +82,11 @@ class Controller:
         """
         self.init()
 
-        self.experiment_name = f'fedstellar_{self.federation}_{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}'
-
         # Save the configuration in environment variables
         logging.info("Saving configuration in environment variables...")
-        os.environ["FEDSTELLAR_EXPERIMENT_NAME"] = self.experiment_name
         os.environ["FEDSTELLAR_LOGS_DIR"] = self.log_dir
         os.environ["FEDSTELLAR_CONFIG_DIR"] = self.config_dir
         os.environ["FEDSTELLAR_PYTHON_PATH"] = self.python_path
-
-        logging.info("Generation logs directory for experiment: {}".format(self.experiment_name))
-        os.makedirs(os.path.join(self.log_dir, self.experiment_name), exist_ok=True)
 
         webserver = True  # TODO: change it
         if webserver:
@@ -97,6 +96,8 @@ class Controller:
             while True:
                 time.sleep(1)
 
+        logging.info("Starting nodes...")
+        input("Press Enter to continue...")
         self.load_configurations_and_start_nodes()
 
         if self.mender:
@@ -162,7 +163,18 @@ class Controller:
         command = '''kill -9 $(lsof -i @localhost:1024-65545 | grep ''' + term + ''' | awk '{print $2}') > /dev/null 2>&1'''
         os.system(command)
 
+    @staticmethod
+    def killport(port):
+        time.sleep(1)
+        command = '''kill -9 $(lsof -i @localhost:''' + str(port) + ''' | grep python | awk '{print $2}') > /dev/null 2>&1'''
+        os.system(command)
+
     def load_configurations_and_start_nodes(self):
+        self.scenario_name = f'fedstellar_{self.federation}_{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}'
+        self.start_date_scenario = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        os.makedirs(os.path.join(self.log_dir, self.scenario_name), exist_ok=True)
+        logging.info("Generating the scenario {} at {}".format(self.scenario_name, self.start_date_scenario))
+
         # Get participants configurations
         print("Loading participants configurations...")
         print(self.config_dir)
@@ -177,161 +189,6 @@ class Controller:
 
         self.topologymanager = self.create_topology(matrix=self.matrix) if self.matrix else self.create_topology()
 
-        # self.topologymanager = self.create_topology(matrix=[[0, 0, 0], [0, 0, 0], [0, 0, 0]])
-        # self.topologymanager = self.create_topology(matrix=[[0, 1, 0], [1, 0, 1], [0, 1, 0]])
-        # self.topologymanager = self.create_topology(matrix=[
-        #     [
-        #         0,
-        #         1,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         1,
-        #         1,
-        #         1
-        #     ],
-        #     [
-        #         1,
-        #         0,
-        #         1,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0
-        #     ],
-        #     [
-        #         0,
-        #         1,
-        #         0,
-        #         1,
-        #         1,
-        #         1,
-        #         0,
-        #         0,
-        #         0
-        #     ],
-        #     [
-        #         0,
-        #         0,
-        #         1,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0
-        #     ],
-        #     [
-        #         0,
-        #         0,
-        #         1,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0
-        #     ],
-        #     [
-        #         0,
-        #         0,
-        #         1,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0
-        #     ],
-        #     [
-        #         1,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0
-        #     ],
-        #     [
-        #         1,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0
-        #     ],
-        #     [
-        #         1,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0
-        #     ]
-        # ])
-
-        # self.topologymanager = self.create_topology(matrix=[
-        #     [
-        #         0,
-        #         1,
-        #         1,
-        #         0,
-        #         0,
-        #         1
-        #     ],
-        #     [
-        #         1,
-        #         0,
-        #         0,
-        #         1,
-        #         1,
-        #         0
-        #     ],
-        #     [
-        #         1,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0
-        #     ],
-        #     [
-        #         0,
-        #         1,
-        #         0,
-        #         0,
-        #         0,
-        #         0
-        #     ],
-        #     [
-        #         0,
-        #         1,
-        #         0,
-        #         0,
-        #         0,
-        #         0
-        #     ],
-        #     [
-        #         1,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0
-        #     ]
-        # ])
-
         # Update participants configuration
         is_start_node, idx_start_node = False, 0
         for i in range(self.n_nodes):
@@ -340,7 +197,7 @@ class Controller:
             participant_config['scenario_args']["federation"] = self.federation
             participant_config['scenario_args']['n_nodes'] = self.n_nodes
             participant_config['network_args']['neighbors'] = self.topologymanager.get_neighbors_string(i)
-            participant_config['scenario_args']['name'] = self.experiment_name
+            participant_config['scenario_args']['name'] = self.scenario_name
             participant_config['device_args']['idx'] = i
             participant_config['device_args']['uid'] = hashlib.sha1((str(participant_config["network_args"]["ip"]) + str(participant_config["network_args"]["port"])).encode()).hexdigest()
             participant_config['tracking_args']['log_dir'] = self.log_dir
@@ -359,10 +216,10 @@ class Controller:
 
         # Add role to the topology (visualization purposes)
         self.topologymanager.update_nodes(self.config.participants)
-        self.topologymanager.draw_graph(path=f"{self.log_dir}/{self.experiment_name}/topology.png", plot=False)
+        self.topologymanager.draw_graph(path=f"{self.log_dir}/{self.scenario_name}/topology.png", plot=False)
 
-        topology_json_path = f"{self.config_dir}/topology.json"
-        self.topologymanager.update_topology_3d_json(participants=self.config.participants, path=topology_json_path)
+        # topology_json_path = f"{self.config_dir}/topology.json"
+        # self.topologymanager.update_topology_3d_json(participants=self.config.participants, path=topology_json_path)
 
         if self.simulation:
             self.start_nodes(idx_start_node)
@@ -372,32 +229,29 @@ class Controller:
     def create_topology(self, matrix=None):
         import numpy as np
         if matrix is not None:
-            topologymanager = TopologyManager(topology=np.array(matrix), experiment_name=self.experiment_name, n_nodes=self.n_nodes, b_symmetric=True, undirected_neighbor_num=self.n_nodes - 1)
+            if self.n_nodes > 2:
+                topologymanager = TopologyManager(topology=np.array(matrix), scenario_name=self.scenario_name, n_nodes=self.n_nodes, b_symmetric=True, undirected_neighbor_num=self.n_nodes - 1)
+            else:
+                topologymanager = TopologyManager(topology=np.array(matrix), scenario_name=self.scenario_name, n_nodes=self.n_nodes, b_symmetric=True, undirected_neighbor_num=2)
         elif self.topology == "fully":
             # Create a fully connected network
-            topologymanager = TopologyManager(experiment_name=self.experiment_name, n_nodes=self.n_nodes, b_symmetric=True, undirected_neighbor_num=self.n_nodes - 1)
+            topologymanager = TopologyManager(scenario_name=self.scenario_name, n_nodes=self.n_nodes, b_symmetric=True, undirected_neighbor_num=self.n_nodes - 1)
             topologymanager.generate_topology()
         elif self.topology == "ring":
             # Create a partially connected network (ring-structured network)
-            topologymanager = TopologyManager(experiment_name=self.experiment_name, n_nodes=self.n_nodes, b_symmetric=True)
+            topologymanager = TopologyManager(scenario_name=self.scenario_name, n_nodes=self.n_nodes, b_symmetric=True)
             topologymanager.generate_ring_topology(increase_convergence=True)
         elif self.topology == "random":
             # Create network topology using topology manager (random)
-            topologymanager = TopologyManager(experiment_name=self.experiment_name, n_nodes=self.n_nodes, b_symmetric=True,
+            topologymanager = TopologyManager(scenario_name=self.scenario_name, n_nodes=self.n_nodes, b_symmetric=True,
                                               undirected_neighbor_num=3)
             topologymanager.generate_topology()
         elif self.topology == "star" and self.federation == "CFL":
             # Create a centralized network
-            topologymanager = TopologyManager(experiment_name=self.experiment_name, n_nodes=self.n_nodes, b_symmetric=True)
+            topologymanager = TopologyManager(scenario_name=self.scenario_name, n_nodes=self.n_nodes, b_symmetric=True)
             topologymanager.generate_server_topology()
         else:
             raise ValueError("Unknown topology type: {}".format(self.topology))
-
-        # topology = topologymanager.get_topology()
-        # logging.debug(topology)
-
-        # Also, it is possible to use a custom topology using adjacency matrix
-        # topologymanager = TopologyManager(experiment_name=experiment_name, n_nodes=n_nodes, topology=[[0, 1, 1, 1], [1, 0, 1, 1]. [1, 1, 0, 1], [1, 1, 1, 0]])
 
         # Assign nodes to topology
         nodes_ip_port = []
@@ -407,7 +261,7 @@ class Controller:
         topologymanager.add_nodes(nodes_ip_port)
         return topologymanager
 
-    def run_node(self, idx):
+    def start_node(self, idx):
         command = f'cd {os.path.dirname(os.path.realpath(__file__))}; {self.python_path} -u node_start.py {str(self.config.participants_path[idx])} 2>&1'
         if sys.platform == "darwin":
             os.system("""osascript -e 'tell application "Terminal" to activate' -e 'tell application "Terminal" to do script "{}"'""".format(command))
@@ -421,9 +275,17 @@ class Controller:
             if idx == idx_start_node:
                 continue
             logging.info("Starting node {} with configuration {}".format(idx, self.config.participants[idx]))
-            self.run_node(idx)
+            self.start_node(idx)
 
         time.sleep(3)
         # Start the node with start flag
         logging.info("Starting node {} with configuration {}".format(idx_start_node, self.config.participants[idx_start_node]))
-        self.run_node(idx_start_node)
+        self.start_node(idx_start_node)
+
+    @classmethod
+    def remove_config_files(cls):
+        # Remove all json and png files in the folder os.environ["FEDSTELLAR_CONFIG_DIR"]
+        for file in glob.glob(os.path.join(os.environ["FEDSTELLAR_CONFIG_DIR"], "*.json")):
+            os.remove(file)
+        for file in glob.glob(os.path.join(os.environ["FEDSTELLAR_CONFIG_DIR"], "*.png")):
+            os.remove(file)

@@ -12,9 +12,9 @@ from fedstellar.role import Role
 
 class TopologyManager:
     def __init__(
-            self, experiment_name=None, n_nodes=5, b_symmetric=True, undirected_neighbor_num=5, topology=None
+            self, scenario_name=None, n_nodes=5, b_symmetric=True, undirected_neighbor_num=5, topology=None
     ):
-        self.experiment_name = experiment_name
+        self.scenario_name = scenario_name
         if topology is None:
             topology = []
         self.n_nodes = n_nodes
@@ -33,11 +33,11 @@ class TopologyManager:
 
     def __getstate__(self):
         # Return the attributes of the class that should be serialized
-        return {'experiment_name': self.experiment_name, 'n_nodes': self.n_nodes, 'topology': self.topology, 'nodes': self.nodes}
+        return {'scenario_name': self.scenario_name, 'n_nodes': self.n_nodes, 'topology': self.topology, 'nodes': self.nodes}
 
     def __setstate__(self, state):
         # Set the attributes of the class from the serialized state
-        self.experiment_name = state['experiment_name']
+        self.scenario_name = state['scenario_name']
         self.n_nodes = state['n_nodes']
         self.topology = state['topology']
         self.nodes = state['nodes']
@@ -96,9 +96,9 @@ class TopologyManager:
         plt.legend()
         # import sys
         # if path is None:
-        #    if not os.path.exists(f"{sys.path[0]}/logs/{self.experiment_name}"):
-        #        os.makedirs(f"{sys.path[0]}/logs/{self.experiment_name}")
-        #    plt.savefig(f"{sys.path[0]}/logs/{self.experiment_name}/topology.png", dpi=100, bbox_inches="tight", pad_inches=0)
+        #    if not os.path.exists(f"{sys.path[0]}/logs/{self.scenario_name}"):
+        #        os.makedirs(f"{sys.path[0]}/logs/{self.scenario_name}")
+        #    plt.savefig(f"{sys.path[0]}/logs/{self.scenario_name}/topology.png", dpi=100, bbox_inches="tight", pad_inches=0)
         # else:
         plt.savefig(f"{path}", dpi=100, bbox_inches="tight", pad_inches=0)
         # plt.gcf().canvas.draw()
@@ -172,6 +172,7 @@ class TopologyManager:
         neighbors_index = []
         neighbors_data = []
         for i in range(self.n_nodes):
+            print(node_idx, i)
             if self.topology[node_idx][i] == 1:
                 neighbors_index.append(i)
                 neighbors_data.append(self.nodes[i])
@@ -295,14 +296,16 @@ class TopologyManager:
             "nodes": [],
             "links": [],
         }
-        print(participants)
         for node in participants:
             json_data["nodes"].append(
                 {
                     "uid": node['device_args']['uid'],
-                    "idx": node['device_args']['idx'],
+                    "id": node['device_args']['idx'],
                     "ipport": node['network_args']['ip'] + ":" + str(node['network_args']['port']),
                     "role": node['device_args']['role'],
+                    "ip": node['network_args']['ip'],
+                    "port": str(node['network_args']['port']),
+                    "start": node['device_args']['start'],
                 }
             )
 
@@ -320,6 +323,6 @@ class TopologyManager:
                         }
                     )
                     # matrix[nodes.index(node['network_args']['ip'] + ':' + str(node['network_args']['port']))][nodes.index(neighbour)] = 1
-
+        print(json_data)
         with open(path, "w") as f:
             json.dump(json_data, f, sort_keys=False, indent=2)

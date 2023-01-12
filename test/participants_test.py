@@ -14,7 +14,7 @@ def test_check_gpu():
     print("Checking GPU...")
 
 
-def test_yaml_file(scenario_config="/Users/enrique/Documents/PhD/fedstellar/config/scenario_config.yaml"):
+def test_yaml_file(scenario_config="/Users/enrique/Documents/PhD/fedstellar/config/deployment_config.yaml"):
     with open(scenario_config, 'r') as stream:
         try:
             config = yaml.safe_load(stream)
