@@ -70,6 +70,17 @@
             <p class="text-muted">Select the deployment options for the scenario.</p>
         </div>
         <div class="form-group">
+            <h4 class="step-number">Federation architecture</h4>
+            <select class="form-control" id="federationArchitecture" name="federation" style="display: inline; width: 50%">
+                <option value="default" selected>DFL</option>
+                <option>SDFL</option>
+                <option>CFL</option>
+            </select>
+            <small id="architectureHelp" class="form-text text-muted">
+                <i id="architectureHelpIcon" class="fa fa-info-circle"></i>
+            </small>
+        </div>
+        <div class="form-group">
             <h4 class="step-number">Network topology</h4>
             <select class="form-control" id="networkTopology" style="display: inline; width: 50%">
                 <option value="default" selected>Custom</option>
@@ -84,21 +95,6 @@
             </small>
         </div>
         <div class="form-group">
-            <h4 class="step-number">Participants</h4>
-            <div id="participant-items"></div>
-        </div>
-        <div class="form-group">
-            <h4 class="step-number">Federation architecture</h4>
-            <select class="form-control" id="federationArchitecture" name="federation" style="display: inline; width: 50%">
-                <option value="default" selected>DFL</option>
-                <option>SDFL</option>
-                <option>CFL</option>
-            </select>
-            <small id="architectureHelp" class="form-text text-muted">
-                <i id="architectureHelpIcon" class="fa fa-info-circle"></i>
-            </small>
-        </div>
-        <div class="form-group">
             <h4 class="step-number">Dataset</h4>
             <select class="form-control" id="datasetSelect" name="dataset" style="display: inline; width: 50%">
                 <option value="default" selected>MNIST</option>
@@ -108,8 +104,12 @@
                 <i id="datasetHelpIcon" class="fa fa-info-circle"></i>
             </small>
         </div>
+        <div class="form-group">
+            <h4 class="step-number">Participants</h4>
+            <div id="participant-items"></div>
+        </div>
     </div>
-    <div id="topology-container" class="col-md-8" style="border: 2px solid black">
+    <div id="topology-container" class="col-md-8 text-center" style="border: 2px solid black">
         <div id="info-container">
             <div id="info-participants">Number of participants: <p id="info-participants-number" style="display: inline">5</p></div>
         </div>
@@ -140,7 +140,7 @@
         </div>
         <div id="3d-graph"></div>
     </div>
-    <button id="run-btn" type="button" class="btn" style="margin-top: 10px">Run Fedstellar</button>
+    <button id="run-btn" type="button" class="btn" style="margin-top: 10px;background-color: rgba(29,182,138,0.49)">Run Fedstellar</button>
 </form>
 
 <style>
