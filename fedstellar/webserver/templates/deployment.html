@@ -579,13 +579,13 @@
 
     const width = document.getElementById('3d-graph').offsetWidth;
 
-    const N = 5;
+    const N = 3;
     const gData = {
         nodes: [...Array(N).keys()].map(i => ({
             id: i,
             ip: "127.0.0.1",
             port: "4500" + i.toString(),
-            role: 'trainer',
+            role: i === 0 ? "aggregator" : "trainer",
             start: (i === 0),
         })),
         links: [...Array(N).keys()]
@@ -628,17 +628,9 @@
         .width(width)
         .height(700)
         .backgroundColor('#ffffff')
-        //.jsonUrl("/monitoring/topology/3d")
-        //.nodeId('id')
-        ////.nodeVal('id')
         .nodeLabel(node => `<p style="color: black">ID: ${node.id} | Role: ${node.role}</p>`)
-
-        ///.onNodeClick(node => window.open(`https://bl.ocks.org/${node.user}/${node.id}`, '_blank'))
-        // .onNodeClick(removeNode)
-
         .onNodeClick((node, event) => {
             // event.stopPropagation();
-
             if (event.ctrlKey) {
                 // Add a new node and link it to the node that was clicked
                 const newNode = {id: gData.nodes.length, ip: "127.0.0.1", port: "4500" + gData.nodes.length.toString(), role: 'trainer', start: false};
@@ -689,22 +681,24 @@
             // If click a node and the same time click on the key 'command' (remove node)
             if (event.metaKey) {
                 // Delete the node from the graph
-                let {nodes, links} = gData;
-                console.log(links);
-                links = links.filter(l => l.source.id !== node.id && l.target.id !== node.id); // Remove links attached to node
-                console.log(links);
-                nodes.splice(node.id, 1); // Remove node
-                nodes.forEach((n, idx) => {
-                    // Remove links from node
-                    n.links = n.links.filter(l => l.source.id !== node.id && l.target.id !== node.id);
-                    // Remove neighbors from node
-                    n.neighbors = n.neighbors.filter(l => l.id !== node.id);
-                    n.id = idx; // Reset node ids to array index
-                    n.port = "4500" + n.id.toString();
-                });
-                // Graph.graphData({nodes, links});
-                gData.nodes = nodes;
-                gData.links = links;
+                if (gData.nodes.length > 1) {
+                    let {nodes, links} = gData;
+                    console.log(links);
+                    links = links.filter(l => l.source.id !== node.id && l.target.id !== node.id); // Remove links attached to node
+                    console.log(links);
+                    nodes.splice(node.id, 1); // Remove node
+                    nodes.forEach((n, idx) => {
+                        // Remove links from node
+                        n.links = n.links.filter(l => l.source.id !== node.id && l.target.id !== node.id);
+                        // Remove neighbors from node
+                        n.neighbors = n.neighbors.filter(l => l.id !== node.id);
+                        n.id = idx; // Reset node ids to array index
+                        n.port = "4500" + n.id.toString();
+                    });
+                    // Graph.graphData({nodes, links});
+                    gData.nodes = nodes;
+                    gData.links = links;
+                }
             }
             // I get the following error: Computed radius is NaN. The "position" attribute is likely to have NaN values.
             Graph.graphData(gData);
@@ -742,9 +736,6 @@
 
             updateColorNodes();
         })
-        ///.linkSource('source')
-        ///.linkTarget('target')
-        //.nodeAutoColorBy('id')  // role
         .nodeColor(node => selectedNodes.has(node) ? 'rgba(255,0,0,0.6)'
             : (highlightNodes.has(node) && node !== hoverNode ? 'rgba(0,255,140,0.8)'
                 : (node.role === "server" ? 'rgba(230,0,255,0.6)'

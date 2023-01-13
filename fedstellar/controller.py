@@ -33,7 +33,12 @@ def signal_handler(sig, frame):
     logging.info('You pressed Ctrl+C!')
     logging.info('Finishing all scenarios and nodes...')
     Controller.killports()
-    os.system("""osascript -e 'tell application "Terminal" to quit'""") if sys.platform == "darwin" else None
+    if sys.platform == "darwin":
+        os.system("""osascript -e 'tell application "Terminal" to quit'""")
+    elif sys.platform == "linux":
+        os.system("""killall gnome-terminal""")
+    else:
+        os.system("""taskkill /IM cmd.exe /F""")
     logging.info("Remove configuration and topology files...")
     Controller.remove_config_files()
     logging.info("Remove configuration and topology files... Done")
@@ -41,15 +46,6 @@ def signal_handler(sig, frame):
 
 
 signal.signal(signal.SIGINT, signal_handler)
-
-
-def run_webserver(python_path, log_dir):
-    # Save the configuration in environment variables
-    controller_env = os.environ.copy()
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    webserver_path = os.path.join(current_dir, "webserver")
-    with open(f'{log_dir}/server.log', 'w', encoding='utf-8') as log_file:
-        subprocess.Popen([python_path, "app.py"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
 
 
 class Controller:
@@ -87,41 +83,43 @@ class Controller:
         os.environ["FEDSTELLAR_CONFIG_DIR"] = self.config_dir
         os.environ["FEDSTELLAR_PYTHON_PATH"] = self.python_path
 
-        webserver = True  # TODO: change it
-        if webserver:
-            logging.info("Starting webserver")
-            run_webserver(self.python_path, self.log_dir)
-            logging.info('Press Ctrl+C for exit')
-            while True:
-                time.sleep(1)
-
-        logging.info("Starting nodes...")
-        input("Press Enter to continue...")
-        self.load_configurations_and_start_nodes()
-
-        if self.mender:
-            logging.info("[Mender.module] Mender module initialized")
-            time.sleep(2)
-            mender = Mender()
-            logging.info("[Mender.module] Getting token from Mender server: {}".format(os.getenv("MENDER_SERVER")))
-            mender.renew_token()
-            time.sleep(2)
-            logging.info("[Mender.module] Getting devices from {} with group Cluster_Thun".format(os.getenv("MENDER_SERVER")))
-            time.sleep(2)
-            devices = mender.get_devices_by_group("Cluster_Thun")
-            logging.info("[Mender.module] Getting a pool of devices: 5 devices")
-            # devices = devices[:5]
-            for i in self.config.participants:
-                logging.info("[Mender.module] Device {} | IP: {}".format(i['device_args']['idx'], i['network_args']['ipdemo']))
-                logging.info("[Mender.module] \tCreating artifacts...")
-                logging.info("[Mender.module] \tSending Fedstellar framework...")
-                # mender.deploy_artifact_device("my-update-2.0.mender", i['device_args']['idx'])
-                logging.info("[Mender.module] \tSending configuration...")
-                time.sleep(5)
+        if self.webserver:
+            self.run_webserver()
+        else:
+            logging.info("The controller without webserver is under development. Please, use the webserver (--webserver) option.")
+            # self.load_configurations_and_start_nodes()
+            if self.mender:
+                logging.info("[Mender.module] Mender module initialized")
+                time.sleep(2)
+                mender = Mender()
+                logging.info("[Mender.module] Getting token from Mender server: {}".format(os.getenv("MENDER_SERVER")))
+                mender.renew_token()
+                time.sleep(2)
+                logging.info("[Mender.module] Getting devices from {} with group Cluster_Thun".format(os.getenv("MENDER_SERVER")))
+                time.sleep(2)
+                devices = mender.get_devices_by_group("Cluster_Thun")
+                logging.info("[Mender.module] Getting a pool of devices: 5 devices")
+                # devices = devices[:5]
+                for i in self.config.participants:
+                    logging.info("[Mender.module] Device {} | IP: {}".format(i['device_args']['idx'], i['network_args']['ipdemo']))
+                    logging.info("[Mender.module] \tCreating artifacts...")
+                    logging.info("[Mender.module] \tSending Fedstellar framework...")
+                    # mender.deploy_artifact_device("my-update-2.0.mender", i['device_args']['idx'])
+                    logging.info("[Mender.module] \tSending configuration...")
+                    time.sleep(5)
 
         logging.info('Press Ctrl+C for exit')
         while True:
             time.sleep(1)
+
+    def run_webserver(self):
+        # Save the configuration in environment variables
+        logging.info("Running webserver: https://127.0.0.1:5000")
+        controller_env = os.environ.copy()
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        webserver_path = os.path.join(current_dir, "webserver")
+        with open(f'{self.log_dir}/server.log', 'w', encoding='utf-8') as log_file:
+            subprocess.Popen([self.python_path, "app.py"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
 
     def init(self):
         # First, kill all the ports related to previous executions
@@ -159,13 +157,25 @@ class Controller:
     def killports(term="python"):
         # kill all the ports related to python processes
         time.sleep(1)
-        command = '''kill -9 $(lsof -i @localhost:1024-65545 | grep ''' + term + ''' | awk '{print $2}') > /dev/null 2>&1'''
+        if sys.platform == "darwin":
+            command = '''kill -9 $(lsof -i @localhost:1024-65545 | grep ''' + term + ''' | awk '{print $2}') > /dev/null 2>&1'''
+        elif sys.platform == "linux":
+            command = '''kill -9 $(lsof -i @localhost:1024-65545 | grep ''' + term + ''' | awk '{print $2}') > /dev/null 2>&1'''
+        else:
+            command = '''taskkill /F /IM ''' + term + '''.exe > nul 2>&1'''
+
         os.system(command)
 
     @staticmethod
     def killport(port):
         time.sleep(1)
-        command = '''kill -9 $(lsof -i @localhost:''' + str(port) + ''' | grep python | awk '{print $2}') > /dev/null 2>&1'''
+        if sys.platform == "darwin":
+            command = '''kill -9 $(lsof -i @localhost:''' + str(port) + ''' | grep python | awk '{print $2}') > /dev/null 2>&1'''
+        elif sys.platform == "linux":
+            command = '''kill -9 $(lsof -i :''' + str(port) + ''' | grep python | awk '{print $2}') > /dev/null 2>&1'''
+        else:
+            command = '''taskkill /F /IM python.exe /T'''
+
         os.system(command)
 
     def load_configurations_and_start_nodes(self):
@@ -264,8 +274,10 @@ class Controller:
         command = f'cd {os.path.dirname(os.path.realpath(__file__))}; {self.python_path} -u node_start.py {str(self.config.participants_path[idx])} 2>&1'
         if sys.platform == "darwin":
             os.system("""osascript -e 'tell application "Terminal" to activate' -e 'tell application "Terminal" to do script "{}"'""".format(command))
+        elif sys.platform == "linux":
+            os.system("""gnome-terminal -e "{}" """.format(command))
         else:
-            os.system(command)
+            os.system("""start cmd /k "{}" """.format(command))
 
     def start_nodes(self, idx_start_node):
         # Start the nodes
