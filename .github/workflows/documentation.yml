@@ -46,8 +46,7 @@ jobs:
       run: |
           ls
           mv index_main.html index.html
-          git add index.html
-          git commit -m "Adding files to gh-pages"
+          git commit -am "Adding files to gh-pages"
           echo "fedstellar.enriquetomasmb.com" > CNAME
           git add CNAME
           git commit --amend --no-edit
