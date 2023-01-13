@@ -31,19 +31,20 @@ jobs:
     - uses: actions/checkout@master
       with:
         fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
-    - name: Extract files from master
-      run: |
-          mkdir ${{ runner.temp }}/files
-          cp docs/index.html ${{ runner.temp }}/files/
     - name: Build and Commit
       uses: sphinx-notes/pages@v2
       with:
         target_path: 7ecafa3f19d05b4e9da98f734fd69aca7baa4965
+    - name: Copy index.html
+      run: |
+        ls
+        cp docs/index.html index.html
+        git add index.html
+        git commit --no-edit
     - name: Add files
       run: |
           echo "fedstellar.enriquetomasmb.com" > CNAME
           git add CNAME
-          git add ${{ runner.temp }}/files/index.html
           git commit --amend --no-edit
     - name: Push changes
       uses: ad-m/github-push-action@master
