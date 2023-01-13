@@ -38,6 +38,9 @@ jobs:
       run: |
           echo "fedstellar.enriquetomasmb.com" > CNAME
           git add CNAME
+          ls /home/runner/work/fedstellar/fedstellar/docs/
+          echo "-----"
+          ls /home/runner/work/fedstellar/fedstellar/
           git add /home/runner/work/fedstellar/fedstellar/docs/index.html
           git commit --amend --no-edit
     - name: Push changes
