@@ -35,6 +35,8 @@ jobs:
       uses: sphinx-notes/pages@v2
       with:
         target_path: 7ecafa3f19d05b4e9da98f734fd69aca7baa4965
+    - name: Checkout to master
+      run: git checkout master
     - name: Copy index.html
       run: |
         ls
