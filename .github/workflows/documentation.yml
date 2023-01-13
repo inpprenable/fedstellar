@@ -37,8 +37,9 @@ jobs:
     - name: Add extra files
       run: |
           echo "fedstellar.enriquetomasmb.com" > CNAME
+          ls
           git add CNAME
-          git add index.html
+          git add docs/index.html
           git commit --amend --no-edit
     - name: Push changes
       uses: ad-m/github-push-action@master
