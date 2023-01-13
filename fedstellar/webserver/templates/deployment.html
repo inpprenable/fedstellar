@@ -70,13 +70,9 @@
             <p class="text-muted">Select the deployment options for the scenario.</p>
         </div>
         <div class="form-group">
-            <h4 class="step-number">Participants</h4>
-            <div id="participant-items"></div>
-        </div>
-        <div class="form-group">
             <h4 class="step-number">Network topology</h4>
             <select class="form-control" id="networkTopology" style="display: inline; width: 50%">
-                <option value="default" selected>Choose an option</option>
+                <option value="default" selected>Custom</option>
                 <option>Fully</option>
                 <option>Ring</option>
                 <option>Star</option>
@@ -88,15 +84,28 @@
             </small>
         </div>
         <div class="form-group">
+            <h4 class="step-number">Participants</h4>
+            <div id="participant-items"></div>
+        </div>
+        <div class="form-group">
             <h4 class="step-number">Federation architecture</h4>
             <select class="form-control" id="federationArchitecture" name="federation" style="display: inline; width: 50%">
-                <option value="default" selected>Choose an option</option>
-                <option>CFL</option>
-                <option>DFL</option>
+                <option value="default" selected>DFL</option>
                 <option>SDFL</option>
+                <option>CFL</option>
             </select>
             <small id="architectureHelp" class="form-text text-muted">
                 <i id="architectureHelpIcon" class="fa fa-info-circle"></i>
+            </small>
+        </div>
+        <div class="form-group">
+            <h4 class="step-number">Dataset</h4>
+            <select class="form-control" id="datasetSelect" name="dataset" style="display: inline; width: 50%">
+                <option value="default" selected>MNIST</option>
+                <option>FEMNIST</option>
+            </select>
+            <small id="datasetHelp" class="form-text text-muted">
+                <i id="datasetHelpIcon" class="fa fa-info-circle"></i>
             </small>
         </div>
     </div>
@@ -135,9 +144,15 @@
 </form>
 
 <style>
+    .btn {
+        outline: none !important;
+        text-decoration: none !important;
+    }
+
     #form-configurations {
         counter-reset: step;
     }
+
     .step-number::before {
         content: counter(step);
         counter-increment: step;
@@ -153,9 +168,8 @@
     }
 
     .participant-started {
-        border-radius: 40%;
-        border: orange 2px solid;
-
+        background-color: rgb(255 165 0 / 51%);
+        font-weight: bold;
     }
 
     #info-container {
@@ -228,6 +242,7 @@
 <script>
     // When click on architectureHelpIcon, show a popover on the bottom of the icon using Bootstrap and HTML code
     contentTopologyHelp = '<ul>\n' +
+        '                    <li>Custom: Custom topology with the nodes</li>\n' +
         '                    <li>Fully: All nodes are connected to all other nodes</li>\n' +
         '                    <li>Ring: All nodes are connected to two other nodes</li>\n' +
         '                    <li>Star: A central node is connected to all other nodes</li>\n' +
@@ -238,6 +253,11 @@
         '                    <li>CFL: All nodes are connected to a central node</li>\n' +
         '                    <li>DFL: Nodes are connected to each other</li>\n' +
         '                    <li>SDFL: Nodes are connected to each other and the aggregator rotates</li>\n' +
+        '                </ul>'
+
+    contentDatasetHelp = '<ul>\n' +
+        '                    <li>MNIST: The MNIST dataset</li>\n' +
+        '                    <li>FEMNIST: The FEMNIST dataset</li>\n' +
         '                </ul>'
     $('#topologyHelpIcon').popover({
         title: 'Network topology',
@@ -253,6 +273,15 @@
         html: true,
         placement: 'right',
         content: contentArchitectureHelp,
+        trigger: 'hover',
+        container: 'body',
+        delay: {show: 500, hide: 100},
+    });
+    $('#datasetHelpIcon').popover({
+        title: 'Dataset',
+        html: true,
+        placement: 'right',
+        content: contentDatasetHelp,
         trigger: 'hover',
         container: 'body',
         delay: {show: 500, hide: 100},
@@ -475,46 +504,26 @@
             // participantItem.classList.add("participant-item");
             const participantItem_img = document.createElement("img");
             participantItem_img.id = `participant-img-${i}`;
+            participantItem_img.setAttribute("data-id", i.toString());
             participantItem_img.src = "{{ url_for('static', filename='img/device.png') }}";
             participantItem_img.width = 50
             participantItem_img.height = 50
             participantItem_img.style.marginRight = "10px";
-            // Add text when mouse is over the image
-            if (node.start) {
-                participantItem_img.classList.add("participant-started");
-                participantItem_img.title = `Participant ${i} (start node)`;
-            } else {
-                participantItem_img.title = `Participant ${i} (not start node)`;
-            }
-
-            participantItem_img.addEventListener("click", function () {
-                // If any other participant-item has started class, assign it
-
-                if (document.getElementsByClassName("participant-started").length > 0) {
-                    Graph.graphData().nodes[document.getElementsByClassName("participant-started")[0].id.split("-")[2]].start = false;
-                    document.getElementsByClassName("participant-started")[0].classList.remove("participant-started");
-                    participantItem_img.title = `Participant ${i} (not start node)`;
-                    // Remove the start node using node that I removed the class
-                }
-                // Assign started class to the clicked participant-item
-                participantItem_img.classList.add("participant-started");
-                participantItem_img.title = `Participant ${i} (start node)`;
-                // Update the start property of the node
-                Graph.graphData().nodes[i].start = true;
-
-            });
 
             const label = document.createElement("label");
             label.setAttribute("for", "participant-" + i);
+            label.setAttribute("data-id", i.toString());
             label.innerHTML = "Participant " + i;
             label.style.marginRight = "10px";
 
             const info = document.createElement("button")
             info.id = "participant-" + i + "-btn";
+            info.setAttribute("data-id", i.toString());
             info.type = "button";
             info.classList.add("btn");
             info.innerHTML = "+INFO";
             info.style.padding = "0";
+            info.style.fontWeight = "bold";
 
             // When click the button, show the modal with the information of the participant
             info.addEventListener("click", function () {
@@ -558,6 +567,41 @@
                 $('#participant-modal').modal('show');
             });
 
+            const start = document.createElement("button")
+            start.id = "participant-" + i + "-start-btn";
+            start.setAttribute("data-id", i.toString());
+            start.type = "button";
+            start.classList.add("btn");
+            start.innerHTML = "Start participant";
+            start.style.padding = "0";
+            start.style.paddingLeft = "15px";
+            start.style.paddingRight = "15px";
+            start.style.marginLeft = "10px";
+            start.style.border = "none";
+            start.style.cursor = "pointer";
+            // Add text when mouse is over the image
+            if (node.start) {
+                start.classList.add("participant-started");
+                start.title = `Participant ${i} (start node)`;
+            } else {
+                start.title = `Participant ${i} (not start node)`;
+            }
+
+            start.addEventListener("click", function () {
+                if (document.getElementsByClassName("participant-started").length > 0) {
+                    // Get data-id of the participant started
+                    Graph.graphData().nodes[document.getElementsByClassName("participant-started")[0].getAttribute("data-id")].start = false;
+                    document.getElementsByClassName("participant-started")[0].classList.remove("participant-started");
+                    start.title = `Participant ${i} (not start node)`;
+                    // Remove the start node using node that I removed the class
+                }
+                // Assign started class to the clicked participant-item
+                start.classList.add("participant-started");
+                start.title = `Participant ${i} (start node)`;
+                // Update the start property of the node
+                Graph.graphData().nodes[i].start = true;
+            });
+
             document.getElementById("participant-modal-save").addEventListener("click", function () {
                 const participant = Graph.graphData().nodes[i];
                 participant.ip = document.getElementById("participant-" + i + "-ip").value;
@@ -569,7 +613,15 @@
             participantItems.appendChild(participantItem_img);
             participantItems.appendChild(label);
             participantItems.appendChild(info);
+            participantItems.appendChild(start);
             participantItems.appendChild(document.createElement("br"));
+        }
+
+        // If there is no participant-started, add the class to the first participant
+        if (document.getElementsByClassName("participant-started").length === 0) {
+            document.getElementById("participant-0-start-btn").classList.add("participant-started");
+            document.getElementById("participant-0-start-btn").title = `Participant 0 (start node)`;
+            Graph.graphData().nodes[0].start = true;
         }
     }
 </script>
@@ -751,35 +803,38 @@
     // Change text in div with class="scene-nav-info" to "Click on a node to select it. Press Ctrl to add a new node. Press Shift to select multiple nodes. Press Return to create a link between two selected nodes."
     document.getElementsByClassName("scene-nav-info")[0].innerHTML = "Click on a node to select it. Press Ctrl to add a new node. Press Shift to select multiple nodes. Press Return to create a link between two selected nodes.";
 
-    // Open controls
-    const linkForce = Graph
-        .d3Force('link')
-        .distance(link => link.color ? settings.solidDistance : settings.weakDistance);
-
-    //Define GUI
-    const Settings = function () {
-        this.solidDistance = 20;
-        this.weakDistance = 20;
-    };
-
-    const settings = new Settings();
-    const gui = new dat.GUI();
-    document.getElementsByClassName("dg ac")[0].style.zIndex = 10;
-
-    const controllerOne = gui.add(settings, 'solidDistance', 0, 1000);
-    const controllerTwo = gui.add(settings, 'weakDistance', 0, 1000);
-
-    controllerOne.onChange(updateLinkDistance);
-    controllerTwo.onChange(updateLinkDistance);
-
-    function updateLinkDistance() {
-        linkForce.distance(link => link.color ? settings.solidDistance : settings.weakDistance);
-        Graph.numDimensions(3); // Re-heat simulation
-    }
-
     function updateColorNodes() {
         // trigger update of highlighted objects in scene
         Graph.nodeColor(Graph.nodeColor())
+    }
+
+    // openControls();
+
+    function openControls() {
+        // Open controls
+        const linkForce = Graph
+            .d3Force('link')
+            .distance(link => link.color ? settings.solidDistance : settings.weakDistance);
+        //Define GUI
+        const Settings = function () {
+            this.solidDistance = 20;
+            this.weakDistance = 20;
+        };
+
+        const settings = new Settings();
+        const gui = new dat.GUI();
+        document.getElementsByClassName("dg ac")[0].style.zIndex = 10;
+
+        const controllerOne = gui.add(settings, 'solidDistance', 0, 1000);
+        const controllerTwo = gui.add(settings, 'weakDistance', 0, 1000);
+
+        controllerOne.onChange(updateLinkDistance);
+        controllerTwo.onChange(updateLinkDistance);
+
+        function updateLinkDistance() {
+            linkForce.distance(link => link.color ? settings.solidDistance : settings.weakDistance);
+            Graph.numDimensions(3); // Re-heat simulation
+        }
     }
 
 </script>

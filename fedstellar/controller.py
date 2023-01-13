@@ -107,8 +107,9 @@ class Controller:
                     # mender.deploy_artifact_device("my-update-2.0.mender", i['device_args']['idx'])
                     logging.info("[Mender.module] \tSending configuration...")
                     time.sleep(5)
+            sys.exit(0)
 
-        logging.info('Press Ctrl+C for exit')
+        logging.info('Press Ctrl+C for exit from Fedstellar (global exit)')
         while True:
             time.sleep(1)
 
@@ -151,7 +152,6 @@ class Controller:
 
         logging.info("Controller network: {}".format(network))
         logging.info("Controller IP address: {}".format(ip_address))
-        logging.info("Federated architecture: {}".format(self.federation))
 
     @staticmethod
     def killports(term="python"):

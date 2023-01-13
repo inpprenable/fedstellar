@@ -3,7 +3,6 @@ import hashlib
 import json
 import os
 import signal
-import subprocess
 import sys
 
 
@@ -456,7 +455,6 @@ def fedstellar_monitoring_stop_scenario(scenario_name):
     # Stop the scenario
     if "user" in session.keys():
         from fedstellar.controller import Controller
-        os.system("""osascript -e 'tell application "Terminal" to quit'""") if sys.platform == "darwin" else None
         nodes = list_nodes()
         for node in nodes:
             # Kill the node
