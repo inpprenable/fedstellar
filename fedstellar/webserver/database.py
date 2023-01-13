@@ -1,8 +1,6 @@
-import os
 import sqlite3
 import hashlib
 import datetime
-import sys
 
 user_db_file_location = "database_file/users.db"
 note_db_file_location = "database_file/notes.db"
