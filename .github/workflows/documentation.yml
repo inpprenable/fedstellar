@@ -37,7 +37,7 @@ jobs:
     - name: Add extra files
       run: |
           echo "fedstellar.enriquetomasmb.com" > CNAME
-          ls
+          ls 7ecafa3f19d05b4e9da98f734fd69aca7baa4965/
           git add CNAME
           git add docs/index.html
           git commit --amend --no-edit
