@@ -35,18 +35,8 @@ jobs:
       uses: sphinx-notes/pages@v2
       with:
         target_path: 7ecafa3f19d05b4e9da98f734fd69aca7baa4965
-    - name: Checkout to main
-      run: git checkout main
-    - name: Copy index.html
-      run: |
-        cp docs/index.html index_main.html
-    - name: Checkout to gh-pages
-      run: git checkout gh-pages
     - name: Add files
       run: |
-          ls
-          mv index_main.html index.html
-          git commit -am "Adding files to gh-pages"
           echo "fedstellar.enriquetomasmb.com" > CNAME
           git add CNAME
           git commit --amend --no-edit
