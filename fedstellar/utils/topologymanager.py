@@ -1,9 +1,9 @@
 import json
-import logging
-import os
 import random
 
 import matplotlib.pyplot as plt
+plt.switch_backend('Agg')
+
 import networkx as nx
 import numpy as np
 

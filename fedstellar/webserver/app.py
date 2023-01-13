@@ -6,11 +6,15 @@ import signal
 import subprocess
 import sys
 
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Add the path two directories up to the system path
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+
 from ansi2html import Ansi2HTMLConverter
 
 from fedstellar.controller import Controller
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from flask import Flask, session, url_for, redirect, render_template, request, abort, flash, send_file, make_response, jsonify, Response
 from werkzeug.utils import secure_filename

@@ -3,6 +3,8 @@ import os
 import sys
 import time
 
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))  # Parent directory where is the fedml_api module
+
 from fedstellar.learning.pytorch.femnist.femnist import FEMNISTDataModule
 
 from fedstellar.config.config import Config
