@@ -41,10 +41,12 @@ jobs:
       run: |
         ls
         cp docs/index.html index.html
-        git add index.html
-        git commit --no-edit
+    - name: Checkout to main
+      run: git checkout gh-pages
     - name: Add files
       run: |
+          git add index.html
+          git commit -m "Adding files to gh-pages"
           echo "fedstellar.enriquetomasmb.com" > CNAME
           git add CNAME
           git commit --amend --no-edit
