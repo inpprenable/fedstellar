@@ -33,8 +33,8 @@ jobs:
         fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
     - name: Extract files from master
       run: |
-          mkdir /tmp/files
-          cp docs/index.html /tmp/files/
+          mkdir /home/runner/work/fedstellar/files
+          cp docs/index.html /home/runner/work/fedstellar/files/
     - name: Build and Commit
       uses: sphinx-notes/pages@v2
       with:
@@ -43,7 +43,7 @@ jobs:
       run: |
           echo "fedstellar.enriquetomasmb.com" > CNAME
           git add CNAME
-          git add /tmp/files/index.html
+          git add /home/runner/work/fedstellar/files/index.html
           git commit --amend --no-edit
     - name: Push changes
       uses: ad-m/github-push-action@master
