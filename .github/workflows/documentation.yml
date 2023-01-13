@@ -39,7 +39,6 @@ jobs:
       run: git checkout main
     - name: Copy index.html
       run: |
-        ls
         cp docs/index.html index.html
     - name: Checkout to main
       run: git checkout gh-pages
