@@ -11,8 +11,8 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'fedstellar'
-copyright = '2022, Enrique Tomás Martínez Beltrán'
+project = 'Fedstellar'
+copyright = '2023, Enrique Tomás Martínez Beltrán'
 author = 'Enrique Tomás Martínez Beltrán'
 release = '0.1'
 
@@ -26,6 +26,8 @@ extensions = [
     'autoapi.extension'
 ]
 
+autodoc_typehints = 'description'
+
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'app', 'test', 'setup.py']
 
@@ -37,6 +39,7 @@ html_theme = 'furo'
 html_static_path = ['_static']
 
 # -- Options for autoapi extension -------------------------------------------
+autoapi_root = 'api'
 autoapi_template_dir = "_templates/autoapi"
 autoapi_dirs = ['../fedstellar']
 autoapi_type = "python"
@@ -48,5 +51,4 @@ autoapi_options = [
     "imported-members",
 ]
 # autoapi_keep_files = True
-autodoc_typehints = "signature"
 
