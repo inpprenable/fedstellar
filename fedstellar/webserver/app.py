@@ -5,7 +5,6 @@ import os
 import signal
 import sys
 
-
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # Add the path two directories up to the system path
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
@@ -14,10 +13,9 @@ from ansi2html import Ansi2HTMLConverter
 
 from fedstellar.controller import Controller
 
-
 from flask import Flask, session, url_for, redirect, render_template, request, abort, flash, send_file, make_response, jsonify, Response
 from werkzeug.utils import secure_filename
-from fedstellar.webserver.database import list_users, verify, delete_user_from_db, add_user, scenario_update_record, scenario_set_all_status_to_finished, get_active_scenario, remove_all_nodes, get_scenario_by_name, get_user_info
+from fedstellar.webserver.database import list_users, verify, delete_user_from_db, add_user, scenario_update_record, scenario_set_all_status_to_finished, get_active_scenario, remove_all_nodes, get_user_info
 from fedstellar.webserver.database import read_note_from_db, write_note_into_db, delete_note_from_db, match_user_id_with_note_id
 from fedstellar.webserver.database import image_upload_record, list_images_for_user, match_user_id_with_image_uid, delete_image_from_db, get_image_file_name, update_node_record, list_nodes
 
@@ -262,12 +260,6 @@ def fedstellar_monitoring():
     if "user" in session.keys():
         scenario_running = get_active_scenario()
         if scenario_running:
-            scenario_name = scenario_running[0]
-            scenario_start_time = scenario_running[1]
-            scenario_end_time = scenario_running[2]
-            scenario_description = scenario_running[3]
-            scenario_status = scenario_running[4]
-
             nodes_list = list_nodes()
             # Get json data from each node configuration file
             nodes_config = []
@@ -310,14 +302,14 @@ def fedstellar_monitoring():
             if os.path.exists(os.path.join(app.config['config_dir'], 'topology.png')):
                 if os.path.getmtime(os.path.join(app.config['config_dir'], 'topology.png')) < max([os.path.getmtime(os.path.join(app.config['config_dir'], f'participant_{node[1]}.json')) for node in nodes_list]):
                     # Update the 3D topology and image
-                    update_topology(scenario_name, nodes_list, nodes_config)
+                    update_topology(scenario_running[0], nodes_list, nodes_config)
             else:
-                update_topology(scenario_name, nodes_list, nodes_config)
+                update_topology(scenario_running[0], nodes_list, nodes_config)
 
             if request.path == "/monitoring":
-                return render_template("monitoring.html", nodes=nodes_table, scenario_name=scenario_name, scenario_description=scenario_description)
+                return render_template("monitoring.html", nodes=nodes_table, scenario_running=scenario_running)
             elif request.path == "/api/monitoring":
-                return jsonify({'scenario_status': scenario_status, 'nodes_table': list(nodes_table), 'scenario_name': scenario_name, 'scenario_description': scenario_description}), 200
+                return jsonify({'scenario_status': scenario_running[5], 'nodes_table': list(nodes_table), 'scenario_name': scenario_running[0], 'scenario_title': scenario_running[3], 'scenario_description': scenario_running[4]}), 200
             else:
                 return abort(401)
 
@@ -450,6 +442,7 @@ def fedstellar_monitoring_image(scenario_name):
     else:
         make_response("You are not authorized to access this page.", 401)
 
+
 @app.route("/monitoring/<scenario_name>/stop", methods=["GET"])
 def fedstellar_monitoring_stop_scenario(scenario_name):
     # Stop the scenario
@@ -545,7 +538,7 @@ def fedstellar_private_scenario_run():
             controller = Controller(args)  # Generate an instance of controller in this new process
             controller.load_configurations_and_start_nodes()
             # Generate/Update the scenario in the database
-            scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", description=data["scenario_description"])
+            scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=data["scenario_title"], description=data["scenario_description"])
 
             return redirect(url_for("fedstellar_monitoring"))
         else:

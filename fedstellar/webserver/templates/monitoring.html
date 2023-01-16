@@ -6,18 +6,21 @@
 <h4>Monitoring scenarios using Fedstellar</h4>
 <hr>
 
-{% if not scenario_name %}
+{% if not scenario_running %}
 
 <h4>There are no deployed scenarios to monitor... Create one <a href="{{ url_for('fedstellar_private_scenario') }}">here</a>!</h4>
 
-{% elif scenario_name %}
+{% elif scenario_running %}
 
 <h3>Scenario</h3>
-<h5>Scenario name: <b id="scenario_name">{{ scenario_name }}</b></h5>
-<h5>Scenario description: <b id="scenario_description">{{ scenario_description }}</b></h5>
-<a href="{{ url_for('fedstellar_private', scenario_name=scenario_name) }}" target="_blank" class="btn btn-primary">Private page</a>
+<h5>Scenario name: <b id="scenario_name">{{ scenario_running[0] }}</b></h5>
+<h5>Scenario title: <b id="scenario_title">{{ scenario_running[3] }}</b></h5>
+<h5>Scenario description: <b id="scenario_description">{{ scenario_running[4] }}</b></h5>
+<h5>Scenario start time: <b id="scenario_start_time">{{ scenario_running[1] }}</b></h5>
 
-<a href="{{ url_for('fedstellar_monitoring_stop_scenario', scenario_name=scenario_name) }}" class="btn btn-danger">Stop scenario</a>
+<a href="{{ url_for('fedstellar_private', scenario_name=scenario_running[0]) }}" target="_blank" class="btn btn-primary">Private page</a>
+
+<a href="{{ url_for('fedstellar_monitoring_stop_scenario', scenario_name=scenario_running[0]) }}" class="btn btn-danger">Stop scenario</a>
 <hr>
 <h3>Nodes in the database</h3>
 
@@ -97,7 +100,7 @@
 
 <h3>Internal topology</h3>
 
-<a class="btn btn-primary" style="padding: 10px;margin-bottom: 10px" href="{{ url_for('fedstellar_monitoring_image', scenario_name=scenario_name) }}">Download topology</a>
+<a class="btn btn-primary" style="padding: 10px;margin-bottom: 10px" href="{{ url_for('fedstellar_monitoring_image', scenario_name=scenario_running[0]) }}">Download topology</a>
 
 <div id="topology-container" class="row">
     <div id="3d-graph"></div>
