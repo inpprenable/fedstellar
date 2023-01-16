@@ -5,6 +5,7 @@
 
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
@@ -21,12 +22,12 @@ release = '0.1'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
-    'sphinx.ext.viewcode'
+    'sphinx.ext.viewcode',
+    'autoapi.extension'
 ]
 
 templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'app', 'test']
-
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'app', 'test', 'setup.py']
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -34,3 +35,18 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'app', 'test']
 
 html_theme = 'furo'
 html_static_path = ['_static']
+
+# -- Options for autoapi extension -------------------------------------------
+autoapi_template_dir = "_templates/autoapi"
+autoapi_dirs = ['../fedstellar']
+autoapi_type = "python"
+autoapi_options = [
+    "members",
+    "undoc-members",
+    "show-inheritance",
+    "show-module-summary",
+    "imported-members",
+]
+# autoapi_keep_files = True
+autodoc_typehints = "signature"
+
