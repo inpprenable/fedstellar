@@ -843,7 +843,7 @@
 
             // Create the options for the dropdown with specific actions when clicked
             const addNode = document.createElement("a");
-            addNode.innerHTML = "Add aggregator";
+            addNode.innerHTML = "<i class=\"fa fa-plus\" aria-hidden=\"true\"></i> Add node";
             addNode.style.display = "block";
             addNode.style.cursor = "pointer";
             addNode.style.padding = "5px";
@@ -867,7 +867,7 @@
             });
 
             const removeNode = document.createElement("a");
-            removeNode.innerHTML = "Remove node";
+            removeNode.innerHTML = "<i class=\"fa fa-minus\" aria-hidden=\"true\"></i> Remove node";
             removeNode.style.display = "block";
             removeNode.style.cursor = "pointer";
             removeNode.style.padding = "5px";
@@ -900,7 +900,7 @@
             });
 
             const changeRole = document.createElement("a");
-            changeRole.innerHTML = "Change role";
+            changeRole.innerHTML = "<i class=\"fa fa-refresh\" aria-hidden=\"true\"></i> Change role";
             changeRole.style.display = "block";
             changeRole.style.cursor = "pointer";
             changeRole.style.padding = "5px";
@@ -931,46 +931,12 @@
 
         })
         .onNodeClick((node, event) => {
-            // event.stopPropagation();
-            // Add a new node and link it to the node that was clicked (creation)
-            if (event.ctrlKey) {
-                // Activate custom topology
-                document.getElementById("custom-topology-btn").checked = true;
-                document.getElementById("predefined-topology").style.display = "none";
-                const newNode = {id: gData.nodes.length, ip: "127.0.0.1", port: "4500" + gData.nodes.length.toString(), role: 'trainer', start: false};
-                newNode.neighbors = [node];
-                newNode.links = [{source: node, target: newNode}];
-                node.neighbors.push(newNode);
-                node.links.push(newNode.links[0]);
-                // Update the graph
-                gData.nodes.push(newNode);
-                gData.links.push({source: newNode, target: node});
-
+            // If the node is not in the selected nodes, add it
+            if (!selectedNodes.has(node)) {
+                selectedNodes.add(node);
+            } else {
+                selectedNodes.delete(node);
             }
-            if (event.shiftKey) { // multi-selection
-                selectedNodes.has(node) ? selectedNodes.delete(node) : selectedNodes.add(node);
-            } else { // single-selection
-                // Selected is done by clicking on the same node again
-                const selected = selectedNodes.has(node) && selectedNodes.size === 1;
-                selectedNodes.clear();
-                // If the node was not selected, add it to the selection (create a red node)
-                if (!selected) {
-                    selectedNodes.add(node);
-                } else {
-                    // If the node is selected, change its color and role
-                    if (node.role === 'trainer') {
-                        node.role = 'aggregator';
-                        aggregators.add(node);
-                        trainers.delete(node);
-                    } else if (node.role === 'aggregator') {
-                        node.role = 'trainer';
-                        node.color = '#D55E00';
-                        aggregators.delete(node);
-                        trainers.add(node);
-                    }
-                }
-            }
-            // If there are two nodes selected, create a link between them (linking)
             if (selectedNodes.size === 2) {
                 // Activate custom topology
                 document.getElementById("custom-topology-btn").checked = true;
@@ -984,35 +950,7 @@
                 gData.links.push(link);
                 selectedNodes.clear();
             }
-
-            // If click a node and the same time click on the key 'command' (removing)
-            if (event.metaKey) {
-                console.log("Meta key pressed");
-                // Activate custom topology
-                document.getElementById("custom-topology-btn").checked = true;
-                document.getElementById("predefined-topology").style.display = "none";
-                // Delete the node from the graph
-                if (gData.nodes.length > 1) {
-                    let {nodes, links} = gData;
-                    links = links.filter(l => l.source.id !== node.id && l.target.id !== node.id); // Remove links attached to node
-                    nodes.splice(node.id, 1); // Remove node
-                    nodes.forEach((n, idx) => {
-                        // Remove links from node
-                        n.links = n.links.filter(l => l.source.id !== node.id && l.target.id !== node.id);
-                        // Remove neighbors from node
-                        n.neighbors = n.neighbors.filter(l => l.id !== node.id);
-                        n.id = idx; // Reset node ids to array index
-                        n.port = "4500" + n.id.toString();
-                    });
-                    // Graph.graphData({nodes, links});
-                    gData.nodes = nodes;
-                    gData.links = links;
-                }
-            }
-            // I get the following error: Computed radius is NaN. The "position" attribute is likely to have NaN values.
             updateGraph();
-            //Graph.graphData(gData);
-            //getNumberOfNodesAndUpdate();
         })
         .onLinkClick(link => {
             // Remove link
