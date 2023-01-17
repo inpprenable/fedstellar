@@ -838,6 +838,9 @@
             // Add the node id to the dropdown
             dropdown.setAttribute("data-id", node.id);
 
+            const title = document.createElement("h5");
+            title.innerHTML = "Node " + node.id;
+
             // Create the options for the dropdown with specific actions when clicked
             const addNode = document.createElement("a");
             addNode.innerHTML = "Add aggregator";
@@ -921,6 +924,7 @@
             });
 
             // Add the options to the dropdown
+            dropdown.appendChild(title);
             dropdown.appendChild(addNode);
             dropdown.appendChild(removeNode);
             dropdown.appendChild(changeRole);
