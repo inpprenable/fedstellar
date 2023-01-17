@@ -73,12 +73,12 @@
         <td id="status"><span class="label label-danger">Finished</span></td>
         {% endif %}
         <td class="td-icons">
-            <a href="{{ url_for('fedstellar_scenario_private', scenario_name=name) }}" target="_blank" class="label btn btn-primary">Private</a>
-            <a href="{{ url_for('fedstellar_scenario_monitoring', scenario_name=name) }}" class="label btn btn-primary">Monitor</a>
+            <a href="{{ url_for('fedstellar_scenario_private', scenario_name=name) }}" target="_blank" class="label btn btn-info">Private</a>
+            <a href="{{ url_for('fedstellar_scenario_monitoring', scenario_name=name) }}" class="label btn btn-info">Monitor</a>
             {% if status == "running" %}
             <a href="{{ url_for('fedstellar_stop_scenario', scenario_name=name) }}" class="label btn btn-danger">Stop scenario</a>
             {% else %}
-            <a id="reload-btn" data-scenario-name="{{ name }}" target="_blank" class="label btn btn-primary">Reload</a>
+            <a id="reload-btn" data-scenario-name="{{ name }}" target="_blank" class="label btn btn-info">Reload</a>
             {% endif %}
 
         </td>

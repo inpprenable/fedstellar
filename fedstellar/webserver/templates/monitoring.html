@@ -98,16 +98,19 @@
 </table>
 
 <h3>Map</h3>
+<p>This functionality enables you to visualize the nodes in a real-time map. Click on a node to see its details.</p>
 
 <div class="row">
     <div id="map"></div>
 </div>
 
 
-<h3>Internal topology</h3>
-
+<h3>Topology Image</h3>
+<p>This functionality enables you to generate a topology image of the scenario. The image is generated using the following button.</p>
 <a class="btn btn-primary" style="padding: 10px;margin-bottom: 10px" href="{{ url_for('fedstellar_monitoring_image', scenario_name=scenario[0]) }}">Download topology</a>
 
+<h3>Topology 3D</h3>
+<p>This functionality enables you to generate a 3D topology image of the scenario. The grey nodes are the ones that are not online. The image is generated below automatically.</p>
 <div id="topology-container" class="row">
     <div id="3d-graph"></div>
 </div>
@@ -230,24 +233,21 @@
 <script>
     const width = document.getElementById('topology-container').offsetWidth;
 
+    const offlineNodes = new Set();
+
     const Graph = ForceGraph3D()
     (document.getElementById('3d-graph'))
         .width(width)
         .height(700)
         .backgroundColor('#ffffff')
-        //.jsonUrl("/monitoring/" + document.getElementById('scenario_name').innerHTML + "/topology/3d")
         .nodeId('ipport')
-        //.nodeVal('id')
         .nodeLabel(node => `<p style="color: black">ID: ${node.id} | IP: ${node.ipport} | Role: ${node.role}</p>`)
         .onNodeClick(node => {
-            // Aim at node from outside it
             const distance = 40;
             const distRatio = 1 + distance / Math.hypot(node.x, node.y, node.z);
-
             const newPos = node.x || node.y || node.z
                 ? {x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio}
                 : {x: 0, y: 0, z: distance}; // special case if node is in (0,0,0)
-
             Graph.cameraPosition(
                 newPos, // new position
                 node, // lookAt ({ x, y, z })
@@ -256,18 +256,20 @@
         })
         //.linkSource('source')
         //.linkTarget('target')
-        .nodeColor(node => node.role === "trainer" ? '#0173B2'
-            : (node.role === "aggregator" ? 'rgba(255,136,0,0.6)' : undefined))
+
+        .nodeColor(node => offlineNodes.has(node.ipport) ? 'grey' :
+            (node.role === "trainer" ? '#0173B2'
+                : (node.role === "aggregator" ? 'rgba(255,136,0,0.6)'
+                    : (node.role === "evaluator" ? '#F44336' : undefined))))
         .linkColor(link => link.color ? 'red' : 'black')
         .linkOpacity(0.5)
         .linkDirectionalParticles("value")
         .linkDirectionalParticleSpeed(d => d.value * 0.001)
         .linkDirectionalParticleWidth(1);
 
-    Graph.cameraPosition({x: 0, y: 0, z: 100}, {x: 0, y: 0, z: 0}, 0);
-
     document.getElementsByClassName("scene-nav-info")[0].innerHTML = "Only visualization purpose. Click on a node to zoom in.";
 </script>
+
 
 <script>
     function async_update_nodes_page() {
@@ -285,7 +287,6 @@
                 // Examine the json in the response
                 response.json().then(function (data) {
                     // Update the table with the values of the json and mantain the style of HTML
-                    console.log(data);
                     var latlngs = Array();
                     var nodes_offline = Array();
 
@@ -306,6 +307,7 @@
                                     node_row[i].querySelector("#status").innerHTML = '<span class="label label-success">Online</span>';
                                 } else {
                                     nodes_offline.push(node[2] + ":" + node[3]);
+                                    offlineNodes.add(node[2] + ":" + node[3]);
                                     node_row[i].querySelector("#status").innerHTML = '<span class="label label-danger">Offline</span>';
                                 }
                                 break;
@@ -333,39 +335,29 @@
 
                     // Add data to the Graph topology
 
-                    const N = data['nodes_table'].length;
                     const gData = {
                         // if data['nodes_table'][i][0] is not in nodes_offline, then add the node to the graph
-                        nodes: data['nodes_table'].filter(node => !nodes_offline.includes(node[2] + ":" + node[3])).map(node => ({
+                        nodes: data['nodes_table'].map(node => ({
                             id: node[1],
                             ip: node[2],
                             port: node[3],
                             ipport: node[2] + ":" + node[3],
-                            role: node[4]
+                            role: node[4],
+                            color: offlineNodes.has(node[2] + ":" + node[3]) ? 'grey' :
+                                (node[4] === "trainer" ? '#0173B2'
+                                    : (node[4] === "aggregator" ? 'rgba(255,136,0,0.6)'
+                                        : (node[4] === "evaluator" ? '#F44336' : undefined))),
                         })),
-                        // nodes: [...Array(N).keys()].map(i => ({
-                        //     // if data['nodes_table'][i][0] is not in nodes_offline, then add the node to the graph
-                        //
-                        //     id: data['nodes_table'][i][1],
-                        //     ip: data['nodes_table'][i][2],
-                        //     port: data['nodes_table'][i][3],
-                        //     ipport: data['nodes_table'][i][2] + ":" + data['nodes_table'][i][3],
-                        //     role: data['nodes_table'][i][4],
-                        // })),
-
-                        links: data['nodes_table'].filter(node => !nodes_offline.includes(node[2] + ":" + node[3])).map(node => {
+                        links: data['nodes_table'].map(node => {
                             var links = [];
                             if (node[5] !== "") {
                                 var neighbors = node[5].split(",");
                                 neighbors.forEach(function (neighbor) {
-                                    if (!nodes_offline.includes(neighbor)) {
-                                        links.push({
-                                            source: node[2] + ":" + node[3],
-                                            target: neighbor,
-                                            value: 1,
-                                            color: node[4] === "trainer" ? '#0173B2' : (node[4] === "aggregator" ? 'rgba(255,136,0,0.6)' : undefined)
-                                        });
-                                    }
+                                    links.push({
+                                        source: node[2] + ":" + node[3],
+                                        target: neighbor,
+                                        value: offlineNodes.has(node[2] + ":" + node[3]) || offlineNodes.has(neighbor) ? 0 : 1,
+                                    });
                                 });
                             }
                             return links;
