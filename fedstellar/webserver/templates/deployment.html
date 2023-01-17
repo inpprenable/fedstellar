@@ -46,14 +46,14 @@
 
 <form id="form-configurations">
     <div class="col-md-4">
-        <div class="form-group">
+        <div class="form-group row">
             <h4 class="step-number">Scenario information</h4>
             <h5 class="step-title">Scenario title</h5>
             <input type="text" class="form-control" id="scenario-title" placeholder="Example scenario">
             <h5 class="step-title">Scenario description</h5>
             <input type="text" class="form-control" id="scenario-description" placeholder="Write a description for the scenario">
         </div>
-        <div class="form-group" id="deployment-group">
+        <div class="form-group row" id="deployment-group">
             <h4 class="step-number">Deployment</h4>
             <div class="form-check form-check-inline">
                 <input class="form-check-input" type="radio" name="inlineRadioOptions" id="simulation-radio" value="simulation" checked>
@@ -72,10 +72,10 @@
             <h4>Deployment options</h4>
             <p class="text-muted">Select the deployment options for the scenario.</p>
         </div>
-        <div class="form-group">
+        <div class="form-group row">
             <h4 class="step-number">Federation architecture</h4>
             <select class="form-control" id="federationArchitecture" name="federation" style="display: inline; width: 50%">
-                <option value="default" selected>DFL</option>
+                <option selected>DFL</option>
                 <option>SDFL</option>
                 <option>CFL</option>
             </select>
@@ -83,33 +83,42 @@
                 <i id="architectureHelpIcon" class="fa fa-info-circle"></i>
             </small>
         </div>
-        <div class="form-group">
+        <div id="networkTopologyForm" class="form-group row">
             <h4 class="step-number">Network topology</h4>
-            <select class="form-control" id="networkTopology" style="display: inline; width: 50%">
-                <option value="default" selected>Custom</option>
-                <option>Fully</option>
-                <option>Ring</option>
-                <option>Star</option>
-                <option>Random</option>
-            </select>
-            <i id="networkTopologyRandom" class="fa fa-refresh"></i>
-            <small id="topologyHelp" class="form-text text-muted">
-                <i id="topologyHelpIcon" class="fa fa-info-circle"></i>
-            </small>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineNetworkTopology" id="custom-topology-btn" checked>
+                <label class="form-check-label" for="simulation-radio">Custom topology</label>
+                <small id="topologyCustomHelp" class="form-text text-muted">
+                    <i id="topologyCustomIcon" class="fa fa-info-circle"></i>
+                </small>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineNetworkTopology" id="predefined-topology-btn">
+                <label class="form-check-label" for="real-radio">Predefined topology</label>
+                <small id="topologyPredefinedHelp" class="form-text text-muted">
+                    <i id="topologyPredefinedIcon" class="fa fa-info-circle"></i>
+                </small>
+            </div>
+            <div id="predefined-topology" style="display: none">
+                <select class="form-control" id="predefined-topology-select" name="predefined-topology" style="display: inline; width: 40%">
+                    <option selected>Fully</option>
+                    <option>Ring</option>
+                    <option>Star</option>
+                    <option>Random</option>
+                </select>
+                <input type="number" class="form-control" id="predefined-topology-nodes" placeholder="Number of nodes" value="3" style="display: inline; width: 40%">
+                <i id="networkTopologyRandom" class="fa fa-refresh"></i>
+            </div>
         </div>
-        <div class="form-group">
+        <div class="form-group row">
             <h4 class="step-number">Dataset</h4>
             <select class="form-control" id="datasetSelect" name="dataset" style="display: inline; width: 50%">
-                <option value="default" selected>MNIST</option>
+                <option selected>MNIST</option>
                 <option>FEMNIST</option>
             </select>
             <small id="datasetHelp" class="form-text text-muted">
                 <i id="datasetHelpIcon" class="fa fa-info-circle"></i>
             </small>
-        </div>
-        <div class="form-group">
-            <h4 class="step-number">Participants</h4>
-            <div id="participant-items"></div>
         </div>
     </div>
     <div id="topology-container" class="col-md-8 text-center" style="border: 2px solid black">
@@ -120,36 +129,78 @@
             <div id="legend-label">LEGEND</div>
             <div id="legend">
                 <div class="legend-item">
-                    <span class="legend-color" style="background-color: rgba(255,160,0,0.8);"></span>
+                    <span class="legend-color" style="background-color: #D55E00;"></span>
                     <span class="legend-text">Aggregator</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-color" style="background-color: rgba(0,120,255,0.6);"></span>
+                    <span class="legend-color" style="background-color: #0173B2;"></span>
                     <span class="legend-text">Trainer</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-color" style="background-color: rgba(230,0,255,0.6);"></span>
+                    <span class="legend-color" style="background-color: #CC78BC;"></span>
                     <span class="legend-text">Server</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-color" style="background-color: rgba(255,0,0,0.6);"></span>
+                    <span class="legend-color" style="background-color: #930c0c;"></span>
                     <span class="legend-text">Selected node</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-color" style="background-color: rgba(0,255,140,0.8);"></span>
+                    <span class="legend-color" style="background-color: #029E73;"></span>
                     <span class="legend-text">Node's neighbors</span>
                 </div>
             </div>
         </div>
-        <div id="3d-graph"></div>
+        <div id="3d-graph-container">
+            <div id="3d-graph"></div>
+            <div id="node-dropdown" class="dropdown-menu" style="display: none"></div>
+        </div>
     </div>
-    <button id="run-btn" type="button" class="btn" style="margin-top: 10px;background-color: rgba(29,182,138,0.49)">Run Fedstellar</button>
+    <div id="extra-container" class="col-md-4"></div>
+    <div id="submit-container" class="col-md-8">
+        <button id="user-btn" type="button" class="btn" style="margin-top: 10px;background-color: rgba(29,113,182,0.49)" disabled>User mode</button>
+        <button id="expert-btn" type="button" class="btn" style="margin-top: 10px;background-color: rgba(172,182,29,0.49)">Expert mode</button>
+        <button id="run-btn" type="button" class="btn" style="margin-top: 10px;background-color: rgba(182,29,29,0.49);float: right">Run Fedstellar</button>
+    </div>
+    <div id="expert-container" class="col-md-12" style="display: none">
+        <div class="form-group row">
+            <h4 class="step-number">Participants</h4>
+            <div id="participant-items"></div>
+        </div>
+        <div class="form-group row">
+            <h4 class="step-number">Network topology</h4>
+            <div id="network-topology-items"></div>
+        </div>
+        <div class="form-group row">
+            <h4 class="step-number">Communication</h4>
+            <div id="communication-items"></div>
+        </div>
+        <div class="form-group row">
+            <h4 class="step-number">Training</h4>
+            <div id="training-items"></div>
+        </div>
+        <div class="form-group row">
+            <h4 class="step-number">Aggregation</h4>
+            <div id="aggregation-items"></div>
+        </div>
+        <div class="form-group row">
+            <h4 class="step-number">Evaluation</h4>
+            <div id="evaluation-items"></div>
+        </div>
+    </div>
 </form>
 
 <style>
     .btn {
         outline: none !important;
         text-decoration: none !important;
+    }
+
+    .row {
+        margin: 0;
+    }
+
+    .participant-item {
+        padding: 5px;
     }
 
     #form-configurations {
@@ -244,8 +295,10 @@
 
 <script>
     // When click on architectureHelpIcon, show a popover on the bottom of the icon using Bootstrap and HTML code
-    contentTopologyHelp = '<ul>\n' +
+    contentTopologyCustomHelp = '<ul>\n' +
         '                    <li>Custom: Custom topology with the nodes</li>\n' +
+        '                </ul>';
+    contentTopologyPredefinedHelp = '<ul>\n' +
         '                    <li>Fully: All nodes are connected to all other nodes</li>\n' +
         '                    <li>Ring: All nodes are connected to two other nodes</li>\n' +
         '                    <li>Star: A central node is connected to all other nodes</li>\n' +
@@ -262,11 +315,20 @@
         '                    <li>MNIST: The MNIST dataset</li>\n' +
         '                    <li>FEMNIST: The FEMNIST dataset</li>\n' +
         '                </ul>'
-    $('#topologyHelpIcon').popover({
+    $('#topologyCustomIcon').popover({
         title: 'Network topology',
         html: true,
         placement: 'right',
-        content: contentTopologyHelp,
+        content: contentTopologyCustomHelp,
+        trigger: 'hover',
+        container: 'body',
+        delay: {show: 500, hide: 100},
+    });
+    $('#topologyPredefinedIcon').popover({
+        title: 'Network topology',
+        html: true,
+        placement: 'right',
+        content: contentTopologyPredefinedHelp,
         trigger: 'hover',
         container: 'body',
         delay: {show: 500, hide: 100},
@@ -289,6 +351,33 @@
         container: 'body',
         delay: {show: 500, hide: 100},
     });
+</script>
+
+<script>
+    var userBtn = document.getElementById('user-btn');
+    var expertBtn = document.getElementById("expert-btn");
+    expertBtn.addEventListener("click", function () {
+        // Disabled expertBtn
+        expertBtn.disabled = true;
+        userBtn.disabled = false;
+
+        document.getElementById("expert-container").style.display = "block";
+        document.getElementById("expert-container").style.visibility = "visible";
+        document.getElementById("expert-container").style.opacity = "1";
+        document.getElementById("expert-container").style.transition = "all 0.5s ease-in-out";
+    });
+
+    userBtn.addEventListener("click", function () {
+        // Disabled userBtn
+        userBtn.disabled = true;
+        expertBtn.disabled = false;
+
+        document.getElementById("expert-container").style.display = "none";
+        document.getElementById("expert-container").style.visibility = "hidden";
+        document.getElementById("expert-container").style.opacity = "0";
+        document.getElementById("expert-container").style.transition = "all 0.5s ease-in-out";
+    });
+
 </script>
 
 <script>
@@ -331,7 +420,8 @@
                     "matrix": getMatrix(Graph.graphData().nodes, Graph.graphData().links),
                     "federation": document.getElementById("federationArchitecture").value,
                     "simulation": true,
-                    "topology": document.getElementById("networkTopology").value,
+                    "topology": document.getElementById("predefined-topology-btn").checked ? document.getElementById("predefined-topology-select").value : "Custom",
+
                 };
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", "/deployment/run", true);
@@ -351,19 +441,40 @@
 <script>
     // Generate matrix for the topology (predefined network topology)
 
-    // If networkTopology is changed to Fully, gData is updated to a fully connected graph
-    $('#networkTopology').change(function () {
+    predefinedTopologyDiv = document.getElementById("predefined-topology")
+    customTopologyBtn = document.getElementById("custom-topology-btn");
+    customTopologyBtn.addEventListener("click", function () {
+        predefinedTopologyDiv.style.display = "none";
+    });
+    // When click on "predefined-topology-btn" check input, display "predefined-topology"
+    predefinedTopologyBtn = document.getElementById("predefined-topology-btn");
+    predefinedTopologyBtn.addEventListener("click", function () {
+        predefinedTopologyDiv.style.display = "block";
+    });
 
-        if ($(this).val() !== 'default') {
-            // Remove all links in gData
-            gData.links.splice(0, gData.links.length);
-            // Remove all neighbors in gData
-            gData.nodes.forEach(function (node) {
-                node.neighbors.splice(0, node.neighbors.length);
-            });
-        }
+    document.getElementById("networkTopologyRandom").addEventListener("click", function () {
+        var n_nodes_predefined = document.getElementById("predefined-topology-nodes").value;
+        n_nodes_predefined = parseInt(n_nodes_predefined);
 
-        if ($(this).val() === 'Fully') {
+        // Remove all nodes in the graph
+        gData.nodes.splice(0, Graph.graphData().nodes.length);
+        // Remove all links in the graph
+        gData.links.splice(0, Graph.graphData().links.length);
+
+        gData = {
+            nodes: [...Array(n_nodes_predefined).keys()].map(i => ({
+                id: i,
+                ip: "127.0.0.1",
+                port: "4500" + i.toString(),
+                role: i === 0 ? "aggregator" : "trainer",
+                start: (i === 0),
+                neighbors: [],
+            })),
+            links: []
+        };
+
+
+        if ($("#predefined-topology-select").val() === 'Fully') {
             // Update gData: create a link between each node
             for (var i = 0; i < gData.nodes.length; i++) {
                 for (var j = 0; j < gData.nodes.length; j++) {
@@ -376,7 +487,7 @@
             }
         }
         // If networkTopology is changed to Ring, gData is updated to a ring graph
-        else if ($(this).val() === 'Ring') {
+        else if ($("#predefined-topology-select").val() === 'Ring') {
             // Update gData: create a link between each node and its two neighbors
             for (var i = 0; i < gData.nodes.length; i++) {
                 gData.links.push({source: i, target: (i + 1) % gData.nodes.length});
@@ -384,12 +495,12 @@
             }
         }
         // If networkTopology is changed to Star, gData is updated to a star graph
-        else if ($(this).val() === 'Star') {
+        else if ($("#predefined-topology-select").val() === 'Star') {
             // Update gData: create a link between each node and the central node
             for (var i = 0; i < gData.nodes.length; i++) {
                 gData.links.push({source: i, target: 0});
             }
-        } else if ($(this).val() === 'Random') {
+        } else if ($("#predefined-topology-select").val() === 'Random') {
             // Update gData: create a link between each node and a random node
             for (var i = 0; i < gData.nodes.length; i++) {
                 var randomNode = Math.floor(Math.random() * gData.nodes.length);
@@ -400,36 +511,9 @@
             }
         }
 
-        // Remove duplicated links
-        for (var i = 0; i < gData.links.length; i++) {
-            for (var j = i + 1; j < gData.links.length; j++) {
-                if ((gData.links[i].source === gData.links[j].source && gData.links[i].target === gData.links[j].target) ||
-                    gData.links[i].source === gData.links[j].target && gData.links[i].target === gData.links[j].source) {
-                    gData.links.splice(j, 1);
-                }
-            }
-        }
-        // Update neighbors of each node in gData
-        gData.links.forEach(function (link) {
-
-            for (var i = 0; i < gData.nodes.length; i++) {
-                if (gData.nodes[i].id === link.source.id) {
-                    gData.nodes[i].neighbors.push(link.target.id);
-                }
-                if (gData.nodes[i].id === link.target.id) {
-                    gData.nodes[i].neighbors.push(link.source.id);
-                }
-            }
-
-        });
-
         // Update the graph
-        Graph.graphData(gData);
+        updateGraph();
 
-    });
-
-    document.getElementById("networkTopologyRandom").addEventListener("click", function () {
-        $('#networkTopology').trigger('change');
     });
 
 </script>
@@ -438,22 +522,20 @@
     // If federationArchitecture is changed to CFL, gData is updated to Star graph
     $('#federationArchitecture').change(function () {
         if ($(this).val() === 'CFL') {
-            $('#networkTopology').val('Star');
-            // Block networkTopology
-            $('#networkTopology').prop('disabled', true);
+            $('#predefined-topology-select').val('Star');
+            $('#predefined-topology-select').prop('disabled', true);
 
             // Update gData: change the role of the central node to "server"
             gData.nodes[0].role = "server";
         } else {
-            // Unblock networkTopology
-            $('#networkTopology').prop('disabled', false);
+            $('#predefined-topology-select').prop('disabled', false);
             // Update gData: change the role of the central node to "client"
             gData.nodes[0].role = "trainer";
         }
 
         // Reload the graph
         Graph.graphData(gData);
-        $('#networkTopology').trigger('change');
+        $('#predefined-topology-select').trigger('change');
 
     });
 </script>
@@ -525,7 +607,7 @@
             info.setAttribute("data-id", i.toString());
             info.type = "button";
             info.classList.add("btn");
-            info.innerHTML = "+INFO";
+            info.innerHTML = "+ INFO";
             info.style.padding = "0";
             info.style.fontWeight = "bold";
 
@@ -576,7 +658,7 @@
             start.setAttribute("data-id", i.toString());
             start.type = "button";
             start.classList.add("btn");
-            start.innerHTML = "Start participant";
+            start.innerHTML = "Start";
             start.style.padding = "0";
             start.style.paddingLeft = "15px";
             start.style.paddingRight = "15px";
@@ -613,12 +695,23 @@
                 Graph.graphData(Graph.graphData());
             });
 
+            // Create div named "participant-item" and add the elements
+            const participantItem = document.createElement("div");
+            participantItem.classList.add("col-md-2");
+            participantItem.classList.add("participant-item");
+            participantItem.appendChild(participantItem_img);
+            participantItem.appendChild(label);
+            participantItem.appendChild(info);
+            participantItem.appendChild(start);
 
-            participantItems.appendChild(participantItem_img);
-            participantItems.appendChild(label);
-            participantItems.appendChild(info);
-            participantItems.appendChild(start);
-            participantItems.appendChild(document.createElement("br"));
+            // Add the div to the participant list
+            participantItems.appendChild(participantItem);
+
+            // participantItems.appendChild(participantItem_img);
+            // participantItems.appendChild(label);
+            // participantItems.appendChild(info);
+            // participantItems.appendChild(start);
+            // participantItems.appendChild(document.createElement("br"));
         }
 
         // If there is no participant-started, add the class to the first participant
@@ -633,16 +726,66 @@
 <script>
     // Create the graph object
 
+    function updateGraph() {
+        // Global update of the graph
+        gDataUpdate(gData);
+        Graph.graphData(gData);
+        getNumberOfNodesAndUpdate()
+    }
+
+    function gDataUpdate() {
+        console.log("gDataUpdate");
+        console.log(gData);
+        // cross-link node objects
+        // gData.links.forEach(link => {
+        //     const a = gData.nodes[link.source];
+        //     const b = gData.nodes[link.target];
+        //     console.log(a, b);
+        //     !a.neighbors && (a.neighbors = []);
+        //     !b.neighbors && (b.neighbors = []);
+        //     a.neighbors.push(b);
+        //     b.neighbors.push(a);
+        //
+        //     !a.links && (a.links = []);
+        //     !b.links && (b.links = []);
+        //     a.links.push(link);
+        //     b.links.push(link);
+        // });
+        // Remove duplicated links
+        for (var i = 0; i < gData.links.length; i++) {
+            for (var j = i + 1; j < gData.links.length; j++) {
+                if ((gData.links[i].source === gData.links[j].source && gData.links[i].target === gData.links[j].target) ||
+                    gData.links[i].source === gData.links[j].target && gData.links[i].target === gData.links[j].source) {
+                    gData.links.splice(j, 1);
+                }
+            }
+        }
+        // Update neighbors of each node in gData
+        gData.links.forEach(function (link) {
+            for (var i = 0; i < gData.nodes.length; i++) {
+                if (gData.nodes[i].id === link.source.id) {
+                    gData.nodes[i].neighbors.push(link.target.id);
+                }
+                if (gData.nodes[i].id === link.target.id) {
+                    gData.nodes[i].neighbors.push(link.source.id);
+                }
+            }
+
+        });
+    }
+
     const width = document.getElementById('3d-graph').offsetWidth;
 
     const N = 3;
-    const gData = {
+    let gData = {
         nodes: [...Array(N).keys()].map(i => ({
             id: i,
             ip: "127.0.0.1",
             port: "4500" + i.toString(),
             role: i === 0 ? "aggregator" : "trainer",
             start: (i === 0),
+            neighbors: [],
+            links: [],
         })),
         links: [...Array(N).keys()]
             .filter(id => id)
@@ -652,20 +795,7 @@
             }))
     };
 
-    // cross-link node objects
-    gData.links.forEach(link => {
-        const a = gData.nodes[link.source];
-        const b = gData.nodes[link.target];
-        !a.neighbors && (a.neighbors = []);
-        !b.neighbors && (b.neighbors = []);
-        a.neighbors.push(b);
-        b.neighbors.push(a);
-
-        !a.links && (a.links = []);
-        !b.links && (b.links = []);
-        a.links.push(link);
-        b.links.push(link);
-    });
+    gDataUpdate();
 
     const highlightNodes = new Set();
     let hoverNode = null;
@@ -685,10 +815,124 @@
         .height(700)
         .backgroundColor('#ffffff')
         .nodeLabel(node => `<p style="color: black">ID: ${node.id} | Role: ${node.role}</p>`)
+        .onNodeRightClick((node, event) => {
+            // Display a dropdown menu with the options next to the node
+            // The options should be: "Add aggregator", "Add trainer", "Remove node"
+            const graphContainerRect = document.getElementById("3d-graph-container").getBoundingClientRect();
+            var dropdown = document.getElementById("node-dropdown");
+            // Reset the dropdown menu
+            dropdown.innerHTML = "";
+            dropdown.style.display = "block";
+            // Put the dropdown in the same location as the node
+            dropdown.style.left = event.clientX - graphContainerRect.left + 50 + "px";
+            dropdown.style.top = event.clientY - graphContainerRect.top + "px";
+
+            dropdown.style.position = "absolute";
+            dropdown.style.zIndex = "1000";
+            dropdown.style.backgroundColor = "white";
+            dropdown.style.border = "1px solid black";
+            dropdown.style.padding = "10px";
+            dropdown.style.borderRadius = "5px";
+            dropdown.style.boxShadow = "0 0 10px rgba(0,0,0,0.5)";
+
+            // Add the node id to the dropdown
+            dropdown.setAttribute("data-id", node.id);
+
+            // Create the options for the dropdown with specific actions when clicked
+            const addNode = document.createElement("a");
+            addNode.innerHTML = "Add aggregator";
+            addNode.style.display = "block";
+            addNode.style.cursor = "pointer";
+            addNode.style.padding = "5px";
+            addNode.style.borderRadius = "5px";
+            addNode.style.marginBottom = "5px";
+            addNode.classList.add("dropdown-item");
+            addNode.addEventListener("click", function () {
+                console.log("Add node");
+                // Activate custom topology
+                document.getElementById("custom-topology-btn").checked = true;
+                document.getElementById("predefined-topology").style.display = "none";
+                const newNode = {id: gData.nodes.length, ip: "127.0.0.1", port: "4500" + gData.nodes.length.toString(), role: 'trainer', start: false};
+                newNode.neighbors = [node];
+                newNode.links = [{source: node, target: newNode}];
+                node.neighbors.push(newNode);
+                node.links.push(newNode.links[0]);
+                // Update the graph
+                gData.nodes.push(newNode);
+                gData.links.push({source: newNode, target: node});
+                updateGraph();
+            });
+
+            const removeNode = document.createElement("a");
+            removeNode.innerHTML = "Remove node";
+            removeNode.style.display = "block";
+            removeNode.style.cursor = "pointer";
+            removeNode.style.padding = "5px";
+            removeNode.style.borderRadius = "5px";
+            removeNode.style.marginBottom = "5px";
+            removeNode.classList.add("dropdown-item");
+            removeNode.addEventListener("click", function () {
+                console.log("Remove node");
+                // Activate custom topology
+                document.getElementById("custom-topology-btn").checked = true;
+                document.getElementById("predefined-topology").style.display = "none";
+                // Delete the node from the graph
+                if (gData.nodes.length > 1) {
+                    let {nodes, links} = gData;
+                    links = links.filter(l => l.source.id !== node.id && l.target.id !== node.id); // Remove links attached to node
+                    nodes.splice(node.id, 1); // Remove node
+                    nodes.forEach((n, idx) => {
+                        // Remove links from node
+                        n.links = n.links.filter(l => l.source.id !== node.id && l.target.id !== node.id);
+                        // Remove neighbors from node
+                        n.neighbors = n.neighbors.filter(l => l.id !== node.id);
+                        n.id = idx; // Reset node ids to array index
+                        n.port = "4500" + n.id.toString();
+                    });
+                    // Graph.graphData({nodes, links});
+                    gData.nodes = nodes;
+                    gData.links = links;
+                }
+                updateGraph();
+            });
+
+            const changeRole = document.createElement("a");
+            changeRole.innerHTML = "Change role";
+            changeRole.style.display = "block";
+            changeRole.style.cursor = "pointer";
+            changeRole.style.padding = "5px";
+            changeRole.style.borderRadius = "5px";
+            changeRole.style.marginBottom = "5px";
+            changeRole.classList.add("dropdown-item");
+            changeRole.addEventListener("click", function () {
+                console.log("Change role");
+                // If the node is selected, change its color and role
+                if (node.role === 'trainer') {
+                    node.role = 'aggregator';
+                    aggregators.add(node);
+                    trainers.delete(node);
+                } else if (node.role === 'aggregator') {
+                    node.role = 'trainer';
+                    node.color = '#D55E00';
+                    aggregators.delete(node);
+                    trainers.add(node);
+                }
+                updateGraph();
+            });
+
+            // Add the options to the dropdown
+            dropdown.appendChild(addNode);
+            dropdown.appendChild(removeNode);
+            dropdown.appendChild(changeRole);
+
+        })
         .onNodeClick((node, event) => {
             // event.stopPropagation();
+            // Add a new node and link it to the node that was clicked (creation)
             if (event.ctrlKey) {
-                // Add a new node and link it to the node that was clicked
+                // Activate custom topology
+                document.getElementById("custom-topology-btn").checked = true;
+                document.getElementById("predefined-topology").style.display = "none";
                 const newNode = {id: gData.nodes.length, ip: "127.0.0.1", port: "4500" + gData.nodes.length.toString(), role: 'trainer', start: false};
                 newNode.neighbors = [node];
                 newNode.links = [{source: node, target: newNode}];
@@ -716,14 +960,17 @@
                         trainers.delete(node);
                     } else if (node.role === 'aggregator') {
                         node.role = 'trainer';
-                        node.color = 'rgba(255,160,0,0.8)';
+                        node.color = '#D55E00';
                         aggregators.delete(node);
                         trainers.add(node);
                     }
                 }
             }
-            // If there are two nodes selected, create a link between them
+            // If there are two nodes selected, create a link between them (linking)
             if (selectedNodes.size === 2) {
+                // Activate custom topology
+                document.getElementById("custom-topology-btn").checked = true;
+                document.getElementById("predefined-topology").style.display = "none";
                 const [a, b] = selectedNodes;
                 const link = {source: a, target: b};
                 a.neighbors.push(b);
@@ -734,14 +981,16 @@
                 selectedNodes.clear();
             }
 
-            // If click a node and the same time click on the key 'command' (remove node)
+            // If click a node and the same time click on the key 'command' (removing)
             if (event.metaKey) {
+                console.log("Meta key pressed");
+                // Activate custom topology
+                document.getElementById("custom-topology-btn").checked = true;
+                document.getElementById("predefined-topology").style.display = "none";
                 // Delete the node from the graph
                 if (gData.nodes.length > 1) {
                     let {nodes, links} = gData;
-                    console.log(links);
                     links = links.filter(l => l.source.id !== node.id && l.target.id !== node.id); // Remove links attached to node
-                    console.log(links);
                     nodes.splice(node.id, 1); // Remove node
                     nodes.forEach((n, idx) => {
                         // Remove links from node
@@ -757,8 +1006,9 @@
                 }
             }
             // I get the following error: Computed radius is NaN. The "position" attribute is likely to have NaN values.
-            Graph.graphData(gData);
-            getNumberOfNodesAndUpdate();
+            updateGraph();
+            //Graph.graphData(gData);
+            //getNumberOfNodesAndUpdate();
         })
         .onLinkClick(link => {
             // Remove link
@@ -792,11 +1042,11 @@
 
             updateColorNodes();
         })
-        .nodeColor(node => selectedNodes.has(node) ? 'rgba(255,0,0,0.6)'
-            : (highlightNodes.has(node) && node !== hoverNode ? 'rgba(0,255,140,0.8)'
-                : (node.role === "server" ? 'rgba(230,0,255,0.6)'
-                    : node.role === "trainer" ? 'rgba(0,120,255,0.6)'
-                        : (node.role === "aggregator" ? 'rgba(255,136,0,0.6)' : undefined))))
+        .nodeColor(node => selectedNodes.has(node) ? '#930c0c'
+            : (highlightNodes.has(node) && node !== hoverNode ? '#029E73'
+                : (node.role === "server" ? '#CC78BC'
+                    : node.role === "trainer" ? '#0173B2'
+                        : (node.role === "aggregator" ? '#D55E00' : undefined))))
         .linkColor(link => link.color ? 'red' : 'black')
         .linkOpacity(0.6)
         .linkWidth(1)
@@ -841,6 +1091,22 @@
         }
     }
 
+</script>
+
+<script>
+    // Hide the dropdown menu when the user clicks outside of it
+    window.onclick = function (event) {
+        if (!event.target.matches('.dropdown-item')) {
+            console.log("Clicked outside");
+            var dropdowns = document.getElementsByClassName("dropdown-menu");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.style.display === "block") {
+                    openDropdown.style.display = "none";
+                }
+            }
+        }
+    }
 </script>
 
 <script>

@@ -249,7 +249,7 @@
         })
         //.linkSource('source')
         //.linkTarget('target')
-        .nodeColor(node => node.role === "trainer" ? 'rgba(0,120,255,0.6)'
+        .nodeColor(node => node.role === "trainer" ? '#0173B2'
             : (node.role === "aggregator" ? 'rgba(255,136,0,0.6)' : undefined))
         .linkColor(link => link.color ? 'red' : 'black')
         .linkOpacity(0.5)
@@ -354,7 +354,7 @@
                                             source: node[2] + ":" + node[3],
                                             target: neighbor,
                                             value: 1,
-                                            color: node[4] === "trainer" ? 'rgba(0,120,255,0.6)' : (node[4] === "aggregator" ? 'rgba(255,136,0,0.6)' : undefined)
+                                            color: node[4] === "trainer" ? '#0173B2' : (node[4] === "aggregator" ? 'rgba(255,136,0,0.6)' : undefined)
                                         });
                                     }
                                 });
