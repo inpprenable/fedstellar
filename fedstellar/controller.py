@@ -54,7 +54,7 @@ class Controller:
     """
 
     def __init__(self, args):
-        self.scenario_name = None
+        self.scenario_name = args.scenario_name if hasattr(args, "scenario_name") else None
         self.start_date_scenario = None
         self.federation = args.federation
         self.topology = args.topology
@@ -179,9 +179,14 @@ class Controller:
         os.system(command)
 
     def load_configurations_and_start_nodes(self):
-        self.scenario_name = f'fedstellar_{self.federation}_{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}'
-        self.start_date_scenario = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        if not self.scenario_name:
+            self.scenario_name = f'fedstellar_{self.federation}_{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}'
+        # Once the scenario_name is defined, we can update the config_dir
+        self.config_dir = os.path.join(self.config_dir, self.scenario_name)
+        os.makedirs(self.config_dir, exist_ok=True)
+
         os.makedirs(os.path.join(self.log_dir, self.scenario_name), exist_ok=True)
+        self.start_date_scenario = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         logging.info("Generating the scenario {} at {}".format(self.scenario_name, self.start_date_scenario))
 
         # Get participants configurations

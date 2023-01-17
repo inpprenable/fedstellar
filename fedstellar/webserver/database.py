@@ -235,23 +235,37 @@ def list_nodes(sort_by="idx"):
     return result
 
 
+def list_nodes_by_scenario_name(scenario_name):
+    # list all nodes in the database
+    _conn = sqlite3.connect(node_db_file_location)
+    _c = _conn.cursor()
+    # Get all nodes and decently sort them by idx
+    command = "SELECT * FROM nodes WHERE scenario = '" + scenario_name + "' ORDER BY idx;"
+    _c.execute(command)
+    result = _c.fetchall()
+
+    _conn.commit()
+    _conn.close()
+
+    return result
+
+
 def update_node_record(node_uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, scenario):
-    # Check if the node record with node_uid already exists in the database
+    # Check if the node record with node_uid and scenario already exists in the database
     # If it does, update the record
     # If it does not, create a new record
     _conn = sqlite3.connect(node_db_file_location)
     _c = _conn.cursor()
 
-    command = "SELECT * FROM nodes WHERE uid = '" + node_uid + "';"
+    command = "SELECT * FROM nodes WHERE uid = '" + node_uid + "' AND scenario = '" + scenario + "';"
     _c.execute(command)
     result = _c.fetchone()
-
     if result is None:
         # Create a new record
         _c.execute("INSERT INTO nodes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (node_uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, scenario))
     else:
         # Update the record
-        command = "UPDATE nodes SET idx = '" + idx + "', ip = '" + ip + "', port = '" + port + "', role = '" + role + "', neighbors = '" + neighbors + "', latitude = '" + latitude + "', longitude = '" + longitude + "', timestamp = '" + timestamp + "', federation = '" + federation + "', scenario = '" + scenario + "' WHERE uid = '" + node_uid + "';"
+        command = "UPDATE nodes SET idx = '" + idx + "', ip = '" + ip + "', port = '" + port + "', role = '" + role + "', neighbors = '" + neighbors + "', latitude = '" + latitude + "', longitude = '" + longitude + "', timestamp = '" + timestamp + "', federation = '" + federation + "' WHERE uid = '" + node_uid + "' AND scenario = '" + scenario + "';"
         _c.execute(command)
 
     _conn.commit()
@@ -308,16 +322,18 @@ def scenario_update_record(scenario_name, start_time, end_time, title, descripti
 
 
 def scenario_set_all_status_to_finished():
+    # Set all scenarios to finished and update the end_time to current time
     _conn = sqlite3.connect(scenario_db_file_location)
     _c = _conn.cursor()
-    command = "UPDATE scenarios SET status = 'finished';"
+
+    command = "UPDATE scenarios SET status = 'finished', end_time = '" + str(datetime.datetime.now()) + "';"
     _c.execute(command)
 
     _conn.commit()
     _conn.close()
 
 
-def get_active_scenario():
+def get_running_scenario():
     _conn = sqlite3.connect(scenario_db_file_location)
     _c = _conn.cursor()
     command = "SELECT * FROM scenarios WHERE status = 'running';"

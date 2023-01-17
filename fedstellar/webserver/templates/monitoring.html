@@ -6,22 +6,28 @@
 <h4>Monitoring scenarios using Fedstellar</h4>
 <hr>
 
-{% if not scenario_running %}
+{% if not scenario %}
 
-<h4>There are no deployed scenarios to monitor... Create one <a href="{{ url_for('fedstellar_private_scenario') }}">here</a>!</h4>
+<h4>There are no scenario named {{ scenario_name }}.</h4>
 
-{% elif scenario_running %}
+{% else %}
 
 <h3>Scenario</h3>
-<h5>Scenario name: <b id="scenario_name">{{ scenario_running[0] }}</b></h5>
-<h5>Scenario title: <b id="scenario_title">{{ scenario_running[3] }}</b></h5>
-<h5>Scenario description: <b id="scenario_description">{{ scenario_running[4] }}</b></h5>
-<h5>Scenario start time: <b id="scenario_start_time">{{ scenario_running[1] }}</b></h5>
+<h5>Scenario name: <b id="scenario_name">{{ scenario[0] }}</b></h5>
+<h5>Scenario title: <b id="scenario_title">{{ scenario[3] }}</b></h5>
+<h5>Scenario description: <b id="scenario_description">{{ scenario[4] }}</b></h5>
+<h5>Scenario start time: <b id="scenario_start_time">{{ scenario[1] }}</b></h5>
+<h5>Scenario end time: <b id="scenario_end_time">{{ scenario[2] }}</b></h5>
+{% if scenario[5] == "running" %}
+<h5>Scenario status: <span id="scenario_status" class="label label-success">Running</span></h5>
+<a href="{{ url_for('fedstellar_stop_scenario', scenario_name=scenario[0]) }}" class="btn btn-danger">Stop scenario</a>
+{% else %}
+<h5>Scenario status: <span id="scenario_status" class="label label-danger">Finished</span></h5>
+{% endif %}
 
-<a href="{{ url_for('fedstellar_private', scenario_name=scenario_running[0]) }}" target="_blank" class="btn btn-primary">Private page</a>
-
-<a href="{{ url_for('fedstellar_monitoring_stop_scenario', scenario_name=scenario_running[0]) }}" class="btn btn-danger">Stop scenario</a>
+<a href="{{ url_for('fedstellar_scenario_private', scenario_name=scenario[0]) }}" target="_blank" class="btn btn-primary">Private page</a>
 <hr>
+
 <h3>Nodes in the database</h3>
 
 <table id="table-nodes" class="table small table-responsive">
@@ -42,7 +48,7 @@
 
     </tr>
     </thead>
-    {% for uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, experimentname, status in nodes %}
+    {% for uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, scenario, status in nodes %}
     <tr id="node-vars">
         <td id="uid"> {{ uid }}</td>
         <td id="idx"> {{ idx }}</td>
@@ -69,11 +75,11 @@
                         <input type="checkbox" class="form-check-input" id="logicon" style="pointer-events: all">
                         Show logs
                     </a>
-                    <a class="dropdown-item download" href="/monitoring/{{ uid }}/logs">
+                    <a class="dropdown-item download" href="/scenario/{{ scenario_name }}/node/{{ uid }}/logfile">
                         <i class="fa fa-download"></i>
                         Download INFO logs
                     </a>
-                    <a class="dropdown-item download" href="/monitoring/{{ uid }}/logs/debug">
+                    <a class="dropdown-item download" href="/scenario/{{ scenario_name }}/node/{{ uid }}/debugfile">
                         <i class="fa fa-download"></i>
                         Download DEBUG logs
                     </a>
@@ -83,7 +89,7 @@
     </tr>
     <tr class="dropdown-content" style="display: none;">
         <td colspan="12">
-            <div id="logscontainer" data-uid="{{ uid }}">
+            <div id="logscontainer" data-uid="{{ uid }}" data-scenario="{{ scenario_name }}">
                 <p id="logstext" style="color: black; font-weight: bold"></p>
             </div>
         </td>
@@ -100,7 +106,7 @@
 
 <h3>Internal topology</h3>
 
-<a class="btn btn-primary" style="padding: 10px;margin-bottom: 10px" href="{{ url_for('fedstellar_monitoring_image', scenario_name=scenario_running[0]) }}">Download topology</a>
+<a class="btn btn-primary" style="padding: 10px;margin-bottom: 10px" href="{{ url_for('fedstellar_monitoring_image', scenario_name=scenario[0]) }}">Download topology</a>
 
 <div id="topology-container" class="row">
     <div id="3d-graph"></div>
@@ -189,10 +195,11 @@
     //var icon = document.getElementById("icon");
     logscontainers.forEach(function (logscontainer) {
         var uid = logscontainer.getAttribute("data-uid");
+        var scenario = logscontainer.getAttribute("data-scenario");
 
         setInterval(function () {
             // Obtiene el log del servidor y lo muestra en la página
-            fetch('/monitoring/' + uid + '/logs/20')
+            fetch('/scenario/' + scenario + '/node/' + uid + '/logs/20')
                 .then(function (response) {
                     if (!response.ok) {
                         logscontainer.innerHTML = '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>'
@@ -265,10 +272,11 @@
 <script>
     function async_update_nodes_page() {
         // Get all divs with id "node-vars" and update them with value returned by async GET request
+        var scenario_name = document.getElementById('scenario_name').innerHTML;
         var node_row = document.querySelectorAll("#node-vars");
 
         // Get the table
-        fetch('/api/monitoring')
+        fetch('/api/scenario/' + scenario_name + '/monitoring')
             .then(function (response) {
                 if (!response.ok) {
                     showAlert("danger", "Error: " + response.status + " " + response.statusText);
@@ -277,6 +285,7 @@
                 // Examine the json in the response
                 response.json().then(function (data) {
                     // Update the table with the values of the json and mantain the style of HTML
+                    console.log(data);
                     var latlngs = Array();
                     var nodes_offline = Array();
 

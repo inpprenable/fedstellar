@@ -880,7 +880,7 @@ class Node(BaseNode):
 
         """
         # Set the URL for the POST request
-        url = f'http://{self.config.participant["scenario_args"]["controller"]}/monitoring/update/{self.config.participant["device_args"]["uid"]}'
+        url = f'http://{self.config.participant["scenario_args"]["controller"]}/scenario/{self.config.participant["scenario_args"]["name"]}/node/update'
 
         # Send the POST request if the controller is available
         try:
@@ -903,7 +903,7 @@ class Node(BaseNode):
         """
 
         # Set the URL for the POST request
-        url = f'http://{self.config.participant["scenario_args"]["controller"]}/monitoring/update/{self.config.participant["device_args"]["uid"]}/logs'
+        url = f'http://{self.config.participant["scenario_args"]["controller"]}/scenario/{self.config.participant["scenario_args"]["name"]}/node/{self.config.participant["device_args"]["uid"]}/update/logs'
 
         # Send the POST request if the controller is available
         try:

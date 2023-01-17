@@ -6,12 +6,6 @@
 <h4>Deployment of scenarios using Fedstellar</h4>
 <hr>
 
-{% if scenario_name %}
-
-<h4>There is a scenario named <b>{{ scenario_name }}</b> already deployed... Click <a href="{{ url_for('fedstellar_monitoring') }}">here</a> to see it!</h4>
-
-{% elif not scenario_name %}
-
 <!-- Modal participant -->
 <div class="modal fade" id="participant-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -383,7 +377,7 @@
 <script>
     // Send configuration to the server for deployment
 
-    // When click "run-btn" button, create a POST request to /deployment/run with JSON data
+    // When click "run-btn" button, create a POST request to /scenario/deployment/run with JSON data
     document.getElementById("run-btn").addEventListener("click", function () {
 
         // Show the modal
@@ -424,7 +418,7 @@
 
                 };
                 var xhr = new XMLHttpRequest();
-                xhr.open("POST", "/deployment/run", true);
+                xhr.open("POST", "/scenario/deployment/run", true);
                 xhr.setRequestHeader('Content-Type', 'application/json');
                 xhr.send(JSON.stringify(data));
                 setTimeout(function () {
@@ -555,7 +549,7 @@
         let textAreas = "";
         for (let i = 0; i < numberOfNodes; i++) {
             textAreas += `<h4>Participant ${i}</h4>`;
-            let response = await fetch(`/deployment/participant/file`);
+            let response = await fetch(`/scenario/deployment/participant/file`);
             let json = await response.json();
             textAreas += `<textarea class="form-control" rows="10" cols="50" style="width:100%;" name="participant${i}">${JSON.stringify(json, null, 4)}</textarea>`;
             // textAreas += `<textarea class="form-control" rows="10" cols="50" name="scenario" id="scenario" style="width:100%;"></textarea>`;
@@ -1109,7 +1103,5 @@
         return matrixString;
     }
 </script>
-
-{% endif %}
 
 {% endblock %}
