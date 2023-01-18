@@ -39,6 +39,7 @@ def signal_handler(sig, frame):
         os.system("""killall gnome-terminal""")
     else:
         os.system("""taskkill /IM cmd.exe /F""")
+        os.system("""taskkill /IM powershell.exe /F""")
     logging.info("Remove configuration and topology files...")
     Controller.remove_config_files()
     logging.info("Remove configuration and topology files... Done")
