@@ -97,7 +97,19 @@ Running Fedstellar
 ==================
 To run Fedstellar, you can use the following command line::
 
-    python app/main.py --webserver
+    python app/main.py --webserver [PARAMS]
+    
+You can show the PARAMS using::
+
+    python app/main.py --help
+
+For a correct execution of the framework, it is necessary to indicate the python path (absolute path)::
+
+    python app/main.py --python /Users/enrique/fedstellar-venv/bin/python
+
+or::
+
+    python app/main.py --python /Users/enrique/fedstellar-venv/Scripts/python
 
 The webserver will be available at http://127.0.0.1:5000 (by default)
 
@@ -105,4 +117,10 @@ To change the default port, you can use the following command line::
 
     python app/main.py --webserver --port 8080
 
+Fedstellar Webserver
+==================
+You can login with the following credentials:
+
+- User: admin
+- Password: admin
 
