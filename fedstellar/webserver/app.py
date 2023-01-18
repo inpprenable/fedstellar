@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import hashlib
 import json
@@ -645,4 +646,8 @@ def fedstellar_scenario_deployment_reload(scenario_name):
         return redirect(url_for("fedstellar_scenario"))
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    # Parse args from command line
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", type=int, default=5000, help="Port to run the webserver")
+    args = parser.parse_args()
+    app.run(debug=True, host="0.0.0.0", port=int(args.port))

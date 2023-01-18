@@ -14,6 +14,8 @@ argparser.add_argument('-t', '--topology', dest='topology', default="fully",
                           help='Topology: fully, ring, random, or star (default: fully)')
 argparser.add_argument('-w', '--webserver', dest='webserver', action='store_true', default=False,
                        help='Start webserver')
+argparser.add_argument('-pr', '--port', dest='port', default=5000,
+                       help='Webserver port (default: 5000)')
 argparser.add_argument('-s', '--simulation', action='store_false', dest='simulation', help='Run simulation')
 argparser.add_argument('-c', '--config', dest='config', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config'),
                        help='Config directory path')
