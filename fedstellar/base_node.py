@@ -79,7 +79,7 @@ class BaseNode(threading.Thread, Observer):
         self.log_dir = os.path.join(config.participant['tracking_args']["log_dir"], self.experiment_name)
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
-        self.log_filename = f"{self.log_dir}/{self.get_name_demo()}" if self.hostdemo else f"{self.log_dir}/{self.get_name()}"
+        self.log_filename = f"{self.log_dir}/participant_{config.participant['device_args']['idx']}" if self.hostdemo else f"{self.log_dir}/participant_{config.participant['device_args']['idx']}"
         os.makedirs(os.path.dirname(self.log_filename), exist_ok=True)
         console_handler, file_handler, file_handler_only_debug, exp_errors_file_handler = self.setup_logging(self.log_filename)
 

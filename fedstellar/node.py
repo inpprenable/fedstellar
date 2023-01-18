@@ -98,9 +98,9 @@ class Node(BaseNode):
             logging.info("[NODE] Tracking W&B enabled")
             logging.getLogger("wandb").setLevel(logging.ERROR)
             if self.hostdemo:
-                wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=self.get_name_demo(), mode="disabled")
+                wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=f"participant_{self.idx}", mode="disabled")
             else:
-                wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=self.get_name(), mode="disabled")
+                wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=f"participant_{self.idx}", mode="disabled")
             wandblogger.watch(model, log="all")
             if self.idx == 0:
                 import wandb
@@ -109,7 +109,7 @@ class Node(BaseNode):
             self.learner = learner(model, data, logger=wandblogger)
         else:
             logging.info("[NODE] Tracking CSV enabled")
-            self.learner = learner(model, data, logger=CSVLogger(f"{self.log_dir}", name="metrics", version=self.get_name_demo()))
+            self.learner = learner(model, data, logger=CSVLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}"))
 
         logging.info("[NODE] Role: " + str(self.config.participant["device_args"]["role"]))
 
