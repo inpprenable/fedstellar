@@ -76,7 +76,10 @@ class Controller:
         """
         Start the controller
         """
-        self.init()
+        # First, kill all the ports related to previous executions
+        # self.killports()
+
+        # self.init()
 
         # Save the configuration in environment variables
         logging.info("Saving configuration in environment variables...")
@@ -124,8 +127,6 @@ class Controller:
             subprocess.Popen([self.python_path, "app.py", "--port", str(self.webserver_port)], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
 
     def init(self):
-        # First, kill all the ports related to previous executions
-        # self.killports()
 
         banner = """
                     ______       _     _       _ _            
@@ -282,8 +283,11 @@ class Controller:
             os.system("""osascript -e 'tell application "Terminal" to activate' -e 'tell application "Terminal" to do script "{}"'""".format(command))
         elif sys.platform == "linux":
             os.system("""gnome-terminal -e "{}" """.format(command))
+        elif sys.platform == "win32":
+            command_win = f'cd {os.path.dirname(os.path.realpath(__file__))} && {self.python_path} -u node_start.py {str(self.config.participants_path[idx])} 2>&1'
+            os.system("""start cmd /k "{}" """.format(command_win))
         else:
-            os.system("""start cmd /k "{}" """.format(command))
+            raise ValueError("Unknown operating system")
 
     def start_nodes(self, idx_start_node):
         # Start the nodes
