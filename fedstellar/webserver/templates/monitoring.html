@@ -270,6 +270,27 @@
     document.getElementsByClassName("scene-nav-info")[0].innerHTML = "Only visualization purpose. Click on a node to zoom in.";
 </script>
 
+<script>
+    function updateGraph(gData) {
+        // Global update of the graph
+        gDataUpdate(gData);
+        Graph.graphData(gData);
+    }
+
+    function gDataUpdate(gData) {
+        console.log("gDataUpdate");
+        console.log(gData);
+        // Remove duplicated links
+        for (var i = 0; i < gData.links.length; i++) {
+            for (var j = i + 1; j < gData.links.length; j++) {
+                if ((gData.links[i].source === gData.links[j].source && gData.links[i].target === gData.links[j].target) ||
+                    gData.links[i].source === gData.links[j].target && gData.links[i].target === gData.links[j].source) {
+                    gData.links.splice(j, 1);
+                }
+            }
+        }
+    }
+</script>
 
 <script>
     function async_update_nodes_page() {
@@ -351,7 +372,7 @@
                         links: data['nodes_table'].map(node => {
                             var links = [];
                             if (node[5] !== "") {
-                                var neighbors = node[5].split(",");
+                                var neighbors = node[5].split(" ");
                                 neighbors.forEach(function (neighbor) {
                                     links.push({
                                         source: node[2] + ":" + node[3],
@@ -365,22 +386,10 @@
                     };
 
                     // cross-link node objects
-                    gData.links.forEach(link => {
-                        const s = gData.nodes.find(node => node.ipport === link.source);
-                        const t = gData.nodes.find(node => node.ipport === link.target);
-                        link.source = s;
-                        link.target = t;
-                        if (s) {
-                            s.neighbors = s.neighbors || [];
-                            s.neighbors.push(t);
-                        }
-                        if (t) {
-                            t.neighbors = t.neighbors || [];
-                            t.neighbors.push(s);
-                        }
-                    });
+                    console.log(gData);
+                    updateGraph(gData);
 
-                    Graph.graphData(gData);
+                    //Graph.graphData(gData);
 
                 });
             })
@@ -389,7 +398,7 @@
     window.onload = async function () {
         await async_update_nodes_page();
     };
-    setInterval(async_update_nodes_page, 2000); // Actualiza la tabla cada 1 segundo
+    setInterval(async_update_nodes_page, 2000); // Update the nodes every 2 seconds
 </script>
 
 {% endif %}

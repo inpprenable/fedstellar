@@ -441,9 +441,7 @@
                 xhr.open("POST", "/scenario/deployment/run", true);
                 xhr.setRequestHeader('Content-Type', 'application/json');
                 xhr.send(JSON.stringify(data));
-                setTimeout(function () {
-                    window.location.href = "/scenario/";
-                }, 5000);
+                window.location.href = "/scenario/";
 
             });
         }
@@ -743,7 +741,7 @@
         // Global update of the graph
         gDataUpdate(gData);
         Graph.graphData(gData);
-        getNumberOfNodesAndUpdate()
+        getNumberOfNodesAndUpdate();
     }
 
     function gDataUpdate() {

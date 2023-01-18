@@ -1,7 +1,9 @@
 import json
 import random
 
+import matplotlib
 import matplotlib.pyplot as plt
+matplotlib.use('Agg')
 plt.switch_backend('Agg')
 
 import networkx as nx
