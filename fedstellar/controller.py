@@ -176,8 +176,10 @@ class Controller:
             command = '''kill -9 $(lsof -i @localhost:''' + str(port) + ''' | grep python | awk '{print $2}') > /dev/null 2>&1'''
         elif sys.platform == "linux":
             command = '''kill -9 $(lsof -i :''' + str(port) + ''' | grep python | awk '{print $2}') > /dev/null 2>&1'''
+        elif sys.platform == "win32":
+            command = 'taskkill /F /PID $(FOR /F "tokens=5" %P IN (\'netstat -a -n -o ^| findstr :' + str(port) + '\') DO echo %P)'
         else:
-            command = '''taskkill /F /IM python.exe /T'''
+            raise ValueError("Unknown platform")
 
         os.system(command)
 
