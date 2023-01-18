@@ -2,6 +2,7 @@ import datetime
 import hashlib
 import json
 import os
+import shutil
 import signal
 import sys
 
@@ -15,7 +16,7 @@ from fedstellar.controller import Controller
 
 from flask import Flask, session, url_for, redirect, render_template, request, abort, flash, send_file, make_response, jsonify, Response
 from werkzeug.utils import secure_filename
-from fedstellar.webserver.database import list_users, verify, delete_user_from_db, add_user, scenario_update_record, scenario_set_all_status_to_finished, get_running_scenario, remove_all_nodes, get_user_info, get_scenario_by_name, list_nodes_by_scenario_name, get_all_scenarios
+from fedstellar.webserver.database import list_users, verify, delete_user_from_db, add_user, scenario_update_record, scenario_set_all_status_to_finished, get_running_scenario, get_user_info, get_scenario_by_name, list_nodes_by_scenario_name, get_all_scenarios
 from fedstellar.webserver.database import read_note_from_db, write_note_into_db, delete_note_from_db, match_user_id_with_note_id
 from fedstellar.webserver.database import image_upload_record, list_images_for_user, match_user_id_with_image_uid, delete_image_from_db, get_image_file_name, update_node_record, list_nodes
 
@@ -249,6 +250,7 @@ def fedstellar_add_user():
     else:
         return abort(401)
 
+
 #                                                   #
 # -------------- Scenario management -------------- #
 #                                                   #
@@ -472,23 +474,57 @@ def fedstellar_monitoring_image(scenario_name):
         make_response("You are not authorized to access this page.", 401)
 
 
+def stop_scenario(scenario_name=None):
+    from fedstellar.controller import Controller
+    nodes = list_nodes()
+    for node in nodes:
+        # Kill the node
+        Controller.killport(node[3])
+
+    scenario_set_all_status_to_finished()
+    Controller.remove_config_files()
+    # remove_all_nodes()
+
+
 @app.route("/scenario/<scenario_name>/stop", methods=["GET"])
 def fedstellar_stop_scenario(scenario_name):
     # Stop the scenario
     if "user" in session.keys():
-        from fedstellar.controller import Controller
-        nodes = list_nodes()
-        for node in nodes:
-            # Kill the node
-            Controller.killport(node[3])
-
-        scenario_set_all_status_to_finished()
-        Controller.remove_config_files()
-        # remove_all_nodes()
-
-        return redirect(url_for('fedstellar_home'))
+        stop_scenario()
+        return redirect(url_for('fedstellar_scenario'))
     else:
         pass
+
+
+#                                                   #
+# ------------------- Statistics ------------------ #
+#                                                   #
+
+@app.route("/scenario/<scenario_name>/statistics/", methods=["GET"])
+def fedstellar_scenario_statistics(scenario_name):
+    if "user" in session.keys():
+        metrics_folder = os.path.join(app.config['log_dir'], scenario_name, 'metrics')
+        # Si existe metrics_folder, crear un zip con esta carpeta y que se pueda descargar
+        if os.path.exists(metrics_folder):
+            # Create a zip file with the metrics folder
+            zip_file = shutil.make_archive(metrics_folder, 'zip', metrics_folder)
+            # Send the zip file
+            return send_file(zip_file, mimetype='application/zip', as_attachment=True)
+
+        # import pandas as pd
+        # import plotly.express as px
+        # scenario = get_scenario_by_name(scenario_name)
+        # data = pd.read_csv("/Users/enrique/Documents/PhD/fedstellar/app/logs/fedstellar_DFL_18_01_2023_13_01_44/metrics/127.0.0.1:45000/metrics.csv")
+        # # Extend the value of the column "round" until a new value is found
+        # data["round"].ffill(inplace=True)
+        # data.groupby("round").mean()
+        # data.to_csv("/Users/enrique/Documents/PhD/fedstellar/app/logs/fedstellar_DFL_18_01_2023_13_01_44/metrics/127.0.0.1:45000/test.csv")
+        #
+        # fig = px.line(data, x='step', y='test_accuracy', title='Train Loss over Epochs', color='round')
+        # response = make_response(render_template("statistics.html", scenario=scenario, plot=fig.to_html(full_html=False)))
+        # return response
+    else:
+        return abort(401)
 
 
 #                                                   #
@@ -516,15 +552,15 @@ def fedstellar_monitoring_participant_file():
 
 
 @app.route("/scenario/deployment/run", methods=["POST"])
-# TODO: Improve the display of the configurations and the customization of the scenario
 def fedstellar_scenario_deployment_run():
     if "user" in session.keys():
         # Receive a JSON data with the scenario configuration
         if request.is_json:
+            # Stop the running scenario
+            stop_scenario()
+
             data = request.get_json()
-
             nodes = data['nodes']
-
             scenario_name = f'fedstellar_{data["federation"]}_{datetime.datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}'
 
             args = {
@@ -540,6 +576,12 @@ def fedstellar_scenario_deployment_run():
                 "webserver": True,
                 "python": app.config['python_path'],
             }
+            # Save args in a file
+            scenario_path = os.path.join(app.config['config_dir'], scenario_name)
+            os.makedirs(scenario_path, exist_ok=True)
+            controller_file = os.path.join(app.config['config_dir'], scenario_name, 'controller.json')
+            with open(controller_file, 'w') as f:
+                json.dump(args, f)
             # For each node, create a new file in config directory
             import shutil
             # Loop dictionary of nodes
@@ -559,6 +601,11 @@ def fedstellar_scenario_deployment_run():
                 # participant_config['device_args']['idx'] = i
                 participant_config["device_args"]["start"] = node_config["start"]
                 participant_config["device_args"]["role"] = node_config["role"]
+                # The following parameters have to be same for all nodes (for now)
+                participant_config["scenario_args"]["rounds"] = int(data["rounds"])
+                participant_config["data_args"]["dataset"] = data["dataset"]
+                participant_config["model_args"]["model"] = data["model"]
+                participant_config["training_args"]["epochs"] = int(data["epochs"])
 
                 with open(participant_file, 'w') as f:
                     json.dump(participant_config, f, sort_keys=False, indent=2)
@@ -571,12 +618,31 @@ def fedstellar_scenario_deployment_run():
             # Generate/Update the scenario in the database
             scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=data["scenario_title"], description=data["scenario_description"])
 
-            return redirect(url_for("fedstellar_scenario_monitoring", scenario_name=scenario_name))
+            return redirect(url_for("fedstellar_scenario"))
         else:
             return abort(401)
     else:
         return abort(401)
 
+@app.route("/scenario/<scenario_name>/deployment/reload", methods=["GET"])
+def fedstellar_scenario_deployment_reload(scenario_name):
+    if "user" in session.keys():
+        # Stop the running scenario
+        stop_scenario()
+        # Load the scenario configuration
+        scenario = get_scenario_by_name(scenario_name)
+        controller_config = os.path.join(app.config['config_dir'], scenario_name, 'controller.json')
+        with open(controller_config) as f:
+            args = json.load(f)
+        # Create a argparse object
+        import argparse
+        args = argparse.Namespace(**args)
+        controller = Controller(args)
+        controller.load_configurations_and_start_nodes()
+        # Generate/Update the scenario in the database
+        scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=scenario[3], description=scenario[4])
+
+        return redirect(url_for("fedstellar_scenario"))
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)

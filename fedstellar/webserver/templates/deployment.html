@@ -158,26 +158,41 @@
     <div id="expert-container" class="col-md-12" style="display: none">
         <div class="form-group row">
             <h4 class="step-number">Participants</h4>
+            <h5>Number of rounds</h5>
+            <input type="number" class="form-control" id="rounds" placeholder="Number of rounds" value="3" style="display: inline; width: 20%">
+            <h5>Individual participants</h5>
             <div id="participant-items"></div>
         </div>
         <div class="form-group row">
             <h4 class="step-number">Network topology</h4>
+            <h5>Under development...</h5>
             <div id="network-topology-items"></div>
         </div>
         <div class="form-group row">
             <h4 class="step-number">Communication</h4>
+            <h5>Under development...</h5>
             <div id="communication-items"></div>
         </div>
         <div class="form-group row">
             <h4 class="step-number">Training</h4>
-            <div id="training-items"></div>
+            <h5>Model</h5>
+            <select class="form-control" id="modelSelect" name="model" style="display: inline; width: 20%">
+                <option selected>MLP</option>
+                <option>CNN</option>
+            </select>
+            <h5>Number of Epochs</h5>
+            <input type="number" class="form-control" id="epochs" placeholder="Number of Epochs" value="3" style="display: inline; width: 20%">
         </div>
         <div class="form-group row">
             <h4 class="step-number">Aggregation</h4>
-            <div id="aggregation-items"></div>
+            <h5>Aggregation algorithm</h5>
+            <select class="form-control" id="aggregationSelect" name="aggregation" style="display: inline; width: 20%">
+                <option selected>FedAvg</option>
+            </select>
         </div>
         <div class="form-group row">
             <h4 class="step-number">Evaluation</h4>
+            <h5>Under development...</h5>
             <div id="evaluation-items"></div>
         </div>
     </div>
@@ -389,7 +404,8 @@
             $('#confirm-modal-body').html('Please select one "start" participant for the scenario');
             document.getElementById("yes-button").disabled = true;
         } else {
-            $('#confirm-modal-body').html('Are you sure you want to run Fedstellar?');
+            $('#confirm-modal-body').html('Are you sure you want to run the scenario?\n' +
+                '<br><br><p style="color: red">Warning: this will stop the running scenario and start a new one.</p>');
             document.getElementById("yes-button").disabled = false;
 
             document.getElementById("yes-button").addEventListener("click", function () {
@@ -415,6 +431,10 @@
                     "federation": document.getElementById("federationArchitecture").value,
                     "simulation": true,
                     "topology": document.getElementById("predefined-topology-btn").checked ? document.getElementById("predefined-topology-select").value : "Custom",
+                    "rounds": document.getElementById("rounds").value,
+                    "dataset": document.getElementById("datasetSelect").value,
+                    "model": document.getElementById("modelSelect").value,
+                    "epochs": document.getElementById("epochs").value,
 
                 };
                 var xhr = new XMLHttpRequest();
@@ -422,8 +442,7 @@
                 xhr.setRequestHeader('Content-Type', 'application/json');
                 xhr.send(JSON.stringify(data));
                 setTimeout(function () {
-                    // Reload page
-                    window.location.reload();
+                    window.location.href = "/scenario/";
                 }, 5000);
 
             });

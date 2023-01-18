@@ -2,6 +2,7 @@
   "scenario_args": {
     "name": "",
     "federation": "DFL",
+    "rounds": 3,
     "simulation": true,
     "controller": "127.0.0.1:5000",
     "random_seed": 0,
@@ -35,22 +36,19 @@
     "delay-distro": 0
   },
   "data_args": {
-    "dataset": "MNIST",
-    "dataset_dir": "data/MNIST",
-    "partition_method": "noniid",
-    "partition_alpha": 0.5
+    "dataset": "MNIST"
   },
   "model_args": {
     "model": "MLP"
   },
+  "training_args": {
+    "epochs": 3
+  },
   "aggregator_args": {
     "algorithm": "FedAvg"
   },
-  "validation_args": {
-    "frequency_of_the_test": 5
-  },
   "tracking_args": {
-    "enable_remote_tracking": true,
+    "enable_remote_tracking": false,
     "log_dir": "/Users/enrique/Documents/PhD/fedstellar/app/logs",
     "config_dir": "/Users/enrique/Documents/PhD/fedstellar/app/config",
     "enable_wandb": false,

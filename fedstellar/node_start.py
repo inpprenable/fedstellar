@@ -10,6 +10,7 @@ from fedstellar.learning.pytorch.femnist.femnist import FEMNISTDataModule
 from fedstellar.config.config import Config
 from fedstellar.learning.pytorch.mnist.mnist import MNISTDataModule
 from fedstellar.learning.pytorch.mnist.models.mlp import MLP
+from fedstellar.learning.pytorch.mnist.models.cnn import CNN as CNN_mnist
 from fedstellar.learning.pytorch.femnist.models.cnn import CNN as CNN_femnist
 from fedstellar.node import Node
 
@@ -29,20 +30,36 @@ def main():
     port = config.participant["network_args"]["port"]
     neighbors = config.participant["network_args"]["neighbors"].split()
 
-    if model == "MLP":
-        model = MLP()
-    elif model == "CNN":
-        model = CNN_femnist()
-    else:
-        raise ValueError(f"Model {model} not supported")
+    rounds = config.participant["scenario_args"]["rounds"]
+    epochs = config.participant["training_args"]["epochs"]
+
+    aggregation_algorithm = config.participant["aggregator_args"]["algorithm"]
+
 
     dataset = config.participant["data_args"]["dataset"]
     if dataset == "MNIST":
         dataset = MNISTDataModule(sub_id=idx, number_sub=n_nodes, iid=True)
+        if model == "MLP":
+            model = MLP()
+        elif model == "CNN":
+            model = CNN_mnist()
+        else:
+            raise ValueError(f"Model {model} not supported")
     elif dataset == "FEMNIST":
         dataset = FEMNISTDataModule(sub_id=idx, number_sub=n_nodes, root_dir="data")
+        if model == "MLP":
+            model = MLP()
+        elif model == "CNN":
+            model = CNN_femnist()
+        else:
+            raise ValueError(f"Model {model} not supported")
     else:
         raise ValueError(f"Dataset {dataset} not supported")
+
+    if aggregation_algorithm == "FedAvg":
+        pass
+    else:
+        raise ValueError(f"Aggregation algorithm {aggregation_algorithm} not supported")
 
     node = Node(
         idx=idx,
@@ -73,7 +90,7 @@ def main():
     start_node = config.participant["device_args"]["start"]
 
     if start_node:
-        node.set_start_learning(rounds=3, epochs=5)  # rounds=10, epochs=5
+        node.set_start_learning(rounds=rounds, epochs=epochs)  # rounds=10, epochs=5
 
 
 if __name__ == "__main__":

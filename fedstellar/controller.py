@@ -115,7 +115,7 @@ class Controller:
 
     def run_webserver(self):
         # Save the configuration in environment variables
-        logging.info("Running webserver: https://127.0.0.1:5000")
+        logging.info("Running webserver: http://127.0.0.1:5000")
         controller_env = os.environ.copy()
         current_dir = os.path.dirname(os.path.abspath(__file__))
         webserver_path = os.path.join(current_dir, "webserver")
@@ -213,7 +213,7 @@ class Controller:
             participant_config['network_args']['neighbors'] = self.topologymanager.get_neighbors_string(i)
             participant_config['scenario_args']['name'] = self.scenario_name
             participant_config['device_args']['idx'] = i
-            participant_config['device_args']['uid'] = hashlib.sha1((str(participant_config["network_args"]["ip"]) + str(participant_config["network_args"]["port"])).encode()).hexdigest()
+            participant_config['device_args']['uid'] = hashlib.sha1((str(participant_config["network_args"]["ip"]) + str(participant_config["network_args"]["port"]) + str(self.scenario_name)).encode()).hexdigest()
             participant_config['tracking_args']['log_dir'] = self.log_dir
             participant_config['tracking_args']['config_dir'] = self.config_dir
             if participant_config["device_args"]["start"]:

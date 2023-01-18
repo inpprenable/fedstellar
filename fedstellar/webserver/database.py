@@ -260,6 +260,8 @@ def update_node_record(node_uid, idx, ip, port, role, neighbors, latitude, longi
     command = "SELECT * FROM nodes WHERE uid = '" + node_uid + "' AND scenario = '" + scenario + "';"
     _c.execute(command)
     result = _c.fetchone()
+    print("Update Node Record Result:")
+    print(result)
     if result is None:
         # Create a new record
         _c.execute("INSERT INTO nodes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (node_uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, scenario))

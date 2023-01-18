@@ -75,12 +75,12 @@
         <td class="td-icons">
             <a href="{{ url_for('fedstellar_scenario_private', scenario_name=name) }}" target="_blank" class="label btn btn-info">Private</a>
             <a href="{{ url_for('fedstellar_scenario_monitoring', scenario_name=name) }}" class="label btn btn-info">Monitor</a>
+            <a href="{{ url_for('fedstellar_scenario_statistics', scenario_name=name) }}" class="label btn btn-info">Statistics</a>
             {% if status == "running" %}
             <a href="{{ url_for('fedstellar_stop_scenario', scenario_name=name) }}" class="label btn btn-danger">Stop scenario</a>
             {% else %}
             <a id="reload-btn" data-scenario-name="{{ name }}" target="_blank" class="label btn btn-info">Reload</a>
             {% endif %}
-
         </td>
     </tr>
     {% endfor %}
@@ -90,10 +90,24 @@
     .fa {
         padding: 3px;
     }
+
     .label {
         line-height: revert;
     }
 </style>
+
+<script>
+    // When clicking on reload-btn (there are many in the document), show a modal to confirm the action
+    $(document).on('click', '#reload-btn', function () {
+        var scenario_name = $(this).data('scenario-name');
+        $('#confirm-modal').modal('show');
+        $('#confirm-modal .modal-title').text('Reload scenario');
+        $('#confirm-modal #confirm-modal-body').html('Are you sure you want to reload the scenario ' + scenario_name + '?<br><br><p style="color: red">Warning: this will stop the running scenario and start a new one.</p>');
+        $('#confirm-modal #yes-button').click(function () {
+            window.location.href = "/scenario/" + scenario_name + "/deployment/reload";
+        });
+    });
+</script>
 
 <script>
     function async_update_nodes_page() {
@@ -162,14 +176,18 @@
                             cell_end_time.innerHTML = scenario_end_time;
                             cell_title.innerHTML = scenario_title;
                             cell_description.innerHTML = scenario_description;
-                            if (scenario_status == "running") {
+                            if (scenario_status === "running") {
                                 cell_status.innerHTML = "<span class=\"label label-success\">Running</span>";
                             } else {
                                 cell_status.innerHTML = "<span class=\"label label-danger\">Finished</span>";
                             }
-                            cell_icons.innerHTML = "<a href=\"/scenario/" + scenario_name + "/monitoring" + "\"><i class=\"fa fa-bars\" aria-hidden=\"true\"></i></a>";
-                            if (scenario_status == "running") {
-                                cell_icons.innerHTML += "<a href=\"/scenario/stop/" + scenario_name + "\" class=\"btn btn-danger\">Stop scenario</a>";
+                            cell_icons.innerHTML = "<a href=\"/scenario/" + scenario_name + "/private\" target=\"_blank\" class=\"label btn btn-info\">Private</a>" +
+                                "<a href=\"/scenario/" + scenario_name + "/monitoring\" class=\"label btn btn-info\">Monitor</a>"
+                            cell_icons.innerHTML += "<a href=\"/scenario/" + scenario_name + "/statistics\" class=\"label btn btn-info\">Statistics</a>";
+                            if (scenario_status === "running") {
+                                cell_icons.innerHTML += "<a href=\"/scenario/" + scenario_name + "/stop\" class=\"label btn btn-danger\">Stop scenario</a>"
+                            } else {
+                                cell_icons.innerHTML += "<a id=\"reload-btn\" data-scenario-name=\"" + scenario_name + "\" target=\"_blank\" class=\"label btn btn-info\">Reload</a>"
                             }
                         }
                     }

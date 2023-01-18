@@ -109,12 +109,14 @@ class Node(BaseNode):
             self.learner = learner(model, data, logger=wandblogger)
         else:
             logging.info("[NODE] Tracking CSV enabled")
-            self.learner = learner(model, data, logger=CSVLogger(f"{self.log_dir}", name=self.get_name_demo()))
+            self.learner = learner(model, data, logger=CSVLogger(f"{self.log_dir}", name="metrics", version=self.get_name_demo()))
 
         logging.info("[NODE] Role: " + str(self.config.participant["device_args"]["role"]))
 
         # Aggregator
-        self.aggregator = FedAvg(node_name=self.get_name(), config=self.config)
+        if self.config.participant["aggregator_args"]["algorithm"] == "FedAvg":
+            self.aggregator = FedAvg(node_name=self.get_name(), config=self.config)
+
         self.aggregator.add_observer(self)
 
         self.shared_metrics = False

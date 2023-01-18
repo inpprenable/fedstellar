@@ -1,10 +1,12 @@
 {% extends "layout.html" %}
-{% block page_title %}Scenario Monitoring{% endblock %}
+{% block page_title %}Scenario Statistics{% endblock %}
 {% block body %}
 {{ super() }}
 
-<h4>Monitor scenario using Fedstellar</h4>
+<h4>Stats for scenario</h4>
 <hr>
+
+{{ plot|safe }}
 
 {% if not scenario %}
 
@@ -28,7 +30,7 @@
 <a href="{{ url_for('fedstellar_scenario_private', scenario_name=scenario[0]) }}" target="_blank" class="btn btn-primary">Private page</a>
 <hr>
 
-<h3>Nodes in the database</h3>
+<h3>Statistics</h3>
 
 <table id="table-nodes" class="table small table-responsive">
     <thead>
