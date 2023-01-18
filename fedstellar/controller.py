@@ -282,12 +282,16 @@ class Controller:
 
     def start_node(self, idx):
         command = f'cd {os.path.dirname(os.path.realpath(__file__))}; {self.python_path} -u node_start.py {str(self.config.participants_path[idx])} 2>&1'
+        print("Starting node {} with command: {}".format(idx, command))
         if sys.platform == "darwin":
+            print("MacOS detected")
             os.system("""osascript -e 'tell application "Terminal" to activate' -e 'tell application "Terminal" to do script "{}"'""".format(command))
         elif sys.platform == "linux":
+            print("Linux OS detected")
             os.system("""gnome-terminal -e "{}" """.format(command))
         elif sys.platform == "win32":
-            command_win = f'cd {os.path.dirname(os.path.realpath(__file__))} && {self.python_path} -u node_start.py {str(self.config.participants_path[idx])} 2>&1'
+            print("Windows OS detected")
+            command_win = f'cd {os.path.dirname(os.path.realpath(__file__))} {str("&&")} {self.python_path} -u node_start.py {str(self.config.participants_path[idx])} 2>&1'
             os.system("""start cmd /k "{}" """.format(command_win))
         else:
             raise ValueError("Unknown operating system")

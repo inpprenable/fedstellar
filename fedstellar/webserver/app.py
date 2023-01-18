@@ -259,8 +259,6 @@ def fedstellar_add_user():
 @app.route("/scenario/", methods=["GET"])
 def fedstellar_scenario():
     if "user" in session.keys() or request.path == "/api/scenario/":
-        print("User: " + session['user'] + " is requesting scenario page.")
-
         # Get the list of scenarios
         scenarios = get_all_scenarios()
         scenario_running = get_running_scenario()
@@ -307,7 +305,9 @@ def fedstellar_scenario_monitoring(scenario_name):
                         nodes_offline.append(node[2] + ':' + str(node[3]))
                     else:
                         nodes_status.append(True)
-
+                print(nodes_list)
+                print(nodes_config)
+                print("--------------------------------------------------------------------------------")
                 nodes_table = zip([x[0] for x in nodes_list],  # UID
                                   [x[1] for x in nodes_list],  # IDX
                                   [x[2] for x in nodes_list],  # IP
@@ -331,7 +331,9 @@ def fedstellar_scenario_monitoring(scenario_name):
                     node_list = node[2] + ':' + str(node[3])
                     if node_list in nodes_offline:
                         nodes_list.remove(node)
-
+                print("----------------")
+                print(nodes_list)
+                print(nodes_config)
                 if os.path.exists(os.path.join(app.config['config_dir'], scenario_name, 'topology.png')):
                     if os.path.getmtime(os.path.join(app.config['config_dir'], scenario_name, 'topology.png')) < max([os.path.getmtime(os.path.join(app.config['config_dir'], scenario_name, f'participant_{node[1]}.json')) for node in nodes_list]):
                         # Update the 3D topology and image
