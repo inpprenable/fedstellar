@@ -125,7 +125,7 @@ class Controller:
 
     def init(self):
         # First, kill all the ports related to previous executions
-        self.killports()
+        # self.killports()
 
         banner = """
                     ______       _     _       _ _            
