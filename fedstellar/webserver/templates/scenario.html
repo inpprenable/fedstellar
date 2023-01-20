@@ -25,8 +25,8 @@
 {% if not scenario_running %}
 
 <h4>There are no deployed scenarios.</h4>
-<a href="{{ url_for('fedstellar_scenario_deployment') }}" class="btn btn-primary">Deploy scenario</a>
-<a href="http://127.0.0.1:6006" class="btn btn-info">Scenario statistics</a>
+<a href="{{ url_for('fedstellar_scenario_deployment') }}" target="_blank" class="btn btn-primary">Deploy scenario</a>
+<a href="http://127.0.0.1:6006" target="_blank" class="btn btn-info">Scenario statistics</a>
 
 <hr>
 {% elif scenario_running %}
@@ -42,8 +42,8 @@
 <a href="{{ url_for('fedstellar_scenario_private', scenario_name=scenario_running[0]) }}" target="_blank" class="btn btn-primary">Private page</a>
 
 <a href="{{ url_for('fedstellar_stop_scenario', scenario_name=scenario_running[0]) }}" class="btn btn-danger">Stop scenario</a>
-<a id="new-scenario-btn" href="{{ url_for('fedstellar_scenario_deployment') }}" class="btn btn-primary">Deploy new scenario</a>
-<a href="http://127.0.0.1:6006" class="btn btn-info">Scenario statistics</a>
+<a id="new-scenario-btn" href="{{ url_for('fedstellar_scenario_deployment') }}" target="_blank" class="btn btn-primary">Deploy new scenario</a>
+<a href="http://127.0.0.1:6006" target="_blank" class="btn btn-info">Scenario statistics</a>
 <hr>
 
 {% endif %}
@@ -77,7 +77,7 @@
         {% endif %}
         <td class="td-icons">
             <a href="{{ url_for('fedstellar_scenario_private', scenario_name=name) }}" target="_blank" class="label btn btn-info">Private</a>
-            <a href="{{ url_for('fedstellar_scenario_monitoring', scenario_name=name) }}" class="label btn btn-info">Monitor</a>
+            <a href="{{ url_for('fedstellar_scenario_monitoring', scenario_name=name) }}" target="_blank" class="label btn btn-info">Monitor</a>
             <a href="{{ url_for('fedstellar_scenario_statistics', scenario_name=name) }}" class="label btn btn-info">Download Statistics</a>
             {% if status == "running" %}
             <a href="{{ url_for('fedstellar_stop_scenario', scenario_name=name) }}" class="label btn btn-danger">Stop scenario</a>
