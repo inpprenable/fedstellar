@@ -54,13 +54,13 @@ class MLP(pl.LightningModule):
         """ """
         x, y = batch
         loss = F.cross_entropy(self(x), y)
-        self.log("train_loss", loss, prog_bar=True)
+        self.log("Train/Loss", loss, prog_bar=True)
         return loss
 
     def training_epoch_end(self, outputs: EPOCH_OUTPUT) -> None:
         """ """
         loss = torch.stack([x["loss"] for x in outputs]).mean()
-        self.log("train_loss_end", loss, prog_bar=True)
+        self.log("TrainEnd/Loss", loss, prog_bar=True)
 
     def validation_step(self, batch, batch_idx):
         """ """
@@ -69,8 +69,8 @@ class MLP(pl.LightningModule):
         loss = F.cross_entropy(self(x), y)
         out = torch.argmax(logits, dim=1)
         metric = self.metric(out, y)
-        self.log("val_loss", loss, prog_bar=True)
-        self.log("val_accuracy", metric, prog_bar=True)
+        self.log("Validation/Loss", loss, prog_bar=True)
+        self.log("Validation/Accuracy", metric, prog_bar=True)
         return loss
 
     def test_step(self, batch, batch_idx):
@@ -80,6 +80,6 @@ class MLP(pl.LightningModule):
         loss = F.cross_entropy(self(x), y)
         out = torch.argmax(logits, dim=1)
         metric = self.metric(out, y)
-        self.log("test_loss", loss, prog_bar=True)
-        self.log("test_metric", metric, prog_bar=True)
+        self.log("Test/Loss", loss, prog_bar=True)
+        self.log("Test/Accuracy", metric, prog_bar=True)
         return loss

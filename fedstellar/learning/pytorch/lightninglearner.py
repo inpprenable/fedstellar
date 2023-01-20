@@ -9,7 +9,7 @@ from collections import OrderedDict
 
 import torch
 from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks import ModelSummary, TQDMProgressBar
+from pytorch_lightning.callbacks import ModelSummary, TQDMProgressBar, DeviceStatsMonitor
 
 from fedstellar.learning.exceptions import DecodingParamsError, ModelNotMatchingError
 from fedstellar.learning.learner import NodeLearner
@@ -46,7 +46,7 @@ class LightningLearner(NodeLearner):
         # self.local_step = 0
         # self.global_step = 0
 
-        self.logger.log_metrics({"round": self.round})
+        self.logger.log_metrics({"Round": self.round})
 
 
     def set_model(self, model):
@@ -114,10 +114,10 @@ class LightningLearner(NodeLearner):
             if self.epochs > 0:
                 self.create_trainer()
                 results = self.__trainer.test(self.model, self.data, verbose=True)
-                loss = results[0]["test_loss"]
-                metric = results[0]["test_metric"]
+                loss = results[0]["Test/Loss"]
+                metric = results[0]["Test/Accuracy"]
                 self.__trainer = None
-                self.log_validation_metrics(loss, metric)
+                self.log_validation_metrics(loss, metric, self.round)
                 return loss, metric
             else:
                 return None
@@ -126,7 +126,7 @@ class LightningLearner(NodeLearner):
             return None
 
     def log_validation_metrics(self, loss, metric, round=None, name=None):
-        self.logger.log_metrics({"test_loss": loss, "test_accuracy": metric}, step=round)
+        self.logger.log_metrics({"Test/Loss": loss, "Test/Accuracy": metric}, step=round)
         pass
 
     def get_num_samples(self):
@@ -145,13 +145,13 @@ class LightningLearner(NodeLearner):
     def finalize_round(self):
         logging.info("[LightningLearner] Finalizing round: {}".format(self.round))
         self.round = self.round + 1
-        self.logger.log_metrics({"round": self.round})
+        self.logger.log_metrics({"Round": self.round})
         logging.info("[LightningLearner] Starting round: {}".format(self.round))
         pass
 
     def create_trainer(self):
         self.__trainer = Trainer(
-            callbacks=[ModelSummary(max_depth=1), TQDMProgressBar(refresh_rate=200)],
+            callbacks=[ModelSummary(max_depth=1), TQDMProgressBar(refresh_rate=200), DeviceStatsMonitor(cpu_stats=True)],
             max_epochs=self.epochs,
             accelerator="auto",
             logger=self.logger,

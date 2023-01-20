@@ -114,7 +114,7 @@ class Node(BaseNode):
                 self.learner = learner(model, data, logger=csvlogger)
             elif self.config.participant['tracking_args']['local_tracking'] == 'web':
                 logging.info("[NODE] Tracking Web enabled")
-                tensorboardlogger = TensorBoardLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}")
+                tensorboardlogger = TensorBoardLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}", log_graph=True)
                 self.learner = learner(model, data, logger=tensorboardlogger)
 
 
@@ -859,6 +859,7 @@ class Node(BaseNode):
         elif event == Events.REPORT_STATUS_TO_CONTROLLER_EVENT:
             self.__report_status_to_controller()
             self.__report_logs_to_controller()
+            self.__report_resources()
 
         elif event == Events.STORE_MODEL_PARAMETERS_EVENT:
             if obj is not None:
@@ -926,6 +927,35 @@ class Node(BaseNode):
         if response.status_code != 200:
             logging.error(f'Error received from controller: {response.status_code}')
             logging.error(response.text)
+
+    def __report_resources(self):
+        """
+        Report node resources to the controller.
+
+        Returns:
+
+        """
+
+        import psutil
+        # Gather CPU usage information
+        cpu_percent = psutil.cpu_percent()
+        # Gather RAM usage information
+        ram_percent = psutil.virtual_memory().percent
+        # Gather disk usage information
+        disk_percent = psutil.disk_usage("/").percent
+
+        logging.info(f'CPU usage: {cpu_percent}%, RAM usage: {ram_percent}%, Disk usage: {disk_percent}%')
+        self.learner.logger.log_metrics({"Resources/CPU_percent": cpu_percent, "Resources/RAM_percent": ram_percent, "Resources/Disk_percent": disk_percent})
+
+        # Gather network usage information
+        net_io_counters = psutil.net_io_counters()
+        bytes_sent = net_io_counters.bytes_sent
+        bytes_recv = net_io_counters.bytes_recv
+        packets_sent = net_io_counters.packets_sent
+        packets_recv = net_io_counters.packets_recv
+
+        logging.info(f'Network usage: {bytes_sent} bytes sent, {bytes_recv} bytes received, {packets_sent} packets sent, {packets_recv} packets received')
+        self.learner.logger.log_metrics({"Resources/Bytes_sent": bytes_sent, "Resources/Bytes_recv": bytes_recv, "Resources/Packets_sent": packets_sent, "Resources/Packets_recv": packets_recv})
 
     def __store_model_parameters(self, obj):
         """

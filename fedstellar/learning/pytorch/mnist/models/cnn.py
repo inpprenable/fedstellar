@@ -68,7 +68,7 @@ class CNN(pl.LightningModule):
         """ """
         x, y = batch
         loss = self.loss_fn(self(x), y)
-        self.log("train_loss", loss, prog_bar=True)
+        self.log("Train/Loss", loss, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -78,8 +78,8 @@ class CNN(pl.LightningModule):
         loss = self.loss_fn(self(x), y)
         out = torch.argmax(logits, dim=1)
         metric = self.metric(out, y)
-        self.log("val_loss", loss, prog_bar=True)
-        self.log("val_accuracy", metric, prog_bar=True)
+        self.log("Validation/Loss", loss, prog_bar=True)
+        self.log("Accuracy/Loss", metric, prog_bar=True)
         return loss
 
     def test_step(self, batch, batch_idx):
@@ -89,6 +89,6 @@ class CNN(pl.LightningModule):
         loss = self.loss_fn(self(x), y)
         out = torch.argmax(logits, dim=1)
         metric = self.metric(out, y)
-        self.log("test_loss", loss, prog_bar=True)
-        self.log("test_metric", metric, prog_bar=True)
+        self.log("Test/Loss", loss, prog_bar=True)
+        self.log("Test/Accuracy", metric, prog_bar=True)
         return loss
