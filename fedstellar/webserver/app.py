@@ -305,9 +305,10 @@ def fedstellar_scenario_monitoring(scenario_name):
                         nodes_offline.append(node[2] + ':' + str(node[3]))
                     else:
                         nodes_status.append(True)
-                print(nodes_list)
-                print(nodes_config)
-                print("--------------------------------------------------------------------------------")
+                # print("------------------------------BEFORE--------------------------------------------")
+                # print(nodes_list)
+                # print(nodes_config)
+                # print("--------------------------------------------------------------------------------")
                 nodes_table = zip([x[0] for x in nodes_list],  # UID
                                   [x[1] for x in nodes_list],  # IDX
                                   [x[2] for x in nodes_list],  # IP
@@ -322,18 +323,10 @@ def fedstellar_scenario_monitoring(scenario_name):
                                   nodes_status  # Status
                                   )
 
-                # Nodes_config and nodes_list are lists which contain the nodes that are online
-                for node in nodes_config:
-                    node_config = node['network_args']['ip'] + ':' + str(node['network_args']['port'])
-                    if node_config in nodes_offline:
-                        nodes_config.remove(node)
-                for node in nodes_list:
-                    node_list = node[2] + ':' + str(node[3])
-                    if node_list in nodes_offline:
-                        nodes_list.remove(node)
-                print("----------------")
-                print(nodes_list)
-                print(nodes_config)
+                # print("-----------------------------AFTER----------------------------------------------")
+                # print(nodes_list)
+                # print(nodes_config)
+                # print("--------------------------------------------------------------------------------")
                 if os.path.exists(os.path.join(app.config['config_dir'], scenario_name, 'topology.png')):
                     if os.path.getmtime(os.path.join(app.config['config_dir'], scenario_name, 'topology.png')) < max([os.path.getmtime(os.path.join(app.config['config_dir'], scenario_name, f'participant_{node[1]}.json')) for node in nodes_list]):
                         # Update the 3D topology and image
