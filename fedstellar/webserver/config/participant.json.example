@@ -49,9 +49,9 @@
   },
   "tracking_args": {
     "enable_remote_tracking": false,
+    "local_tracking": "web",
     "log_dir": "/Users/enrique/Documents/PhD/fedstellar/app/logs",
     "config_dir": "/Users/enrique/Documents/PhD/fedstellar/app/config",
-    "enable_wandb": false,
     "wandb_key": [
       "your wandb key"
     ],

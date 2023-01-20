@@ -90,6 +90,7 @@ class Controller:
 
         if self.webserver:
             self.run_webserver()
+            self.run_statistics()
         else:
             logging.info("The controller without webserver is under development. Please, use the webserver (--webserver) option.")
             # self.load_configurations_and_start_nodes()
@@ -126,6 +127,25 @@ class Controller:
         webserver_path = os.path.join(current_dir, "webserver")
         with open(f'{self.log_dir}/server.log', 'w', encoding='utf-8') as log_file:
             subprocess.Popen([self.python_path, "app.py", "--port", str(self.webserver_port)], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+
+    def run_statistics(self):
+        import tensorboard
+        import zipfile
+        import warnings
+        # Ignore warning from zipfile
+        warnings.filterwarnings("ignore", category=UserWarning)
+        # Get the tensorboard path
+        tensorboard_path = os.path.dirname(tensorboard.__file__)
+        # Include "index.html" in a zip file "webfiles.zip" which is in the tensorboard root folder. If the file "index.html" exists in the zip, it will be overwritten.
+        with zipfile.ZipFile(os.path.join(tensorboard_path, "webfiles.zip"), "a") as zip:
+            zip.write(os.path.join(os.path.dirname(os.path.abspath(__file__)), "webserver", "config", "statistics", "index.html"), "index.html")
+
+        logging.info(f"Running statistics server: http://127.0.0.1:6006")
+        controller_env = os.environ.copy()
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        webserver_path = os.path.join(current_dir, "webserver")
+        with open(f'{self.log_dir}/statistics_server.log', 'w', encoding='utf-8') as log_file:
+            subprocess.Popen(["tensorboard", "--port", str("6006"), "--logdir", self.log_dir, "--window_title", "Fedstellar statistics", "--reload_interval", "1"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
 
     def init(self):
 

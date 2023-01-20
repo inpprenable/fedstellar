@@ -26,7 +26,9 @@
 
 <h4>There are no deployed scenarios.</h4>
 <a href="{{ url_for('fedstellar_scenario_deployment') }}" class="btn btn-primary">Deploy scenario</a>
+<a href="http://127.0.0.1:6006" class="btn btn-info">Scenario statistics</a>
 
+<hr>
 {% elif scenario_running %}
 
 <h4>There is a scenario running.</h4>
@@ -41,6 +43,7 @@
 
 <a href="{{ url_for('fedstellar_stop_scenario', scenario_name=scenario_running[0]) }}" class="btn btn-danger">Stop scenario</a>
 <a id="new-scenario-btn" href="{{ url_for('fedstellar_scenario_deployment') }}" class="btn btn-primary">Deploy new scenario</a>
+<a href="http://127.0.0.1:6006" class="btn btn-info">Scenario statistics</a>
 <hr>
 
 {% endif %}
@@ -75,7 +78,7 @@
         <td class="td-icons">
             <a href="{{ url_for('fedstellar_scenario_private', scenario_name=name) }}" target="_blank" class="label btn btn-info">Private</a>
             <a href="{{ url_for('fedstellar_scenario_monitoring', scenario_name=name) }}" class="label btn btn-info">Monitor</a>
-            <a href="{{ url_for('fedstellar_scenario_statistics', scenario_name=name) }}" class="label btn btn-info">Statistics</a>
+            <a href="{{ url_for('fedstellar_scenario_statistics', scenario_name=name) }}" class="label btn btn-info">Download Statistics</a>
             {% if status == "running" %}
             <a href="{{ url_for('fedstellar_stop_scenario', scenario_name=name) }}" class="label btn btn-danger">Stop scenario</a>
             {% else %}
@@ -184,7 +187,7 @@
                             }
                             cell_icons.innerHTML = "<a href=\"/scenario/" + scenario_name + "/private\" target=\"_blank\" class=\"label btn btn-info\">Private</a>" +
                                 "<a href=\"/scenario/" + scenario_name + "/monitoring\" class=\"label btn btn-info\">Monitor</a>"
-                            cell_icons.innerHTML += "<a href=\"/scenario/" + scenario_name + "/statistics\" class=\"label btn btn-info\">Statistics</a>";
+                            cell_icons.innerHTML += "<a href=\"/scenario/" + scenario_name + "/statistics\" class=\"label btn btn-info\">Download statistics</a>";
                             if (scenario_status === "running") {
                                 cell_icons.innerHTML += "<a href=\"/scenario/" + scenario_name + "/stop\" class=\"label btn btn-danger\">Stop scenario</a>"
                             } else {

@@ -627,6 +627,7 @@ def fedstellar_scenario_deployment_run():
     else:
         return abort(401)
 
+
 @app.route("/scenario/<scenario_name>/deployment/reload", methods=["GET"])
 def fedstellar_scenario_deployment_reload(scenario_name):
     if "user" in session.keys():
@@ -646,6 +647,7 @@ def fedstellar_scenario_deployment_reload(scenario_name):
         scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=scenario[3], description=scenario[4])
 
         return redirect(url_for("fedstellar_scenario"))
+
 
 if __name__ == "__main__":
     # Parse args from command line

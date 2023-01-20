@@ -21,7 +21,7 @@ import random
 import threading
 import time
 
-from pytorch_lightning.loggers import WandbLogger, CSVLogger
+from pytorch_lightning.loggers import WandbLogger, CSVLogger, TensorBoardLogger
 
 from fedstellar.base_node import BaseNode
 from fedstellar.communication_protocol import CommunicationProtocol
@@ -108,8 +108,15 @@ class Node(BaseNode):
                 wandblogger.log_image(key="topology", images=[img_topology])
             self.learner = learner(model, data, logger=wandblogger)
         else:
-            logging.info("[NODE] Tracking CSV enabled")
-            self.learner = learner(model, data, logger=CSVLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}"))
+            if self.config.participant['tracking_args']['local_tracking'] == 'csv':
+                logging.info("[NODE] Tracking CSV enabled")
+                csvlogger = CSVLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}")
+                self.learner = learner(model, data, logger=csvlogger)
+            elif self.config.participant['tracking_args']['local_tracking'] == 'web':
+                logging.info("[NODE] Tracking Web enabled")
+                tensorboardlogger = TensorBoardLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}")
+                self.learner = learner(model, data, logger=tensorboardlogger)
+
 
         logging.info("[NODE] Role: " + str(self.config.participant["device_args"]["role"]))
 
