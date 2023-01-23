@@ -83,6 +83,7 @@
             <a href="{{ url_for('fedstellar_stop_scenario', scenario_name=name) }}" class="label btn btn-danger">Stop scenario</a>
             {% else %}
             <a id="reload-btn" data-scenario-name="{{ name }}" target="_blank" class="label btn btn-info">Reload</a>
+            <a id="remove-btn" data-scenario-name="{{ name }}" target="_blank" class="label btn btn-danger" style="float: right"><i class="fa fa-times"></i></a>
             {% endif %}
         </td>
     </tr>
@@ -90,6 +91,10 @@
 </table>
 
 <style>
+    td {
+        vertical-align: inherit !important;
+    }
+
     .fa {
         padding: 3px;
     }
@@ -113,115 +118,15 @@
 </script>
 
 <script>
-    function async_update_nodes_page() {
-        // Get all divs with id "scenario-vars" and update them with value returned by async GET request
-        var scenario_row = document.querySelectorAll("#scenario-vars");
-
-        // Get the table
-        fetch('/api/scenario/')
-            .then(function (response) {
-                if (!response.ok) {
-                    showAlert("danger", "Error: " + response.status + " " + response.statusText);
-                    return;
-                }
-                // Examine the json in the response
-                response.json().then(function (data) {
-                    // Loop over data and create a new row for each scenario or update the existing one
-                    for (var i = 0; i < data.length; i++) {
-                        var scenario = data[i];
-                        var scenario_name = scenario[0];
-                        var scenario_start_time = scenario[1];
-                        var scenario_end_time = scenario[2];
-                        var scenario_title = scenario[3];
-                        var scenario_description = scenario[4];
-                        var scenario_status = scenario[5];
-
-                        // Check if the scenario is already in the table
-                        var scenario_found = false;
-                        for (var j = 0; j < scenario_row.length; j++) {
-                            var row = scenario_row[j];
-                            var row_scenario_name = row.querySelector("#name").innerHTML;
-                            if (row_scenario_name === scenario_name) {
-                                scenario_found = true;
-                                // Update the row
-                                row.querySelector("#start_time").innerHTML = scenario_start_time;
-                                row.querySelector("#end_time").innerHTML = scenario_end_time;
-                                row.querySelector("#title").innerHTML = scenario_title;
-                                row.querySelector("#description").innerHTML = scenario_description;
-                                if (scenario_status == "running") {
-                                    row.querySelector("#status").innerHTML = "<span class=\"label label-success\">Running</span>";
-                                } else {
-                                    row.querySelector("#status").innerHTML = "<span class=\"label label-danger\">Finished</span>";
-                                }
-                                break;
-                            }
-                        }
-                        if (!scenario_found) {
-                            // Create a new row
-                            var table = document.getElementById("table-scenarios");
-                            var row = table.insertRow(-1);
-                            row.id = "scenario-vars";
-                            var cell_name = row.insertCell(0);
-                            var cell_start_time = row.insertCell(1);
-                            var cell_end_time = row.insertCell(2);
-                            var cell_title = row.insertCell(3);
-                            var cell_description = row.insertCell(4);
-                            var cell_status = row.insertCell(5);
-                            var cell_icons = row.insertCell(6);
-                            cell_icons.className = "td-icons";
-                            cell_name.id = "name";
-                            cell_start_time.id = "start_time";
-                            cell_end_time.id = "end_time";
-                            cell_title.id = "title";
-                            cell_description.id = "description";
-                            cell_status.id = "status";
-                            cell_name.innerHTML = scenario_name;
-                            cell_start_time.innerHTML = scenario_start_time;
-                            cell_end_time.innerHTML = scenario_end_time;
-                            cell_title.innerHTML = scenario_title;
-                            cell_description.innerHTML = scenario_description;
-                            if (scenario_status === "running") {
-                                cell_status.innerHTML = "<span class=\"label label-success\">Running</span>";
-                            } else {
-                                cell_status.innerHTML = "<span class=\"label label-danger\">Finished</span>";
-                            }
-                            cell_icons.innerHTML = "<a href=\"/scenario/" + scenario_name + "/private\" target=\"_blank\" class=\"label btn btn-info\">Private</a>" +
-                                "<a href=\"/scenario/" + scenario_name + "/monitoring\" class=\"label btn btn-info\">Monitor</a>"
-                            cell_icons.innerHTML += "<a href=\"/scenario/" + scenario_name + "/statistics\" class=\"label btn btn-info\">Download statistics</a>";
-                            if (scenario_status === "running") {
-                                cell_icons.innerHTML += "<a href=\"/scenario/" + scenario_name + "/stop\" class=\"label btn btn-danger\">Stop scenario</a>"
-                            } else {
-                                cell_icons.innerHTML += "<a id=\"reload-btn\" data-scenario-name=\"" + scenario_name + "\" target=\"_blank\" class=\"label btn btn-info\">Reload</a>"
-                            }
-                        }
-                    }
-
-                    // Remove all rows that are not in the data
-                    for (var i = 0; i < scenario_row.length; i++) {
-                        var row = scenario_row[i];
-                        var row_scenario_name = row.querySelector("#name").innerHTML;
-                        var scenario_found = false;
-                        for (var j = 0; j < data.length; j++) {
-                            var scenario = data[j];
-                            var scenario_name = scenario[0];
-                            if (row_scenario_name === scenario_name) {
-                                scenario_found = true;
-                                break;
-                            }
-                        }
-                        if (!scenario_found) {
-                            row.parentNode.removeChild(row);
-                        }
-                    }
-
-                });
-            })
-    }
-
-    window.onload = async function () {
-        await async_update_nodes_page();
-    };
-    setInterval(async_update_nodes_page, 2000); // Update every 2 seconds
+    $(document).on('click', '#remove-btn', function () {
+        var scenario_name = $(this).data('scenario-name');
+        $('#confirm-modal').modal('show');
+        $('#confirm-modal .modal-title').text('Remove scenario');
+        $('#confirm-modal #confirm-modal-body').html('Are you sure you want to remove the scenario ' + scenario_name + '?<br><br><p style="color: red">Warning: this will remove the scenario from the database.</p>');
+        $('#confirm-modal #yes-button').click(function () {
+            window.location.href = "/scenario/" + scenario_name + "/remove";
+        });
+    });
 </script>
 
 {% endblock %}

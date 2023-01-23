@@ -17,7 +17,8 @@ from fedstellar.controller import Controller
 
 from flask import Flask, session, url_for, redirect, render_template, request, abort, flash, send_file, make_response, jsonify, Response
 from werkzeug.utils import secure_filename
-from fedstellar.webserver.database import list_users, verify, delete_user_from_db, add_user, scenario_update_record, scenario_set_all_status_to_finished, get_running_scenario, get_user_info, get_scenario_by_name, list_nodes_by_scenario_name, get_all_scenarios
+from fedstellar.webserver.database import list_users, verify, delete_user_from_db, add_user, scenario_update_record, scenario_set_all_status_to_finished, get_running_scenario, get_user_info, get_scenario_by_name, list_nodes_by_scenario_name, get_all_scenarios, remove_nodes_by_scenario_name, \
+    remove_scenario_by_name
 from fedstellar.webserver.database import read_note_from_db, write_note_into_db, delete_note_from_db, match_user_id_with_note_id
 from fedstellar.webserver.database import image_upload_record, list_images_for_user, match_user_id_with_image_uid, delete_image_from_db, get_image_file_name, update_node_record, list_nodes
 
@@ -479,14 +480,28 @@ def stop_scenario(scenario_name=None):
 
     scenario_set_all_status_to_finished()
     Controller.remove_config_files()
-    # remove_all_nodes()
-
 
 @app.route("/scenario/<scenario_name>/stop", methods=["GET"])
 def fedstellar_stop_scenario(scenario_name):
     # Stop the scenario
     if "user" in session.keys():
         stop_scenario()
+        return redirect(url_for('fedstellar_scenario'))
+    else:
+        pass
+
+
+def remove_scenario(scenario_name=None):
+    remove_nodes_by_scenario_name(scenario_name)
+    remove_scenario_by_name(scenario_name)
+    Controller.remove_files_by_scenario(scenario_name)
+
+
+@app.route("/scenario/<scenario_name>/remove", methods=["GET"])
+def fedstellar_remove_scenario(scenario_name):
+    # Stop the scenario
+    if "user" in session.keys():
+        remove_scenario(scenario_name)
         return redirect(url_for('fedstellar_scenario'))
     else:
         pass

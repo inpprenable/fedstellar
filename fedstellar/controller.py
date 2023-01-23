@@ -338,3 +338,11 @@ class Controller:
             os.remove(file)
         for file in glob.glob(os.path.join(os.environ["FEDSTELLAR_CONFIG_DIR"], "*.png")):
             os.remove(file)
+
+    @classmethod
+    def remove_files_by_scenario(cls, scenario_name):
+        import shutil
+        shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_CONFIG_DIR"], scenario_name))
+        shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_LOGS_DIR"], scenario_name))
+
+

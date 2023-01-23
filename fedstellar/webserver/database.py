@@ -285,6 +285,16 @@ def remove_all_nodes():
     _conn.close()
 
 
+def remove_nodes_by_scenario_name(scenario_name):
+    _conn = sqlite3.connect(node_db_file_location)
+    _c = _conn.cursor()
+
+    command = "DELETE FROM nodes WHERE scenario = '" + scenario_name + "';"
+    _c.execute(command)
+
+    _conn.commit()
+    _conn.close()
+
 """
     Scenario Management
 """
@@ -359,6 +369,17 @@ def get_scenario_by_name(scenario_name):
     _conn.close()
 
     return result
+
+
+def remove_scenario_by_name(scenario_name):
+    _conn = sqlite3.connect(scenario_db_file_location)
+    _c = _conn.cursor()
+
+    command = "DELETE FROM scenarios WHERE name = '" + scenario_name + "';"
+    _c.execute(command)
+
+    _conn.commit()
+    _conn.close()
 
 
 if __name__ == "__main__":
