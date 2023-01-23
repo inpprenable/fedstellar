@@ -139,6 +139,7 @@ class Controller:
         # Include "index.html" in a zip file "webfiles.zip" which is in the tensorboard root folder. If the file "index.html" exists in the zip, it will be overwritten.
         with zipfile.ZipFile(os.path.join(tensorboard_path, "webfiles.zip"), "a") as zip:
             zip.write(os.path.join(os.path.dirname(os.path.abspath(__file__)), "webserver", "config", "statistics", "index.html"), "index.html")
+            zip.write(os.path.join(os.path.dirname(os.path.abspath(__file__)), "webserver", "config", "statistics", "index.js"), "index.js")
 
         logging.info(f"Running statistics server: http://127.0.0.1:6006")
         controller_env = os.environ.copy()

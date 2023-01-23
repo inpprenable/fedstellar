@@ -8,6 +8,8 @@ import math
 import os
 from datetime import datetime, timedelta
 
+from fedstellar.learning.pytorch.statisticslogger import FedstellarLogger
+
 os.environ['WANDB_SILENT'] = 'true'
 
 # Import the requests module
@@ -21,7 +23,7 @@ import random
 import threading
 import time
 
-from pytorch_lightning.loggers import WandbLogger, CSVLogger, TensorBoardLogger
+from pytorch_lightning.loggers import WandbLogger, CSVLogger
 
 from fedstellar.base_node import BaseNode
 from fedstellar.communication_protocol import CommunicationProtocol
@@ -114,7 +116,7 @@ class Node(BaseNode):
                 self.learner = learner(model, data, logger=csvlogger)
             elif self.config.participant['tracking_args']['local_tracking'] == 'web':
                 logging.info("[NODE] Tracking Web enabled")
-                tensorboardlogger = TensorBoardLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}", log_graph=True)
+                tensorboardlogger = FedstellarLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}", log_graph=True)
                 self.learner = learner(model, data, logger=tensorboardlogger)
 
 
@@ -945,7 +947,7 @@ class Node(BaseNode):
         disk_percent = psutil.disk_usage("/").percent
 
         logging.info(f'CPU usage: {cpu_percent}%, RAM usage: {ram_percent}%, Disk usage: {disk_percent}%')
-        self.learner.logger.log_metrics({"Resources/CPU_percent": cpu_percent, "Resources/RAM_percent": ram_percent, "Resources/Disk_percent": disk_percent})
+        self.learner.logger.log_metrics({"Resources/CPU_percent": cpu_percent, "Resources/RAM_percent": ram_percent, "Resources/Disk_percent": disk_percent}, step=self.learner.logger.global_step)
 
         # Gather network usage information
         net_io_counters = psutil.net_io_counters()
@@ -955,7 +957,7 @@ class Node(BaseNode):
         packets_recv = net_io_counters.packets_recv
 
         logging.info(f'Network usage: {bytes_sent} bytes sent, {bytes_recv} bytes received, {packets_sent} packets sent, {packets_recv} packets received')
-        self.learner.logger.log_metrics({"Resources/Bytes_sent": bytes_sent, "Resources/Bytes_recv": bytes_recv, "Resources/Packets_sent": packets_sent, "Resources/Packets_recv": packets_recv})
+        self.learner.logger.log_metrics({"Resources/Bytes_sent": bytes_sent, "Resources/Bytes_recv": bytes_recv, "Resources/Packets_sent": packets_sent, "Resources/Packets_recv": packets_recv}, step=self.learner.logger.global_step)
 
     def __store_model_parameters(self, obj):
         """

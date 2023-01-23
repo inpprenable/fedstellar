@@ -496,29 +496,19 @@ def fedstellar_stop_scenario(scenario_name):
 # ------------------- Statistics ------------------ #
 #                                                   #
 
-@app.route("/scenario/<scenario_name>/statistics/", methods=["GET"])
-def fedstellar_scenario_statistics(scenario_name):
+@app.route("/scenario/statistics/", methods=["GET"])
+def fedstellar_scenario_statistics():
+    if "user" in session.keys():
+        return render_template("statistics.html", port_statistics="6006")
+
+
+@app.route("/scenario/<scenario_name>/statistics/download", methods=["GET"])
+def fedstellar_scenario_statistics_download(scenario_name):
     if "user" in session.keys():
         metrics_folder = os.path.join(app.config['log_dir'], scenario_name, 'metrics')
-        # Si existe metrics_folder, crear un zip con esta carpeta y que se pueda descargar
         if os.path.exists(metrics_folder):
-            # Create a zip file with the metrics folder
             zip_file = shutil.make_archive(metrics_folder, 'zip', metrics_folder)
-            # Send the zip file
             return send_file(zip_file, mimetype='application/zip', as_attachment=True)
-
-        # import pandas as pd
-        # import plotly.express as px
-        # scenario = get_scenario_by_name(scenario_name)
-        # data = pd.read_csv("/Users/enrique/Documents/PhD/fedstellar/app/logs/fedstellar_DFL_18_01_2023_13_01_44/metrics/127.0.0.1:45000/metrics.csv")
-        # # Extend the value of the column "round" until a new value is found
-        # data["round"].ffill(inplace=True)
-        # data.groupby("round").mean()
-        # data.to_csv("/Users/enrique/Documents/PhD/fedstellar/app/logs/fedstellar_DFL_18_01_2023_13_01_44/metrics/127.0.0.1:45000/test.csv")
-        #
-        # fig = px.line(data, x='step', y='test_accuracy', title='Train Loss over Epochs', color='round')
-        # response = make_response(render_template("statistics.html", scenario=scenario, plot=fig.to_html(full_html=False)))
-        # return response
     else:
         return abort(401)
 

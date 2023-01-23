@@ -5,11 +5,12 @@
 
 import logging
 import pickle
+import time
 from collections import OrderedDict
 
 import torch
 from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks import ModelSummary, TQDMProgressBar, DeviceStatsMonitor
+from pytorch_lightning.callbacks import ModelSummary, TQDMProgressBar
 
 from fedstellar.learning.exceptions import DecodingParamsError, ModelNotMatchingError
 from fedstellar.learning.learner import NodeLearner
@@ -46,7 +47,7 @@ class LightningLearner(NodeLearner):
         # self.local_step = 0
         # self.global_step = 0
 
-        self.logger.log_metrics({"Round": self.round})
+        self.logger.log_metrics({"Round": self.round}, step=self.logger.global_step)
 
 
     def set_model(self, model):
@@ -126,7 +127,7 @@ class LightningLearner(NodeLearner):
             return None
 
     def log_validation_metrics(self, loss, metric, round=None, name=None):
-        self.logger.log_metrics({"Test/Loss": loss, "Test/Accuracy": metric}, step=round)
+        self.logger.log_metrics({"Test/Loss": loss, "Test/Accuracy": metric}, step=self.logger.global_step)
         pass
 
     def get_num_samples(self):
@@ -144,14 +145,16 @@ class LightningLearner(NodeLearner):
 
     def finalize_round(self):
         logging.info("[LightningLearner] Finalizing round: {}".format(self.round))
+        self.logger.global_step = self.logger.global_step + self.logger.local_step
+        self.logger.local_step = 0
         self.round = self.round + 1
-        self.logger.log_metrics({"Round": self.round})
+        self.logger.log_metrics({"Round": self.round}, step=self.logger.global_step)
         logging.info("[LightningLearner] Starting round: {}".format(self.round))
         pass
 
     def create_trainer(self):
         self.__trainer = Trainer(
-            callbacks=[ModelSummary(max_depth=1), TQDMProgressBar(refresh_rate=200), DeviceStatsMonitor(cpu_stats=True)],
+            callbacks=[ModelSummary(max_depth=1), TQDMProgressBar(refresh_rate=200)],
             max_epochs=self.epochs,
             accelerator="auto",
             logger=self.logger,
