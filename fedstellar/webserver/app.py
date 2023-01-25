@@ -27,6 +27,7 @@ app.config.from_object('config')
 app.config['log_dir'] = os.environ.get('FEDSTELLAR_LOGS_DIR')
 app.config['config_dir'] = os.environ.get('FEDSTELLAR_CONFIG_DIR')
 app.config['python_path'] = os.environ.get('FEDSTELLAR_PYTHON_PATH')
+app.config['statistics_port'] = os.environ.get('FEDSTELLAR_STATISTICS_PORT')
 
 
 # Detect CTRL+C from parent process
@@ -514,7 +515,7 @@ def fedstellar_remove_scenario(scenario_name):
 @app.route("/scenario/statistics/", methods=["GET"])
 def fedstellar_scenario_statistics():
     if "user" in session.keys():
-        return render_template("statistics.html", port_statistics="6006")
+        return render_template("statistics.html", port_statistics=app.config['statistics_port'])
 
 
 @app.route("/scenario/<scenario_name>/statistics/download", methods=["GET"])

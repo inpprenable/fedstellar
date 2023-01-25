@@ -61,6 +61,7 @@ class Controller:
         self.topology = args.topology
         self.webserver = args.webserver
         self.webserver_port = args.port if hasattr(args, "port") else 5000
+        self.statistics_port = args.statistics_port if hasattr(args, "statistics_port") else 5100
         self.simulation = args.simulation
         self.config_dir = args.config
         self.log_dir = args.logs
@@ -87,6 +88,7 @@ class Controller:
         os.environ["FEDSTELLAR_LOGS_DIR"] = self.log_dir
         os.environ["FEDSTELLAR_CONFIG_DIR"] = self.config_dir
         os.environ["FEDSTELLAR_PYTHON_PATH"] = self.python_path
+        os.environ["FEDSTELLAR_STATISTICS_PORT"] = str(self.statistics_port)
 
         if self.webserver:
             self.run_webserver()
@@ -121,7 +123,7 @@ class Controller:
 
     def run_webserver(self):
         # Save the configuration in environment variables
-        logging.info(f"Running webserver: http://127.0.0.1:{self.webserver_port}")
+        logging.info(f"Running Fedstellar Webserver: http://127.0.0.1:{self.webserver_port}")
         controller_env = os.environ.copy()
         current_dir = os.path.dirname(os.path.abspath(__file__))
         webserver_path = os.path.join(current_dir, "webserver")
@@ -141,12 +143,12 @@ class Controller:
             zip.write(os.path.join(os.path.dirname(os.path.abspath(__file__)), "webserver", "config", "statistics", "index.html"), "index.html")
             zip.write(os.path.join(os.path.dirname(os.path.abspath(__file__)), "webserver", "config", "statistics", "index.js"), "index.js")
 
-        logging.info(f"Running statistics server: http://127.0.0.1:6006")
+        logging.info(f"Running Fedstellar Statistics")
         controller_env = os.environ.copy()
         current_dir = os.path.dirname(os.path.abspath(__file__))
         webserver_path = os.path.join(current_dir, "webserver")
         with open(f'{self.log_dir}/statistics_server.log', 'w', encoding='utf-8') as log_file:
-            subprocess.Popen(["tensorboard", "--port", str("6006"), "--logdir", self.log_dir, "--reload_interval", "1"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+            subprocess.Popen(["tensorboard", "--port", str(self.statistics_port), "--logdir", self.log_dir, "--reload_interval", "1", "--window_title", "Fedstellar Statistics"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
 
     def init(self):
 
