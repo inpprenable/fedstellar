@@ -1,21 +1,3 @@
-# Copyright The PyTorch Lightning team.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-"""
-TensorBoard Logger
-------------------
-"""
-
 import logging
 import os
 from argparse import Namespace
@@ -32,7 +14,6 @@ from lightning_lite.utilities.cloud_io import get_filesystem
 from lightning_lite.utilities.types import _PATH
 from pytorch_lightning.core.saving import save_hparams_to_yaml
 from pytorch_lightning.loggers.logger import Logger, rank_zero_experiment
-from pytorch_lightning.utilities.imports import _OMEGACONF_AVAILABLE
 from pytorch_lightning.utilities.logger import _add_prefix, _convert_params, _flatten_dict
 from pytorch_lightning.utilities.logger import _sanitize_params as _utils_sanitize_params
 from pytorch_lightning.utilities.rank_zero import rank_zero_only, rank_zero_warn
@@ -41,60 +22,9 @@ log = logging.getLogger(__name__)
 
 _TENSORBOARD_AVAILABLE = RequirementCache("tensorboard")
 
-if _OMEGACONF_AVAILABLE:
-    from omegaconf import Container, OmegaConf
-
 
 class FedstellarLogger(Logger):
-    r"""
-    Log to local file system in `TensorBoard <https://www.tensorflow.org/tensorboard>`_ format.
 
-    Implemented using :class:`~tensorboardX.SummaryWriter`. Logs are saved to
-    ``os.path.join(save_dir, name, version)``. This is the default logger in Lightning, it comes
-    preinstalled.
-
-    Example:
-
-    .. testcode::
-
-        from pytorch_lightning import Trainer
-        from pytorch_lightning.loggers import TensorBoardLogger
-
-        logger = TensorBoardLogger("tb_logs", name="my_model")
-        trainer = Trainer(logger=logger)
-
-    Args:
-        save_dir: Save directory
-        name: Experiment name. Defaults to ``'default'``. If it is the empty string then no per-experiment
-            subdirectory is used.
-        version: Experiment version. If version is not specified the logger inspects the save
-            directory for existing versions, then automatically assigns the next available version.
-            If it is a string then it is used as the run-specific subdirectory name,
-            otherwise ``'version_${version}'`` is used.
-        log_graph: Adds the computational graph to tensorboard. This requires that
-            the user has defined the `self.example_input_array` attribute in their
-            model.
-        default_hp_metric: Enables a placeholder metric with key `hp_metric` when `log_hyperparams` is
-            called without a metric (otherwise calls to log_hyperparams without a metric are ignored).
-        prefix: A string to put at the beginning of metric keys.
-        sub_dir: Sub-directory to group TensorBoard logs. If a sub_dir argument is passed
-            then logs are saved in ``/save_dir/name/version/sub_dir/``. Defaults to ``None`` in which
-            logs are saved in ``/save_dir/name/version/``.
-        \**kwargs: Additional arguments used by :class:`tensorboardX.SummaryWriter` can be passed as keyword
-            arguments in this logger. To automatically flush to disk, `max_queue` sets the size
-            of the queue for pending logs before flushing. `flush_secs` determines how many seconds
-            elapses before flushing.
-
-    Example:
-        >>> import shutil, tempfile
-        >>> tmp = tempfile.mkdtemp()
-        >>> tbl = TensorBoardLogger(tmp)
-        >>> tbl.log_hyperparams({"epochs": 5, "optimizer": "Adam"})
-        >>> tbl.log_metrics({"acc": 0.75})
-        >>> tbl.log_metrics({"acc": 0.9})
-        >>> tbl.finalize("success")
-        >>> shutil.rmtree(tmp)
-    """
     NAME_HPARAMS_FILE = "hparams.yaml"
     LOGGER_JOIN_CHAR = "-"
 
@@ -132,20 +62,12 @@ class FedstellarLogger(Logger):
 
     @property
     def root_dir(self) -> str:
-        """Parent directory for all tensorboard checkpoint subdirectories.
 
-        If the experiment name parameter is an empty string, no experiment subdirectory is used and the checkpoint will
-        be saved in "save_dir/version"
-        """
         return os.path.join(self.save_dir, self.name)
 
     @property
     def log_dir(self) -> str:
-        """The directory for this run's tensorboard checkpoint.
 
-        By default, it is named ``'version_${self.version}'`` but it can be overridden by passing a string value for the
-        constructor's version parameter instead of ``None`` or an int.
-        """
         # create a pseudo standard path ala test-tube
         version = self.version if isinstance(self.version, str) else f"version_{self.version}"
         log_dir = os.path.join(self.root_dir, version)
@@ -157,34 +79,18 @@ class FedstellarLogger(Logger):
 
     @property
     def save_dir(self) -> str:
-        """Gets the save directory where the TensorBoard experiments are saved.
 
-        Returns:
-            The local path to the save directory where the TensorBoard experiments are saved.
-        """
         return self._save_dir
 
     @property
     def sub_dir(self) -> Optional[str]:
-        """Gets the sub directory where the TensorBoard experiments are saved.
 
-        Returns:
-            The local path to the sub directory where the TensorBoard experiments are saved.
-        """
         return self._sub_dir
 
     @property
     @rank_zero_experiment
     def experiment(self) -> SummaryWriter:
-        r"""
-        Actual tensorboard object. To use TensorBoard features in your
-        :class:`~pytorch_lightning.core.module.LightningModule` do the following.
 
-        Example::
-
-            self.logger.experiment.some_tensorboard_function()
-
-        """
         if self._experiment is not None:
             return self._experiment
 
@@ -198,22 +104,11 @@ class FedstellarLogger(Logger):
     def log_hyperparams(
         self, params: Union[Dict[str, Any], Namespace], metrics: Optional[Dict[str, Any]] = None
     ) -> None:
-        """Record hyperparameters. TensorBoard logs with and without saved hyperparameters are incompatible, the
-        hyperparameters are then not displayed in the TensorBoard. Please delete or move the previously saved logs
-        to display the new ones with hyperparameters.
-
-        Args:
-            params: a dictionary-like container with the hyperparameters
-            metrics: Dictionary with metric names as keys and measured quantities as values
-        """
 
         params = _convert_params(params)
 
         # store params to output
-        if _OMEGACONF_AVAILABLE and isinstance(params, Container):
-            self.hparams = OmegaConf.merge(self.hparams, params)
-        else:
-            self.hparams.update(params)
+        self.hparams.update(params)
 
         # format params into the suitable for tensorboard
         params = _flatten_dict(params)
@@ -305,20 +200,12 @@ class FedstellarLogger(Logger):
 
     @property
     def name(self) -> str:
-        """Get the name of the experiment.
 
-        Returns:
-            The name of the experiment.
-        """
         return self._name
 
     @property
     def version(self) -> Union[int, str]:
-        """Get the experiment version.
 
-        Returns:
-            The experiment version if specified else the next version.
-        """
         if self._version is None:
             self._version = self._get_next_version()
         return self._version
