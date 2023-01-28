@@ -7,7 +7,7 @@
   <h3 align="center">Fedstellar</h3>
 
   <p align="center">
-    A Framework for Decentralized Federated Learning
+    Framework for Decentralized Federated Learning
     <br>
   </p>
 </p>
