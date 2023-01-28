@@ -57,12 +57,12 @@
                 <label class="form-check-label" for="simulation-radio">Simulation</label>
             </div>
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="real-radio" value="real" disabled>
-                <label class="form-check-label" for="real-radio">Real devices (under development)</label>
+                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="real-radio" value="real">
+                <label class="form-check-label" for="real-radio">Real devices</label>
             </div>
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="datacenter-radio" value="datacenter" disabled>
-                <label class="form-check-label" for="datacenter-radio">Datacenter (disabled)</label>
+                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="datacenter-radio" value="datacenter">
+                <label class="form-check-label" for="datacenter-radio">Datacenter (computer server)</label>
             </div>
         </div>
         <div id="deployment-options" style="margin-left: 10px">
@@ -167,12 +167,7 @@
             <div id="participant-items"></div>
         </div>
         <div class="form-group row">
-            <h4 class="step-number">Network topology</h4>
-            <h5>Under development...</h5>
-            <div id="network-topology-items"></div>
-        </div>
-        <div class="form-group row">
-            <h4 class="step-number">Communication</h4>
+            <h4 class="step-number">Communications</h4>
             <h5>Under development...</h5>
             <div id="communication-items"></div>
         </div>
@@ -192,11 +187,6 @@
             <select class="form-control" id="aggregationSelect" name="aggregation" style="display: inline; width: 20%">
                 <option selected>FedAvg</option>
             </select>
-        </div>
-        <div class="form-group row">
-            <h4 class="step-number">Evaluation</h4>
-            <h5>Under development...</h5>
-            <div id="evaluation-items"></div>
         </div>
     </div>
 </form>
@@ -486,7 +476,7 @@
                 document.getElementById("spinner").style.display = "block";
                 setTimeout(function () {
                     window.location.href = "/scenario/";
-                }, 5000);
+                }, 8000);
 
             });
         }
@@ -528,6 +518,17 @@
             })),
             links: []
         };
+
+        // Check value of "federationArchitecture"
+        if (document.getElementById("federationArchitecture").value === "DFL") {
+            // All nodes are aggregator
+            gData.nodes.forEach(node => node.role = "aggregator");
+        } else if (document.getElementById("federationArchitecture").value === "SDFL") {
+            // All nodes are trainer
+            gData.nodes.forEach(node => node.role = node.id === 0 ? "aggregator" : "trainer");
+        } else {
+            gData.nodes.forEach(node => node.role = node.id === 0 ? "server" : "trainer");
+        }
 
 
         if ($("#predefined-topology-select").val() === 'Fully') {
@@ -578,22 +579,41 @@
     // If federationArchitecture is changed to CFL, gData is updated to Star graph
     $('#federationArchitecture').change(function () {
         if ($(this).val() === 'CFL') {
+            $('#predefined-topology-btn').click();
             $('#predefined-topology-select').val('Star');
             $('#predefined-topology-select').prop('disabled', true);
+            // Change value of the input "predefined-topology-nodes" to number of nodes
+            $('#predefined-topology-nodes').val(gData.nodes.length);
+            // Click on "networkTopologyRandom" to update the graph
+            $('#networkTopologyRandom').click();
 
             // Update gData: change the role of the central node to "server"
             gData.nodes[0].role = "server";
+            // All nodes minus the central node are trainer
+            for (var i = 1; i < gData.nodes.length; i++) {
+                gData.nodes[i].role = "trainer";
+            }
+        } else if ($(this).val() === 'DFL') {
+            $('#predefined-topology-select').prop('disabled', false);
+            for (var i = 0; i < gData.nodes.length; i++) {
+                gData.nodes[i].role = "aggregator";
+            }
+        } else if ($(this).val() === 'SDFL') {
+            $('#predefined-topology-select').prop('disabled', false);
+            gData.nodes[0].role = "aggregator";
+            for (var i = 1; i < gData.nodes.length; i++) {
+                gData.nodes[i].role = "trainer";
+            }
         } else {
             $('#predefined-topology-select').prop('disabled', false);
-            // Update gData: change the role of the central node to "client"
-            gData.nodes[0].role = "trainer";
         }
 
         // Reload the graph
-        Graph.graphData(gData);
+        updateGraph();
         $('#predefined-topology-select').trigger('change');
 
-    });
+    })
+    ;
 </script>
 
 
@@ -838,7 +858,7 @@
             id: i,
             ip: "127.0.0.1",
             port: "4500" + i.toString(),
-            role: i === 0 ? "aggregator" : "trainer",
+            role: "aggregator",
             start: (i === 0),
             neighbors: [],
             links: [],
@@ -908,14 +928,14 @@
             addNode.classList.add("dropdown-item");
             addNode.addEventListener("click", function () {
                 console.log("Add node");
+                console.log(gData);
+                console.log(node);
                 // Activate custom topology
                 document.getElementById("custom-topology-btn").checked = true;
                 document.getElementById("predefined-topology").style.display = "none";
                 const newNode = {id: gData.nodes.length, ip: "127.0.0.1", port: "4500" + gData.nodes.length.toString(), role: 'trainer', start: false};
                 newNode.neighbors = [node];
-                newNode.links = [{source: node, target: newNode}];
                 node.neighbors.push(newNode);
-                node.links.push(newNode.links[0]);
                 // Update the graph
                 gData.nodes.push(newNode);
                 gData.links.push({source: newNode, target: node});
@@ -941,8 +961,6 @@
                     links = links.filter(l => l.source.id !== node.id && l.target.id !== node.id); // Remove links attached to node
                     nodes.splice(node.id, 1); // Remove node
                     nodes.forEach((n, idx) => {
-                        // Remove links from node
-                        n.links = n.links.filter(l => l.source.id !== node.id && l.target.id !== node.id);
                         // Remove neighbors from node
                         n.neighbors = n.neighbors.filter(l => l.id !== node.id);
                         n.id = idx; // Reset node ids to array index

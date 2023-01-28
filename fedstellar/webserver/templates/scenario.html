@@ -19,18 +19,17 @@
     </div>
 </div>
 
-<h4>Scenario management using Fedstellar</h4>
+<h4>Deploy, analyze and monitor scenarios</h4>
 <hr>
 
 {% if not scenario_running %}
 
-<h4>There are no deployed scenarios.</h4>
+<h4>There are no deployed scenarios</h4>
 <a href="{{ url_for('fedstellar_scenario_deployment') }}" target="_blank" class="btn btn-primary">Deploy scenario</a>
 <a href="{{ url_for('fedstellar_scenario_statistics') }}" target="_blank" class="btn btn-info">Scenario statistics</a>
 
-<hr>
 {% elif scenario_running %}
-
+<hr>
 <h4>There is a scenario running.</h4>
 
 <h3>Scenario</h3>
@@ -47,6 +46,8 @@
 <hr>
 
 {% endif %}
+
+{% if scenarios %}
 
 <h3>Scenarios in the database</h3>
 
@@ -89,6 +90,8 @@
     </tr>
     {% endfor %}
 </table>
+
+{% endif %}
 
 <style>
     td {

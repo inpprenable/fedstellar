@@ -12,7 +12,7 @@
 <script src="https://use.fontawesome.com/0f1b71cc74.js"></script>
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
-
+<body>
 <title>Fedstellar | Webpage</title>
 <nav class="navbar navbar-inverse">
     <div class="container-fluid">
@@ -42,23 +42,32 @@
                     <div class="form-group">
                         <input type="password" name="password" placeholder="Password" class="form-control">
                     </div>
-                    <button type="submit" class="btn btn-success">Log In</button>
+                    <button type="submit" class="btn btn-cream">Log In</button>
                 </form>
                 {% else %}
-                <li>
-                    <a>Logged with <b>{{ session.get("user") }} ({{ session.get("role") }})</b></a>
-                </li>
-                {% if session.get("role", None) == "admin" %}
-                <li>
-                    <a href="{{ url_for('fedstellar_admin') }}">Dashboard</a>
-                </li>
-                {% else %}
-                <li>
-                    <a href="{{ url_for('fedstellar_home') }}">Dashboard</a>
-                </li>
-                {% endif %}
-                <li>
-                    <a href="{{ url_for('fedstellar_logout') }}"><b><u>Logout</u></b></a>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-user" style="margin-right: 5px"></i>
+                        <label style="cursor: pointer">{{ session.get("user") }}</label>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        {% if session.get("role", None) == "admin" %}
+                        <a class="dropdown-item" href="{{ url_for('fedstellar_admin') }}">
+                            <i class="fa fa-id-card" style="margin-right: 5px"></i>
+                            <label style="cursor: pointer">My Profile</label>
+                        </a>
+                        {% else %}
+                        <a class="dropdown-item" href="{{ url_for('fedstellar_home') }}">
+                            <i class="fa fa-id-card" style="margin-right: 5px"></i>
+                            <label style="cursor: pointer">My Profile</label>
+                        </a>
+                        {% endif %}
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{{ url_for('fedstellar_logout') }}">
+                            <i class="fa fa-sign-out" style="margin-right: 5px"></i>
+                            <label style="cursor: pointer">Logout</label>
+                        </a>
+                    </div>
                 </li>
                 {% endif %}
             </ul>
@@ -88,17 +97,29 @@
 </div>
 
 <div class='container'>
-    <hr>
-    <p style="float: left">Created by <a href='https://enriquetomasmb.com'>Enrique Tomás Martínez Beltrán</a></p>
-    <a href="/" style="float: right"><img
-            src="{{ url_for('static', filename='img/fedstellar-logo.jpg') }}"
-            width="400"
-            height="100"
-            border="0"
-            align="right"
-            alt="Fedstellar Logo"
-            title="Fedstellar"></a>
+    <footer>
+        <hr>
+        <div id="copyright" style="float: left"></div>
+        <a href="/" style="float: right"><img
+                src="{{ url_for('static', filename='img/fedstellar-logo.jpg') }}"
+                width="400"
+                height="100"
+                border="0"
+                align="right"
+                alt="Fedstellar Logo"
+                title="Fedstellar"></a>
+
+    </footer>
 </div>
+
+</body>
+
+<script>
+    const copyright = document.getElementById("copyright");
+    var date = new Date();
+    var year = date.getFullYear();
+    copyright.innerHTML = `<p>© ${year} Fedstellar. All rights reserved.<br><a href="https://fedstellar.enriquetomasmb.com/" target="_blank">Documentation</a> | <a href="https://github.com/enriquetomasmb/fedstellar" target="_blank">Source code</a></p>`;
+</script>
 
 <script>
     function showAlert(category, message) {
