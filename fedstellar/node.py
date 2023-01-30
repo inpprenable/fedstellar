@@ -108,7 +108,7 @@ class Node(BaseNode):
                 import wandb
                 img_topology = wandb.Image(f"{self.log_dir}/topology.png", caption="Topology")
                 wandblogger.log_image(key="topology", images=[img_topology])
-            self.learner = learner(model, data, logger=wandblogger)
+            self.learner = learner(model, data, config=self.config, logger=wandblogger)
         else:
             if self.config.participant['tracking_args']['local_tracking'] == 'csv':
                 logging.info("[NODE] Tracking CSV enabled")

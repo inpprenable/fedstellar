@@ -32,10 +32,11 @@ class LightningLearner(NodeLearner):
         logger: Logger.
     """
 
-    def __init__(self, model, data, logger=None):
+    def __init__(self, model, data, config=None, logger=None):
         self.model = model
         # self.model = torch.compile(model)  # PyTorch 2.0
         self.data = data
+        self.config = config
         self.logger = logger
         self.__trainer = None
         self.epochs = 1
@@ -156,7 +157,7 @@ class LightningLearner(NodeLearner):
         self.__trainer = Trainer(
             callbacks=[ModelSummary(max_depth=1), TQDMProgressBar(refresh_rate=200)],
             max_epochs=self.epochs,
-            accelerator="auto",
+            accelerator=self.config.participant["device_args"]["accelerator"],
             logger=self.logger,
             log_every_n_steps=20,
             enable_checkpointing=False,

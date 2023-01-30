@@ -16,8 +16,7 @@
     "password": "pi",
     "role": "trainer",
     "start": true,
-    "using_gpu": true,
-    "gpu_id": 0
+    "accelerator": "auto",
   },
   "geo_args": {
     "latitude": 46.76252,
