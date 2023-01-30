@@ -393,6 +393,41 @@
 </script>
 
 <script>
+    var gui = null;
+    function openControls() {
+        //Define GUI
+        gui = new dat.GUI();
+        const Settings = function () {
+            this.solidDistance = 20;
+            this.weakDistance = 20;
+        };
+        const settings = new Settings();
+
+        // Open controls
+        const linkForce = Graph
+            .d3Force('link')
+            .distance(link => link.color ? settings.solidDistance : settings.weakDistance);
+
+        var linksgui = gui.addFolder('Node Links');
+        linksgui.add(settings, 'solidDistance', 0, 1000).onChange(updateLinkDistance);
+        linksgui.add(settings, 'weakDistance', 0, 1000).onChange(updateLinkDistance);
+        linksgui.open();
+
+        // Change background color of the GUI
+        document.getElementsByClassName("dg li.title")[0].style.background = "rgba(0, 0, 0, 0.6)";
+        document.getElementsByClassName("dg ac")[0].style.zIndex = 10;
+
+        function updateLinkDistance() {
+            linkForce.distance(link => link.color ? settings.solidDistance : settings.weakDistance);
+            Graph.numDimensions(3); // Re-heat simulation
+        }
+    }
+
+    function closeControls() {
+        // Remove gui from the DOM
+        gui.destroy();
+    }
+
     var userBtn = document.getElementById('user-btn');
     var expertBtn = document.getElementById("expert-btn");
     expertBtn.addEventListener("click", function () {
@@ -404,6 +439,8 @@
         document.getElementById("expert-container").style.visibility = "visible";
         document.getElementById("expert-container").style.opacity = "1";
         document.getElementById("expert-container").style.transition = "all 0.5s ease-in-out";
+
+        openControls();
     });
 
     userBtn.addEventListener("click", function () {
@@ -415,6 +452,8 @@
         document.getElementById("expert-container").style.visibility = "hidden";
         document.getElementById("expert-container").style.opacity = "0";
         document.getElementById("expert-container").style.transition = "all 0.5s ease-in-out";
+
+        closeControls();
     });
 
 </script>
@@ -1076,35 +1115,6 @@
     function updateColorNodes() {
         // trigger update of highlighted objects in scene
         Graph.nodeColor(Graph.nodeColor())
-    }
-
-    // openControls();
-
-    function openControls() {
-        // Open controls
-        const linkForce = Graph
-            .d3Force('link')
-            .distance(link => link.color ? settings.solidDistance : settings.weakDistance);
-        //Define GUI
-        const Settings = function () {
-            this.solidDistance = 20;
-            this.weakDistance = 20;
-        };
-
-        const settings = new Settings();
-        const gui = new dat.GUI();
-        document.getElementsByClassName("dg ac")[0].style.zIndex = 10;
-
-        const controllerOne = gui.add(settings, 'solidDistance', 0, 1000);
-        const controllerTwo = gui.add(settings, 'weakDistance', 0, 1000);
-
-        controllerOne.onChange(updateLinkDistance);
-        controllerTwo.onChange(updateLinkDistance);
-
-        function updateLinkDistance() {
-            linkForce.distance(link => link.color ? settings.solidDistance : settings.weakDistance);
-            Graph.numDimensions(3); // Re-heat simulation
-        }
     }
 
 </script>
