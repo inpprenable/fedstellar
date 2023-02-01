@@ -515,9 +515,8 @@ def fedstellar_remove_scenario(scenario_name):
 @app.route("/scenario/statistics/", methods=["GET"])
 def fedstellar_scenario_statistics():
     if "user" in session.keys():
-        # Get IP address of the server
-        import socket
-        ip = socket.gethostbyname(socket.gethostname())
+        # Get URL
+        ip = request.remote_addr
         return render_template("statistics.html", ip_statistics=ip, port_statistics=app.config['statistics_port'])
 
 
@@ -657,4 +656,4 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=5000, help="Port to run the webserver")
     args = parser.parse_args()
     print(f"Starting webserver on port {args.port}")
-    app.run(debug=False, host="0.0.0.0", port=int(args.port))
+    app.run(debug=True, host="0.0.0.0", port=int(args.port))
