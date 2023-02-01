@@ -62,8 +62,8 @@ class Controller:
         self.federation = args.federation
         self.topology = args.topology
         self.webserver = args.webserver
-        self.webserver_port = args.port if hasattr(args, "port") else 5000
-        self.statistics_port = args.statistics_port if hasattr(args, "statistics_port") else 5100
+        self.webserver_port = args.webport if hasattr(args, "webport") else 5000
+        self.statistics_port = args.statsport if hasattr(args, "statsport") else 5100
         self.simulation = args.simulation
         self.config_dir = args.config
         self.log_dir = args.logs
