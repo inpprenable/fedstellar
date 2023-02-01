@@ -59,6 +59,7 @@ class Controller:
     def __init__(self, args):
         self.scenario_name = args.scenario_name if hasattr(args, "scenario_name") else None
         self.start_date_scenario = None
+        self.deploy = args.deploy
         self.federation = args.federation
         self.topology = args.topology
         self.webserver = args.webserver
@@ -130,7 +131,11 @@ class Controller:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         webserver_path = os.path.join(current_dir, "webserver")
         with open(f'{self.log_dir}/server.log', 'w', encoding='utf-8') as log_file:
-            subprocess.Popen([self.python_path, "app.py", "--port", str(self.webserver_port)], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+            if self.deploy:
+                subprocess.Popen(["gunicorn", "--reload", "--access-logfile", f"{self.log_dir}/server.log", "--workers=20", "--threads=2", "--bind", f"0.0.0.0:{self.webserver_port}", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+            else:
+                subprocess.Popen([self.python_path, "app.py", "--port", str(self.webserver_port)], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+
 
     def run_statistics(self):
         import tensorboard
