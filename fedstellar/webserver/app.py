@@ -656,4 +656,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=5000, help="Port to run the webserver")
     args = parser.parse_args()
+    print(f"Starting webserver on port {args.port}")
     app.run(debug=True, host="0.0.0.0", port=int(args.port))

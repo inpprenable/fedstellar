@@ -150,7 +150,7 @@ class Controller:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         webserver_path = os.path.join(current_dir, "webserver")
         with open(f'{self.log_dir}/statistics_server.log', 'w', encoding='utf-8') as log_file:
-            subprocess.Popen(["tensorboard", "--port", str(self.statistics_port), "--logdir", self.log_dir, "--reload_interval", "1", "--window_title", "Fedstellar Statistics"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+            subprocess.Popen(["tensorboard", "--host", "0.0.0.0", "--port", str(self.statistics_port), "--logdir", self.log_dir, "--reload_interval", "1", "--window_title", "Fedstellar Statistics"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
 
     def init(self):
 
