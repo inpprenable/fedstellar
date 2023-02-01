@@ -32,11 +32,13 @@ logging.basicConfig(level=logging.DEBUG,
 def signal_handler(sig, frame):
     logging.info('You pressed Ctrl+C!')
     logging.info('Finishing all scenarios and nodes...')
+    Controller.killports("tensorboa")
     Controller.killports()
     if sys.platform == "darwin":
         os.system("""osascript -e 'tell application "Terminal" to quit'""")
     elif sys.platform == "linux":
-        os.system("""killall gnome-terminal""")
+        # Kill all python processes
+        os.system("""killall python""")
     else:
         os.system("""taskkill /IM cmd.exe /F""")
         os.system("""taskkill /IM powershell.exe /F""")
@@ -183,6 +185,8 @@ class Controller:
     def killports(term="python"):
         # kill all the ports related to python processes
         time.sleep(1)
+        # Remove process related to tensorboard
+
         if sys.platform == "darwin":
             command = '''kill -9 $(lsof -i @localhost:1024-65545 | grep ''' + term + ''' | awk '{print $2}') > /dev/null 2>&1'''
         elif sys.platform == "linux":
@@ -311,7 +315,9 @@ class Controller:
             os.system("""osascript -e 'tell application "Terminal" to activate' -e 'tell application "Terminal" to do script "{}"'""".format(command))
         elif sys.platform == "linux":
             print("Linux OS detected")
-            os.system("""gnome-terminal -e "{}" """.format(command))
+            command = f'{self.python_path} -u {os.path.dirname(os.path.realpath(__file__))}/node_start.py {str(self.config.participants_path[idx])}'
+            print(command)
+            os.system(command + " &")
         elif sys.platform == "win32":
             print("Windows OS detected")
             command_win = f'cd {os.path.dirname(os.path.realpath(__file__))} {str("&&")} {self.python_path} -u node_start.py {str(self.config.participants_path[idx])} 2>&1'

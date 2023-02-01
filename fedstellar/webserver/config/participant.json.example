@@ -17,8 +17,7 @@
     "password": "pi",
     "role": "aggregator",
     "start": false,
-    "using_gpu": true,
-    "gpu_id": 0
+    "accelerator": "auto"
   },
   "geo_args": {
     "latitude": "46.762520",

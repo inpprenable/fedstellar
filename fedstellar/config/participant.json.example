@@ -2,30 +2,31 @@
   "scenario_args": {
     "name": "",
     "federation": "DFL",
+    "rounds": 3,
     "simulation": true,
     "controller": "127.0.0.1:5000",
-    "n_nodes": 6,
     "random_seed": 0,
+    "n_nodes": 0,
     "config_version": "development",
     "debug": true
   },
   "device_args": {
     "uid": "",
-    "idx": 0,
+    "idx": "",
     "username": "pi",
     "password": "pi",
-    "role": "trainer",
-    "start": true,
-    "accelerator": "auto",
+    "role": "aggregator",
+    "start": false,
+    "accelerator": "auto"
   },
   "geo_args": {
-    "latitude": 46.76252,
-    "longitude": 7.60049
+    "latitude": "46.762520",
+    "longitude": "7.600490"
   },
   "network_args": {
-    "ip": "127.0.0.1",
-    "ipdemo": "127.0.0.1",
-    "port": 45000,
+    "ip": "",
+    "ipdemo": "",
+    "port": 0,
     "neighbors": "",
     "interface": "eth0",
     "rate": "1Mbps",
@@ -34,22 +35,20 @@
     "delay-distro": 0
   },
   "data_args": {
-    "dataset": "MNIST",
-    "dataset_dir": "data/MNIST",
-    "partition_method": "noniid",
-    "partition_alpha": 0.5
+    "dataset": "MNIST"
   },
   "model_args": {
     "model": "MLP"
   },
+  "training_args": {
+    "epochs": 3
+  },
   "aggregator_args": {
     "algorithm": "FedAvg"
   },
-  "validation_args": {
-    "frequency_of_the_test": 5
-  },
   "tracking_args": {
     "enable_remote_tracking": false,
+    "local_tracking": "web",
     "log_dir": "/Users/enrique/Documents/PhD/fedstellar/app/logs",
     "config_dir": "/Users/enrique/Documents/PhD/fedstellar/app/config",
     "wandb_key": [

@@ -515,7 +515,10 @@ def fedstellar_remove_scenario(scenario_name):
 @app.route("/scenario/statistics/", methods=["GET"])
 def fedstellar_scenario_statistics():
     if "user" in session.keys():
-        return render_template("statistics.html", port_statistics=app.config['statistics_port'])
+        # Get IP address of the server
+        import socket
+        ip = socket.gethostbyname(socket.gethostname())
+        return render_template("statistics.html", ip_statistics=ip, port_statistics=app.config['statistics_port'])
 
 
 @app.route("/scenario/<scenario_name>/statistics/download", methods=["GET"])

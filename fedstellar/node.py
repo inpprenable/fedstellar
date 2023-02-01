@@ -113,11 +113,11 @@ class Node(BaseNode):
             if self.config.participant['tracking_args']['local_tracking'] == 'csv':
                 logging.info("[NODE] Tracking CSV enabled")
                 csvlogger = CSVLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}")
-                self.learner = learner(model, data, logger=csvlogger)
+                self.learner = learner(model, data, config=self.config, logger=csvlogger)
             elif self.config.participant['tracking_args']['local_tracking'] == 'web':
                 logging.info("[NODE] Tracking Web enabled")
                 tensorboardlogger = FedstellarLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}", log_graph=True)
-                self.learner = learner(model, data, logger=tensorboardlogger)
+                self.learner = learner(model, data, config=self.config, logger=tensorboardlogger)
 
 
         logging.info("[NODE] Role: " + str(self.config.participant["device_args"]["role"]))

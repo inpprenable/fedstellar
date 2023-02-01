@@ -154,6 +154,7 @@ class LightningLearner(NodeLearner):
         pass
 
     def create_trainer(self):
+        logging.info("[Learner] Creating trainer with accelerator: {}".format(self.config.participant["device_args"]["accelerator"]))
         self.__trainer = Trainer(
             callbacks=[ModelSummary(max_depth=1), TQDMProgressBar(refresh_rate=200)],
             max_epochs=self.epochs,
