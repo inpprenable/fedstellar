@@ -316,8 +316,7 @@ class Controller:
         elif sys.platform == "linux":
             print("Linux OS detected")
             command = f'{self.python_path} -u {os.path.dirname(os.path.realpath(__file__))}/node_start.py {str(self.config.participants_path[idx])}'
-            print(command)
-            os.system(command + " &")
+            os.system(command + " 2>&1 &")
         elif sys.platform == "win32":
             print("Windows OS detected")
             command_win = f'cd {os.path.dirname(os.path.realpath(__file__))} {str("&&")} {self.python_path} -u node_start.py {str(self.config.participants_path[idx])} 2>&1'
