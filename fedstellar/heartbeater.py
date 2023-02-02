@@ -60,7 +60,7 @@ class Heartbeater(threading.Thread, Observable):
             self.update_config_with_neighbors()
             self.__count += 1
             # Send role notify each 10 beats
-            if self.__count % 3 == 0:
+            if self.__count % 2 == 0:
                 self.notify(Events.SEND_ROLE_EVENT, None)
                 # Report my status to the controller
                 self.notify(Events.REPORT_STATUS_TO_CONTROLLER_EVENT, None)
