@@ -151,7 +151,7 @@ class Controller:
             current_dir = os.path.dirname(os.path.abspath(__file__))
             webserver_path = os.path.join(current_dir, "webserver")
             with open(f'{self.log_dir}/server.log', 'w', encoding='utf-8') as log_file:
-                subprocess.Popen(["gunicorn", "--reload", "--workers", "10", "--threads", "2", "--bind", f"0.0.0.0:{self.webserver_port}", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+                subprocess.Popen(["gunicorn", "--reload", "--workers", "10", "--threads", "2", "--bind", f"0.0.0.0:{self.webserver_port}", "--access-logfile", f"{self.log_dir}/server.log", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
 
         else:
             logging.info(f"Running Fedstellar Webserver (local): http://127.0.0.1:{self.webserver_port}")
