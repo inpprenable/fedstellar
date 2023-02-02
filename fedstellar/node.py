@@ -941,13 +941,19 @@ class Node(BaseNode):
         import psutil
         # Gather CPU usage information
         cpu_percent = psutil.cpu_percent()
+        # Gather CPU temperature information
+        cpu_temp = psutil.sensors_temperatures()['cpu-thermal'][0].current
+        # Gather GPU usage information
+        gpu_percent = 0
+        if self.config.participant["device_args"]["accelerator"] != "cpu":
+            gpu_percent = psutil.Process().memory_percent()
         # Gather RAM usage information
         ram_percent = psutil.virtual_memory().percent
         # Gather disk usage information
         disk_percent = psutil.disk_usage("/").percent
 
-        logging.info(f'CPU usage: {cpu_percent}%, RAM usage: {ram_percent}%, Disk usage: {disk_percent}%')
-        self.learner.logger.log_metrics({"Resources/CPU_percent": cpu_percent, "Resources/RAM_percent": ram_percent, "Resources/Disk_percent": disk_percent}, step=self.learner.logger.global_step)
+        # logging.info(f'CPU usage: {cpu_percent}%, RAM usage: {ram_percent}%, Disk usage: {disk_percent}%')
+        self.learner.logger.log_metrics({"Resources/CPU_percent": cpu_percent, "Resources/CPU_temp": cpu_temp, "Resources/GPU_percent": gpu_percent, "Resources/RAM_percent": ram_percent, "Resources/Disk_percent": disk_percent}, step=self.learner.logger.global_step)
 
         # Gather network usage information
         net_io_counters = psutil.net_io_counters()
@@ -956,8 +962,13 @@ class Node(BaseNode):
         packets_sent = net_io_counters.packets_sent
         packets_recv = net_io_counters.packets_recv
 
-        logging.info(f'Network usage: {bytes_sent} bytes sent, {bytes_recv} bytes received, {packets_sent} packets sent, {packets_recv} packets received')
+        # logging.info(f'Network usage: {bytes_sent} bytes sent, {bytes_recv} bytes received, {packets_sent} packets sent, {packets_recv} packets received')
         self.learner.logger.log_metrics({"Resources/Bytes_sent": bytes_sent, "Resources/Bytes_recv": bytes_recv, "Resources/Packets_sent": packets_sent, "Resources/Packets_recv": packets_recv}, step=self.learner.logger.global_step)
+
+        # Log uptime information
+        uptime = psutil.boot_time()
+        self.learner.logger.log_metrics({"Resources/Uptime": uptime}, step=self.learner.logger.global_step)
+
 
     def __store_model_parameters(self, obj):
         """
