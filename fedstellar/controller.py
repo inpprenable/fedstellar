@@ -31,9 +31,11 @@ logging.basicConfig(level=logging.DEBUG,
 # Detect ctrl+c and run killports
 def signal_handler(sig, frame):
     logging.info('You pressed Ctrl+C!')
+    logging.info("Remove configuration and topology files...")
+    Controller.remove_config_files()
     logging.info('Finishing all scenarios and nodes...')
     Controller.killports("tensorboa")
-    Controller.killports()
+    Controller.killports("python")
     if sys.platform == "darwin":
         os.system("""osascript -e 'tell application "Terminal" to quit'""")
     elif sys.platform == "linux":
@@ -42,8 +44,6 @@ def signal_handler(sig, frame):
     else:
         os.system("""taskkill /IM cmd.exe /F""")
         os.system("""taskkill /IM powershell.exe /F""")
-    logging.info("Remove configuration and topology files...")
-    Controller.remove_config_files()
     logging.info("Remove configuration and topology files... Done")
     sys.exit(0)
 
@@ -151,7 +151,7 @@ class Controller:
             current_dir = os.path.dirname(os.path.abspath(__file__))
             webserver_path = os.path.join(current_dir, "webserver")
             with open(f'{self.log_dir}/server.log', 'w', encoding='utf-8') as log_file:
-                subprocess.Popen(["gunicorn", "--reload", "--workers", "10", "--threads", "2", "--bind", f"0.0.0.0:{self.webserver_port}", "--access-logfile", f"{self.log_dir}/server.log", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+                subprocess.Popen(["gunicorn", "--reload", "--workers", "10", "--threads", "2", "--bind", f"unix:fedstellar.sock", "-m", "007", "--access-logfile", f"{self.log_dir}/server.log", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
 
         else:
             logging.info(f"Running Fedstellar Webserver (local): http://127.0.0.1:{self.webserver_port}")
