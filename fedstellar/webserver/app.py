@@ -515,11 +515,15 @@ def fedstellar_remove_scenario(scenario_name):
 @app.route("/scenario/statistics/", methods=["GET"])
 def fedstellar_scenario_statistics():
     if "user" in session.keys():
+        import re
         # Get the URL requested by the user (only the domain) and add the port of the statistics server
         url = request.url_root
         url = url.replace("http://", "")
         url = url.replace("https://", "")
         url = url.replace("/", "")
+        # Remove any number at the end of the URL
+        url = re.sub(r'\d+$', '', url)
+        url = url.replace(":", "")
         return render_template("statistics.html", endpoint_statistics=url, port_statistics=app.config['statistics_port'])
 
 
