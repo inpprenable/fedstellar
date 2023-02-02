@@ -59,7 +59,7 @@ class Controller:
     def __init__(self, args):
         self.scenario_name = args.scenario_name if hasattr(args, "scenario_name") else None
         self.start_date_scenario = None
-        self.cloud = args.cloud
+        self.cloud = args.cloud if hasattr(args, 'cloud') else None
         self.federation = args.federation
         self.topology = args.topology
         self.webserver = args.webserver
