@@ -937,12 +937,14 @@ class Node(BaseNode):
         Returns:
 
         """
-
+        import sys
         import psutil
         # Gather CPU usage information
         cpu_percent = psutil.cpu_percent()
         # Gather CPU temperature information
-        cpu_temp = psutil.sensors_temperatures()['cpu-thermal'][0].current
+        cpu_temp = 0
+        if sys.platform == "linux":
+            cpu_temp = psutil.sensors_temperatures()['coretemp'][0].current
         # Gather GPU usage information
         gpu_percent = 0
         if self.config.participant["device_args"]["accelerator"] != "cpu":
