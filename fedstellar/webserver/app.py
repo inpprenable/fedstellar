@@ -548,16 +548,6 @@ def fedstellar_scenario_deployment():
         return abort(401)
 
 
-@app.route("/scenario/deployment/participant/file", methods=["GET"])
-def fedstellar_monitoring_participant_file():
-    if "user" in session.keys():
-        # TODO: fix app.config['config_dir']
-        participant_file_example = os.path.join(app.config['config_dir'], f'participant.json.example')
-        return send_file(participant_file_example, mimetype='application/json')
-    else:
-        make_response("You are not authorized to access this page.", 401)
-
-
 @app.route("/scenario/deployment/run", methods=["POST"])
 def fedstellar_scenario_deployment_run():
     if "user" in session.keys():
