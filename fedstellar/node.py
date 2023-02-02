@@ -952,7 +952,7 @@ class Node(BaseNode):
         # Gather disk usage information
         disk_percent = psutil.disk_usage("/").percent
 
-        # logging.info(f'CPU usage: {cpu_percent}%, RAM usage: {ram_percent}%, Disk usage: {disk_percent}%')
+        logging.info(f'Resources: CPU {cpu_percent}%, CPU temp {cpu_temp}C, GPU {gpu_percent}%, RAM {ram_percent}%, Disk {disk_percent}%')
         self.learner.logger.log_metrics({"Resources/CPU_percent": cpu_percent, "Resources/CPU_temp": cpu_temp, "Resources/GPU_percent": gpu_percent, "Resources/RAM_percent": ram_percent, "Resources/Disk_percent": disk_percent}, step=self.learner.logger.global_step)
 
         # Gather network usage information
@@ -962,11 +962,12 @@ class Node(BaseNode):
         packets_sent = net_io_counters.packets_sent
         packets_recv = net_io_counters.packets_recv
 
-        # logging.info(f'Network usage: {bytes_sent} bytes sent, {bytes_recv} bytes received, {packets_sent} packets sent, {packets_recv} packets received')
+        logging.info(f'Resources: Bytes sent {bytes_sent}, Bytes recv {bytes_recv}, Packets sent {packets_sent}, Packets recv {packets_recv}')
         self.learner.logger.log_metrics({"Resources/Bytes_sent": bytes_sent, "Resources/Bytes_recv": bytes_recv, "Resources/Packets_sent": packets_sent, "Resources/Packets_recv": packets_recv}, step=self.learner.logger.global_step)
 
         # Log uptime information
         uptime = psutil.boot_time()
+        logging.info(f'Resources: Uptime {uptime}')
         self.learner.logger.log_metrics({"Resources/Uptime": uptime}, step=self.learner.logger.global_step)
 
 

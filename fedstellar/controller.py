@@ -33,6 +33,7 @@ def signal_handler(sig, frame):
     logging.info('You pressed Ctrl+C!')
     logging.info("Remove configuration and topology files...")
     Controller.remove_config_files()
+    logging.info("Remove configuration and topology files... Done")
     logging.info('Finishing all scenarios and nodes...')
     Controller.killports("tensorboa")
     Controller.killports("python")
@@ -44,7 +45,6 @@ def signal_handler(sig, frame):
     else:
         os.system("""taskkill /IM cmd.exe /F""")
         os.system("""taskkill /IM powershell.exe /F""")
-    logging.info("Remove configuration and topology files... Done")
     sys.exit(0)
 
 
