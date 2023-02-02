@@ -18,7 +18,8 @@
     "role": "aggregator",
     "start": false,
     "accelerator": "auto",
-    "devices": 2
+    "devices": 2,
+    "strategy": "ddp"
   },
   "geo_args": {
     "latitude": "46.762520",
