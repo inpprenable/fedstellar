@@ -59,7 +59,7 @@ class Controller:
     def __init__(self, args):
         self.scenario_name = args.scenario_name if hasattr(args, "scenario_name") else None
         self.start_date_scenario = None
-        self.deploy = args.deploy
+        self.cloud = args.cloud
         self.federation = args.federation
         self.topology = args.topology
         self.webserver = args.webserver
@@ -84,7 +84,20 @@ class Controller:
         # First, kill all the ports related to previous executions
         # self.killports()
 
-        # self.init()
+        banner = """
+                            ______       _     _       _ _            
+                            |  ___|     | |   | |     | | |           
+                            | |_ ___  __| |___| |_ ___| | | __ _ _ __ 
+                            |  _/ _ \/ _` / __| __/ _ \ | |/ _` | '__|
+                            | ||  __/ (_| \__ \ ||  __/ | | (_| | |   
+                            \_| \___|\__,_|___/\__\___|_|_|\__,_|_|   
+                         Framework for Decentralized Federated Learning 
+                       Enrique Tomás Martínez Beltrán (enriquetomas@um.es)
+                    """
+        print("\x1b[0;36m" + banner + "\x1b[0m")
+
+        # Load the environment variables
+        load_dotenv(self.env_path)
 
         # Save the configuration in environment variables
         logging.info("Saving configuration in environment variables...")
@@ -125,17 +138,28 @@ class Controller:
             time.sleep(1)
 
     def run_webserver(self):
-        # Save the configuration in environment variables
-        logging.info(f"Running Fedstellar Webserver: http://127.0.0.1:{self.webserver_port}")
-        controller_env = os.environ.copy()
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        webserver_path = os.path.join(current_dir, "webserver")
-        with open(f'{self.log_dir}/server.log', 'w', encoding='utf-8') as log_file:
-            if self.deploy:
-                subprocess.Popen(["gunicorn", "--reload", "--access-logfile", f"{self.log_dir}/server.log", "--workers=20", "--threads=2", "--bind", f"0.0.0.0:{self.webserver_port}", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
-            else:
-                subprocess.Popen([self.python_path, "app.py", "--port", str(self.webserver_port)], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+        if sys.platform == "linux" and self.cloud:
+            # Check if gunicon is installed
+            try:
+                subprocess.check_output(["gunicorn", "--version"])
+            except FileNotFoundError:
+                logging.error("Gunicorn is not installed. Please, install it with pip install gunicorn (only for Linux)")
+                sys.exit(1)
 
+            logging.info(f"Running Fedstellar Webserver (cloud): http://127.0.0.1:{self.webserver_port}")
+            controller_env = os.environ.copy()
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            webserver_path = os.path.join(current_dir, "webserver")
+            with open(f'{self.log_dir}/server.log', 'w', encoding='utf-8') as log_file:
+                subprocess.Popen(["gunicorn", "--reload", "--workers", "10", "--threads", "2", "--bind", f"0.0.0.0:{self.webserver_port}", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+
+        else:
+            logging.info(f"Running Fedstellar Webserver (local): http://127.0.0.1:{self.webserver_port}")
+            controller_env = os.environ.copy()
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            webserver_path = os.path.join(current_dir, "webserver")
+            with open(f'{self.log_dir}/server.log', 'w', encoding='utf-8') as log_file:
+                subprocess.Popen([self.python_path, "app.py", "--port", str(self.webserver_port)], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
 
     def run_statistics(self):
         import tensorboard
@@ -156,35 +180,6 @@ class Controller:
         webserver_path = os.path.join(current_dir, "webserver")
         with open(f'{self.log_dir}/statistics_server.log', 'w', encoding='utf-8') as log_file:
             subprocess.Popen(["tensorboard", "--host", "0.0.0.0", "--port", str(self.statistics_port), "--logdir", self.log_dir, "--reload_interval", "1", "--window_title", "Fedstellar Statistics"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
-
-    def init(self):
-
-        banner = """
-                    ______       _     _       _ _            
-                    |  ___|     | |   | |     | | |           
-                    | |_ ___  __| |___| |_ ___| | | __ _ _ __ 
-                    |  _/ _ \/ _` / __| __/ _ \ | |/ _` | '__|
-                    | ||  __/ (_| \__ \ ||  __/ | | (_| | |   
-                    \_| \___|\__,_|___/\__\___|_|_|\__,_|_|   
-                A Framework for Decentralized Federated Learning 
-               Enrique Tomás Martínez Beltrán (enriquetomas@um.es)
-            """
-        print("\x1b[0;36m" + banner + "\x1b[0m")
-
-        # Load the environment variables
-        load_dotenv(self.env_path)
-
-        # Get some info about the backend
-        # collect_env()
-
-        from netifaces import AF_INET
-        import netifaces as ni
-        ip_address = ni.ifaddresses('en0')[AF_INET][0]['addr']
-        import ipaddress
-        network = ipaddress.IPv4Network(f"{ip_address}/24", strict=False)
-
-        logging.info("Controller network: {}".format(network))
-        logging.info("Controller IP address: {}".format(ip_address))
 
     @staticmethod
     def killports(term="python"):
@@ -356,5 +351,3 @@ class Controller:
         import shutil
         shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_CONFIG_DIR"], scenario_name))
         shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_LOGS_DIR"], scenario_name))
-
-

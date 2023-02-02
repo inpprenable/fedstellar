@@ -8,8 +8,8 @@ from fedstellar.controller import Controller
 
 argparser = argparse.ArgumentParser(description='Controller of Fedstellar framework', add_help=False)
 
-argparser.add_argument('-d', '--deploy', dest='deploy', action='store_true', default=False,
-                       help='Deploy on the cloud')
+argparser.add_argument('-cl', '--cloud', dest='cloud', action='store_true', default=False,
+                       help='Run framework in cloud (default: False) (only for Linux)')
 argparser.add_argument('-f', '--federation', dest='federation', default="DFL",
                        help='Federation architecture: CFL, DFL, or SDFL (default: DFL)')
 argparser.add_argument('-t', '--topology', dest='topology', default="fully",
