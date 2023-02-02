@@ -946,16 +946,16 @@ class Node(BaseNode):
         # if sys.platform == "linux":
         #     cpu_temp = psutil.sensors_temperatures()['coretemp'][0].current
         # Gather GPU usage information
-        gpu_percent = 0
-        if self.config.participant["device_args"]["accelerator"] != "cpu":
-            gpu_percent = psutil.Process().memory_percent()
+        # gpu_percent = 0
+        # if self.config.participant["device_args"]["accelerator"] != "cpu":
+        #     gpu_percent = psutil.Process().memory_percent()
         # Gather RAM usage information
         ram_percent = psutil.virtual_memory().percent
         # Gather disk usage information
         disk_percent = psutil.disk_usage("/").percent
 
         # logging.info(f'CPU usage: {cpu_percent}%, RAM usage: {ram_percent}%, Disk usage: {disk_percent}%')
-        self.learner.logger.log_metrics({"Resources/CPU_percent": cpu_percent, "Resources/GPU_percent": gpu_percent, "Resources/RAM_percent": ram_percent, "Resources/Disk_percent": disk_percent}, step=self.learner.logger.global_step)
+        self.learner.logger.log_metrics({"Resources/CPU_percent": cpu_percent, "Resources/RAM_percent": ram_percent, "Resources/Disk_percent": disk_percent}, step=self.learner.logger.global_step)
 
         # Gather network usage information
         net_io_counters = psutil.net_io_counters()
