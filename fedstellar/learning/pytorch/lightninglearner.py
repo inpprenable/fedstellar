@@ -160,7 +160,7 @@ class LightningLearner(NodeLearner):
             max_epochs=self.epochs,
             accelerator=self.config.participant["device_args"]["accelerator"],
             devices=self.config.participant["device_args"]["devices"] if self.config.participant["device_args"]["accelerator"] != "auto" else None,
-            strategy=self.config.participant["device_args"]["strategy"] if self.config.participant["device_args"]["accelerator"] != "auto" else None,
+            # strategy=self.config.participant["device_args"]["strategy"] if self.config.participant["device_args"]["accelerator"] != "auto" else None,
             logger=self.logger,
             log_every_n_steps=20,
             enable_checkpointing=False,
