@@ -147,8 +147,8 @@
                 </div>
             </div>
         </div>
-        <div id="3d-graph-container">
-            <div id="3d-graph"></div>
+        <div id="3d-graph-container" style="width: 100%">
+            <div id="3d-graph" style="width: 100%"></div>
             <div id="node-dropdown" class="dropdown-menu" style="display: none"></div>
         </div>
     </div>
@@ -890,6 +890,10 @@
     }
 
     const width = document.getElementById('3d-graph').offsetWidth;
+    // When resize the window, resize the graph
+    window.addEventListener("resize", function () {
+        Graph.width(document.getElementById('3d-graph').offsetWidth);
+    });
 
     const N = 3;
     let gData = {
