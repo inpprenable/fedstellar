@@ -50,50 +50,67 @@
 {% if scenarios %}
 
 <h3>Scenarios in the database</h3>
+<div class="table-responsive">
+    <table id="table-scenarios" class="table small">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Start time</th>
+            <th>End time</th>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Action</th>
 
-<table id="table-scenarios" class="table small table-responsive">
-    <thead>
-    <tr>
-        <th>Name</th>
-        <th>Start time</th>
-        <th>End time</th>
-        <th>Title</th>
-        <th>Description</th>
-        <th>Status</th>
-        <th>Action</th>
-
-    </tr>
-    </thead>
-    {% for name, start_time, end_time, title, description, status in scenarios %}
-    <tr id="scenario-vars">
-        <td id="name">{{ name }}</td>
-        <td id="start_time">{{ start_time }}</td>
-        <td id="end_time">{{ end_time }}</td>
-        <td id="title">{{ title }}</td>
-        <td id="description">{{ description }}</td>
-        {% if status == "running" %}
-        <td id="status"><span class="label label-success">Running</span></td>
-        {% else %}
-        <td id="status"><span class="label label-danger">Finished</span></td>
-        {% endif %}
-        <td class="td-icons">
-            <a href="{{ url_for('fedstellar_scenario_private', scenario_name=name) }}" class="label btn btn-info">Private</a>
-            <a href="{{ url_for('fedstellar_scenario_monitoring', scenario_name=name) }}" class="label btn btn-info">Monitor</a>
-            <a href="{{ url_for('fedstellar_scenario_statistics_download', scenario_name=name) }}" class="label btn btn-info">Download Statistics</a>
+        </tr>
+        </thead>
+        {% for name, start_time, end_time, title, description, status in scenarios %}
+        <tr id="scenario-vars">
+            <td id="name">{{ name }}</td>
+            <td id="start_time">{{ start_time }}</td>
+            <td id="end_time">{{ end_time }}</td>
+            <td id="title">{{ title }}</td>
+            <td id="description">{{ description }}</td>
             {% if status == "running" %}
-            <a href="{{ url_for('fedstellar_stop_scenario', scenario_name=name) }}" class="label btn btn-danger">Stop scenario</a>
+            <td id="status"><span class="label label-success">Running</span></td>
             {% else %}
-            <a id="reload-btn" data-scenario-name="{{ name }}" class="label btn btn-info">Reload</a>
-            <a id="remove-btn" data-scenario-name="{{ name }}" class="label btn btn-danger" style="float: right"><i class="fa fa-times"></i></a>
+            <td id="status"><span class="label label-danger">Finished</span></td>
             {% endif %}
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+            <td class="td-icons">
+                <a href="{{ url_for('fedstellar_scenario_private', scenario_name=name) }}" class="label btn btn-info">Private</a>
+                <a href="{{ url_for('fedstellar_scenario_monitoring', scenario_name=name) }}" class="label btn btn-info">Monitor</a>
+                <a href="{{ url_for('fedstellar_scenario_statistics_download', scenario_name=name) }}" class="label btn btn-info">Download Statistics</a>
+                {% if status == "running" %}
+                <a href="{{ url_for('fedstellar_stop_scenario', scenario_name=name) }}" class="label btn btn-danger">Stop scenario</a>
+                {% else %}
+                <a id="reload-btn" data-scenario-name="{{ name }}" class="label btn btn-info">Reload</a>
+                <a id="remove-btn" data-scenario-name="{{ name }}" class="label btn btn-danger" style="float: right"><i class="fa fa-times"></i></a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
 
 {% endif %}
 
 <style>
+    .table {
+        display: block !important;
+    }
+
+    @media screen and (max-width: 1200px) {
+        .table-responsive {
+            width: 100%;
+            margin-bottom: 15px;
+            overflow-y: hidden;
+            overflow-x: auto;
+            -ms-overflow-style: -ms-autohiding-scrollbar;
+            border: 1px solid #dddddd;
+            -webkit-overflow-scrolling: touch;
+        }
+    }
+
     td {
         vertical-align: inherit !important;
     }
