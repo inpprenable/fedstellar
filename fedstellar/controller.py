@@ -244,6 +244,7 @@ class Controller:
             participant_config['scenario_args']['n_nodes'] = self.n_nodes
             participant_config['network_args']['neighbors'] = self.topologymanager.get_neighbors_string(i)
             participant_config['scenario_args']['name'] = self.scenario_name
+            participant_config['scenario_args']['start_time'] = self.start_date_scenario
             participant_config['device_args']['idx'] = i
             participant_config['device_args']['uid'] = hashlib.sha1((str(participant_config["network_args"]["ip"]) + str(participant_config["network_args"]["port"]) + str(self.scenario_name)).encode()).hexdigest()
             participant_config['tracking_args']['log_dir'] = self.log_dir

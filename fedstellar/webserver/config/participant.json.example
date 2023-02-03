@@ -1,6 +1,7 @@
 {
   "scenario_args": {
     "name": "",
+    "start_time": "",
     "federation": "DFL",
     "rounds": 3,
     "simulation": true,

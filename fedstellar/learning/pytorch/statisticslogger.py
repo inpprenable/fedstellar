@@ -131,12 +131,12 @@ class FedstellarLogger(Logger):
     @rank_zero_only
     def log_metrics(self, metrics: Mapping[str, float], step: Optional[int] = None) -> None:
         assert rank_zero_only.rank == 0, "experiment tried to log from global_rank != 0"
-
         # FL round information
         self.local_step = step
         __step = self.global_step + self.local_step
 
         metrics = _add_prefix(metrics, self._prefix, self.LOGGER_JOIN_CHAR)
+        logging.info(f"[Statisticslogger] Logging metrics: {metrics}, step: {__step}")
 
         for k, v in metrics.items():
             if isinstance(v, Tensor):

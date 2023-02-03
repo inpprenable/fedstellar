@@ -119,7 +119,6 @@ class Node(BaseNode):
                 tensorboardlogger = FedstellarLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}", log_graph=True)
                 self.learner = learner(model, data, config=self.config, logger=tensorboardlogger)
 
-
         logging.info("[NODE] Role: " + str(self.config.participant["device_args"]["role"]))
 
         # Aggregator
@@ -937,6 +936,7 @@ class Node(BaseNode):
         Returns:
 
         """
+        step = int((datetime.now() - datetime.strptime(self.config.participant["scenario_args"]["start_time"], "%d/%m/%Y %H:%M:%S")).total_seconds())
         import sys
         import psutil
         # Gather CPU usage information
@@ -953,7 +953,7 @@ class Node(BaseNode):
         disk_percent = psutil.disk_usage("/").percent
 
         logging.info(f'Resources: CPU {cpu_percent}%, CPU temp {cpu_temp}C, GPU {gpu_percent}%, RAM {ram_percent}%, Disk {disk_percent}%')
-        self.learner.logger.log_metrics({"Resources/CPU_percent": cpu_percent, "Resources/CPU_temp": cpu_temp, "Resources/GPU_percent": gpu_percent, "Resources/RAM_percent": ram_percent, "Resources/Disk_percent": disk_percent}, step=self.learner.logger.global_step)
+        self.learner.logger.log_metrics({"Resources/CPU_percent": cpu_percent, "Resources/CPU_temp": cpu_temp, "Resources/GPU_percent": gpu_percent, "Resources/RAM_percent": ram_percent, "Resources/Disk_percent": disk_percent}, step=step)
 
         # Gather network usage information
         net_io_counters = psutil.net_io_counters()
@@ -963,13 +963,12 @@ class Node(BaseNode):
         packets_recv = net_io_counters.packets_recv
 
         logging.info(f'Resources: Bytes sent {bytes_sent}, Bytes recv {bytes_recv}, Packets sent {packets_sent}, Packets recv {packets_recv}')
-        self.learner.logger.log_metrics({"Resources/Bytes_sent": bytes_sent, "Resources/Bytes_recv": bytes_recv, "Resources/Packets_sent": packets_sent, "Resources/Packets_recv": packets_recv}, step=self.learner.logger.global_step)
+        self.learner.logger.log_metrics({"Resources/Bytes_sent": bytes_sent, "Resources/Bytes_recv": bytes_recv, "Resources/Packets_sent": packets_sent, "Resources/Packets_recv": packets_recv}, step=step)
 
         # Log uptime information
         uptime = psutil.boot_time()
         logging.info(f'Resources: Uptime {uptime}')
-        self.learner.logger.log_metrics({"Resources/Uptime": uptime}, step=self.learner.logger.global_step)
-
+        self.learner.logger.log_metrics({"Resources/Uptime": uptime}, step=step)
 
     def __store_model_parameters(self, obj):
         """
