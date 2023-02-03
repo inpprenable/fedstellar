@@ -19,10 +19,33 @@
     <p>The password for the documentation is <b style="font-style: italic">fedstellarDFL_!23</b></p>
 
 </div>
-<div id="video-container" class="col-md-6">
+<div id="video-column" class="col-md-6">
     <h3>Functionality Demonstration</h3>
     <p>The following video shows the functionality of the framework. It shows how to create a decentralized topology with different nodes using collaborative learning.</p>
-    <iframe width="100%" height="415" src="https://www.youtube-nocookie.com/embed/J_6OjNiIP3Y" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    <div class="video-container">
+        <iframe class="video" src="https://www.youtube-nocookie.com/embed/J_6OjNiIP3Y" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    </div>
 </div>
+
+<style>
+    .video-container {
+        position: relative;
+        padding-bottom: 56.25%;
+    }
+
+    .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .video {
+        aspect-ratio: 16 / 9;
+        width: 100%;
+    }
+</style>
+
 
 {% endblock %}
