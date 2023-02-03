@@ -30,72 +30,74 @@
 
 <h3>Nodes in the database</h3>
 
-<table id="table-nodes" class="table small table-responsive">
-    <thead>
-    <tr>
-        <th>UID</th>
-        <th>IDX</th>
-        <th>IP</th>
-        <th>Port</th>
-        <th>Role</th>
-        <th>Neighbors</th>
-        <th>Latitude</th>
-        <th>Longitude</th>
-        <th>Timestamp</th>
-        <th>Federation</th>
-        <th>Status</th>
-        <th>Logs</th>
+<div class="table-responsive">
+    <table id="table-nodes" class="table small">
+        <thead>
+        <tr>
+            <th>UID</th>
+            <th>IDX</th>
+            <th>IP</th>
+            <th>Port</th>
+            <th>Role</th>
+            <th>Neighbors</th>
+            <th>Latitude</th>
+            <th>Longitude</th>
+            <th>Timestamp</th>
+            <th>Federation</th>
+            <th>Status</th>
+            <th>Logs</th>
 
-    </tr>
-    </thead>
-    {% for uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, scenario, status in nodes %}
-    <tr id="node-vars">
-        <td id="uid"> {{ uid }}</td>
-        <td id="idx"> {{ idx }}</td>
-        <td id="ip"> {{ ip }}</td>
-        <td id="port"> {{ port }}</td>
-        <td id="role"> {{ role }}</td>
-        <td id="neighbors"> {{ neighbors }}</td>
-        <td id="latitude">{{ latitude }}</td>
-        <td id="longitude">{{ longitude }}</td>
-        <td id="timestamp"> {{ timestamp }}</td>
-        <td id="federation"> {{ federation }}</td>
-        {% if status %}
-        <td id="status"><span class="label label-success">Online</span></td>
-        {% else %}
-        <td id="status"><span class="label label-danger">Offline</span></td>
-        {% endif %}
-        <td class="td-icons" id="logs">
-            <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <i class="fa fa-bars"></i>
-                </button>
-                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                    <a class="dropdown-item" href="#" style="pointer-events: none;">
-                        <input type="checkbox" class="form-check-input" id="logicon" style="pointer-events: all">
-                        Show logs
-                    </a>
-                    <a class="dropdown-item download" href="/scenario/{{ scenario_name }}/node/{{ uid }}/logfile">
-                        <i class="fa fa-download"></i>
-                        Download INFO logs
-                    </a>
-                    <a class="dropdown-item download" href="/scenario/{{ scenario_name }}/node/{{ uid }}/debugfile">
-                        <i class="fa fa-download"></i>
-                        Download DEBUG logs
-                    </a>
+        </tr>
+        </thead>
+        {% for uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, scenario, status in nodes %}
+        <tr id="node-vars">
+            <td id="uid"> {{ uid }}</td>
+            <td id="idx"> {{ idx }}</td>
+            <td id="ip"> {{ ip }}</td>
+            <td id="port"> {{ port }}</td>
+            <td id="role"> {{ role }}</td>
+            <td id="neighbors"> {{ neighbors }}</td>
+            <td id="latitude">{{ latitude }}</td>
+            <td id="longitude">{{ longitude }}</td>
+            <td id="timestamp"> {{ timestamp }}</td>
+            <td id="federation"> {{ federation }}</td>
+            {% if status %}
+            <td id="status"><span class="label label-success">Online</span></td>
+            {% else %}
+            <td id="status"><span class="label label-danger">Offline</span></td>
+            {% endif %}
+            <td class="td-icons" id="logs">
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-bars"></i>
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <a class="dropdown-item" href="#" style="pointer-events: none;">
+                            <input type="checkbox" class="form-check-input" id="logicon" style="pointer-events: all">
+                            Show logs
+                        </a>
+                        <a class="dropdown-item download" href="/scenario/{{ scenario_name }}/node/{{ uid }}/logfile">
+                            <i class="fa fa-download"></i>
+                            Download INFO logs
+                        </a>
+                        <a class="dropdown-item download" href="/scenario/{{ scenario_name }}/node/{{ uid }}/debugfile">
+                            <i class="fa fa-download"></i>
+                            Download DEBUG logs
+                        </a>
+                    </div>
                 </div>
-            </div>
-        </td>
-    </tr>
-    <tr class="dropdown-content" style="display: none;">
-        <td colspan="12">
-            <div id="logscontainer" data-uid="{{ uid }}" data-scenario="{{ scenario_name }}">
-                <p id="logstext" style="color: black; font-weight: bold"></p>
-            </div>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+            </td>
+        </tr>
+        <tr class="dropdown-content" style="display: none;">
+            <td colspan="12">
+                <div id="logscontainer" data-uid="{{ uid }}" data-scenario="{{ scenario_name }}">
+                    <p id="logstext" style="color: black; font-weight: bold"></p>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
 
 <h3>Map</h3>
 <p>This functionality enables you to visualize the nodes in a real-time map. Click on a node to see its details.</p>
@@ -111,11 +113,27 @@
 
 <h3>Topology 3D</h3>
 <p>This functionality enables you to generate a 3D topology image of the scenario. The grey nodes are the ones that are not online. The image is generated below automatically.</p>
-<div id="topology-container" class="row">
-    <div id="3d-graph"></div>
+<div id="3d-graph-container" class="row" style="width: 100%">
+    <div id="3d-graph" style="width: 100%"></div>
 </div>
 
 <style>
+    .table {
+        display: block !important;
+    }
+
+    @media screen and (max-width: 1200px) {
+        .table-responsive {
+            width: 100%;
+            margin-bottom: 15px;
+            overflow-y: hidden;
+            overflow-x: auto;
+            -ms-overflow-style: -ms-autohiding-scrollbar;
+            border: 1px solid #dddddd;
+            -webkit-overflow-scrolling: touch;
+        }
+    }
+
     #map {
         position: relative;
         border: 1px solid black;
@@ -231,7 +249,11 @@
 </script>
 
 <script>
-    const width = document.getElementById('topology-container').offsetWidth;
+    const width = document.getElementById('3d-graph').offsetWidth;
+    // When resize the window, resize the graph
+    window.addEventListener("resize", function () {
+        Graph.width(document.getElementById('3d-graph').offsetWidth);
+    });
 
     const offlineNodes = new Set();
 
@@ -262,18 +284,20 @@
                 : (node.role === "aggregator" ? 'rgba(255,136,0,0.6)'
                     : (node.role === "evaluator" ? '#F44336' : undefined))))
         .linkColor(link => link.color ? 'red' : 'black')
-        .linkOpacity(0.5)
+        .linkOpacity(0.6)
+        .linkWidth(0.3)
         .linkDirectionalParticles("value")
         .linkDirectionalParticleSpeed(d => d.value * 0.001)
         .linkDirectionalParticleWidth(1);
 
+    Graph.cameraPosition({x: 0, y: 0, z: 70}, {x: 0, y: 0, z: 0}, 0);
     document.getElementsByClassName("scene-nav-info")[0].innerHTML = "Only visualization purpose. Click on a node to zoom in.";
 </script>
 
 <script>
     function updateGraph(gData) {
         // Global update of the graph
-        gDataUpdate(gData);
+        //gDataUpdate(gData);
         Graph.graphData(gData);
     }
 
@@ -293,6 +317,8 @@
 </script>
 
 <script>
+    var initizalization = false;
+
     function async_update_nodes_page() {
         // Get all divs with id "node-vars" and update them with value returned by async GET request
         var scenario_name = document.getElementById('scenario_name').innerHTML;
@@ -307,7 +333,7 @@
                 }
                 // Examine the json in the response
                 response.json().then(function (data) {
-                    // Update the table with the values of the json and mantain the style of HTML
+                    // Update the table with the values of the json and maintain the style of HTML
                     var latlngs = Array();
                     var nodes_offline = Array();
 
@@ -334,62 +360,70 @@
                                 break;
                             }
                         }
-                        var markerExists = false;
+                        if (!initizalization || Graph.graphData().nodes.length < data['nodes_table'].length) {
+                            var markerExists = false;
 
-                        map.eachLayer(function (layer) {
-                            if (layer instanceof L.Marker) {
-                                if (layer.options.title === node[0] && layer._latlng.lat === node[6] && layer._latlng.lng === node[7]) {
-                                    markerExists = true;
-                                } else if (layer.options.title === node[0] && (layer._latlng.lat !== node[6] || layer._latlng.lng !== node[7])) {
+                            map.eachLayer(function (layer) {
+                                if (layer instanceof L.Marker) {
+                                    if (layer.options.title === node[0] && layer._latlng.lat === node[6] && layer._latlng.lng === node[7]) {
+                                        markerExists = true;
+                                    } else if (layer.options.title === node[0] && (layer._latlng.lat !== node[6] || layer._latlng.lng !== node[7])) {
+                                        map.removeLayer(layer);
+                                    }
+                                } else if (layer instanceof L.Polyline) {
                                     map.removeLayer(layer);
                                 }
-                            } else if (layer instanceof L.Polyline) {
-                                map.removeLayer(layer);
+                            });
+                            if (!markerExists) {
+                                L.marker([node[6], node[7]], {title: node[0]}).addTo(map).bindPopup('UID: ' + node[0] + '<br>IP:' + node[2] + ':' + node[3] + '<br>CLUSTER: Spain-Switzerland');
                             }
-                        });
-                        if (!markerExists) {
-                            L.marker([node[6], node[7]], {title: node[0]}).addTo(map).bindPopup('UID: ' + node[0] + '<br>IP:' + node[2] + ':' + node[3] + '<br>CLUSTER: Spain-Switzerland');
+                            latlngs.push(L.latLng(node[6], node[7]));
                         }
-                        latlngs.push(L.latLng(node[6], node[7]));
                     });
-                    L.polyline(latlngs, {color: 'red', opacity: 0.5, smoothFactor: 1}).addTo(map);
+                    if (!initizalization || Graph.graphData().nodes.length < data['nodes_table'].length) {
+                        L.polyline(latlngs, {color: 'red', opacity: 0.5, smoothFactor: 1}).addTo(map);
+                    }
 
                     // Add data to the Graph topology
-
-                    const gData = {
-                        // if data['nodes_table'][i][0] is not in nodes_offline, then add the node to the graph
-                        nodes: data['nodes_table'].map(node => ({
-                            id: node[1],
-                            ip: node[2],
-                            port: node[3],
-                            ipport: node[2] + ":" + node[3],
-                            role: node[4],
-                            color: offlineNodes.has(node[2] + ":" + node[3]) ? 'grey' :
-                                (node[4] === "trainer" ? '#0173B2'
-                                    : (node[4] === "aggregator" ? 'rgba(255,136,0,0.6)'
-                                        : (node[4] === "evaluator" ? '#F44336' : undefined))),
-                        })),
-                        links: data['nodes_table'].map(node => {
-                            var links = [];
-                            if (node[5] !== "") {
-                                var neighbors = node[5].split(" ");
-                                neighbors.forEach(function (neighbor) {
-                                    links.push({
-                                        source: node[2] + ":" + node[3],
-                                        target: neighbor,
-                                        value: offlineNodes.has(node[2] + ":" + node[3]) || offlineNodes.has(neighbor) ? 0 : 1,
+                    // Check if there are new nodes to add to the graph
+                    if (!initizalization || Graph.graphData().nodes.length < data['nodes_table'].length) {
+                        const gData = {
+                            // if data['nodes_table'][i][0] is not in nodes_offline, then add the node to the graph
+                            nodes: data['nodes_table'].map(node => ({
+                                id: node[1],
+                                ip: node[2],
+                                port: node[3],
+                                ipport: node[2] + ":" + node[3],
+                                role: node[4],
+                                color: offlineNodes.has(node[2] + ":" + node[3]) ? 'grey' :
+                                    (node[4] === "trainer" ? '#0173B2'
+                                        : (node[4] === "aggregator" ? 'rgba(255,136,0,0.6)'
+                                            : (node[4] === "evaluator" ? '#F44336' : undefined))),
+                            })),
+                            links: data['nodes_table'].map(node => {
+                                var links = [];
+                                if (node[5] !== "") {
+                                    var neighbors = node[5].split(" ");
+                                    neighbors.forEach(function (neighbor) {
+                                        links.push({
+                                            source: node[2] + ":" + node[3],
+                                            target: neighbor,
+                                            value: offlineNodes.has(node[2] + ":" + node[3]) || offlineNodes.has(neighbor) ? 0 : 1,
+                                        });
                                     });
-                                });
-                            }
-                            return links;
-                        }).flat()
-                    };
+                                }
+                                return links;
+                            }).flat()
+                        };
 
-                    // cross-link node objects
-                    console.log(gData);
-                    updateGraph(gData);
+                        // cross-link node objects
+                        console.log(gData);
+                        updateGraph(gData);
+                    }
 
-                    //Graph.graphData(gData);
+                    if (!initizalization) {
+                        initizalization = true;
+                    }
 
                 });
             })
