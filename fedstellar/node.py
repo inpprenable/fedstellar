@@ -945,15 +945,12 @@ class Node(BaseNode):
         cpu_temp = 0
         if sys.platform == "linux":
             cpu_temp = psutil.sensors_temperatures()['coretemp'][0].current
-        # Gather GPU usage information
-        gpu_percent = psutil.Process().memory_percent()
         # Gather RAM usage information
         ram_percent = psutil.virtual_memory().percent
         # Gather disk usage information
         disk_percent = psutil.disk_usage("/").percent
-
-        logging.info(f'Resources: CPU {cpu_percent}%, CPU temp {cpu_temp}C, GPU {gpu_percent}%, RAM {ram_percent}%, Disk {disk_percent}%')
-        self.learner.logger.log_metrics({"Resources/CPU_percent": cpu_percent, "Resources/CPU_temp": cpu_temp, "Resources/GPU_percent": gpu_percent, "Resources/RAM_percent": ram_percent, "Resources/Disk_percent": disk_percent}, step=step)
+        logging.info(f'Resources: CPU {cpu_percent}%, CPU temp {cpu_temp}C, RAM {ram_percent}%, Disk {disk_percent}%')
+        self.learner.logger.log_metrics({"Resources/CPU_percent": cpu_percent, "Resources/CPU_temp": cpu_temp, "Resources/RAM_percent": ram_percent, "Resources/Disk_percent": disk_percent}, step=step)
 
         # Gather network usage information
         net_io_counters = psutil.net_io_counters()
@@ -969,6 +966,22 @@ class Node(BaseNode):
         uptime = psutil.boot_time()
         logging.info(f'Resources: Uptime {uptime}')
         self.learner.logger.log_metrics({"Resources/Uptime": uptime}, step=step)
+
+        # Check if pynvml is available
+        try:
+            import pynvml
+            pynvml.nvmlInit()
+            devices = pynvml.nvmlDeviceGetCount()
+            for i in range(devices):
+                handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+                gpu_percent = pynvml.nvmlDeviceGetUtilizationRates(handle).gpu
+                gpu_temp = pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
+                gpu_mem = pynvml.nvmlDeviceGetMemoryInfo(handle)
+                gpu_mem_percent = gpu_mem.used / gpu_mem.total * 100
+                logging.info(f'Resources: GPU-{i} {gpu_percent}%, GPU temp {gpu_temp}C, GPU mem {gpu_mem_percent}%')
+                self.learner.logger.log_metrics({f"Resources/GPU{i}_percent": gpu_percent, f"Resources/GPU{i}_temp": gpu_temp, f"Resources/GPU{i}_mem_percent": gpu_mem_percent}, step=step)
+        except ModuleNotFoundError:
+            logging.info(f'pynvml not found, skipping GPU usage')
 
     def __store_model_parameters(self, obj):
         """
