@@ -31,9 +31,9 @@ logging.basicConfig(level=logging.DEBUG,
 # Detect ctrl+c and run killports
 def signal_handler(sig, frame):
     logging.info('You pressed Ctrl+C!')
-    logging.info("Remove configuration and topology files...")
-    Controller.remove_config_files()
-    logging.info("Remove configuration and topology files... Done")
+    # logging.info("Remove configuration and topology files...")
+    # Controller.remove_config_files()
+    # logging.info("Remove configuration and topology files... Done")
     logging.info('Finishing all scenarios and nodes...')
     Controller.killports("tensorboa")
     Controller.killports("python")
