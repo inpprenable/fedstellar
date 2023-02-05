@@ -33,6 +33,38 @@ div {
     text-align: justify;
 }
 
+.table {
+    display: block !important;
+}
+
+@media screen and (max-width: 1200px) {
+    .table-responsive {
+        width: 100%;
+        margin-bottom: 15px;
+        overflow-y: hidden;
+        overflow-x: auto;
+        -ms-overflow-style: -ms-autohiding-scrollbar;
+        border: 1px solid #dddddd;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+td {
+    vertical-align: middle !important;
+}
+
+.fa {
+    padding: 3px;
+}
+
+.td-icons {
+    text-align: center;
+}
+
+.label {
+    line-height: revert;
+}
+
 .btn-cream {
     color: #000000;
     background-color: #FFEFCB;

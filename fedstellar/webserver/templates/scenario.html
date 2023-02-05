@@ -94,36 +94,6 @@
 
 {% endif %}
 
-<style>
-    .table {
-        display: block !important;
-    }
-
-    @media screen and (max-width: 1200px) {
-        .table-responsive {
-            width: 100%;
-            margin-bottom: 15px;
-            overflow-y: hidden;
-            overflow-x: auto;
-            -ms-overflow-style: -ms-autohiding-scrollbar;
-            border: 1px solid #dddddd;
-            -webkit-overflow-scrolling: touch;
-        }
-    }
-
-    td {
-        vertical-align: inherit !important;
-    }
-
-    .fa {
-        padding: 3px;
-    }
-
-    .label {
-        line-height: revert;
-    }
-</style>
-
 <script>
     // When clicking on reload-btn (there are many in the document), show a modal to confirm the action
     $(document).on('click', '#reload-btn', function () {
