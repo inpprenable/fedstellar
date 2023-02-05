@@ -33,6 +33,10 @@ div {
     text-align: justify;
 }
 
+.label {
+    font-weight: normal;
+}
+
 .table {
     display: block !important;
 }
@@ -55,10 +59,6 @@ td {
 
 .fa {
     padding: 3px;
-}
-
-.td-icons {
-    text-align: center;
 }
 
 .label {
@@ -149,3 +149,32 @@ td {
 .dropdown-toggle:empty::after {
     margin-left: 0;
 }
+
+@media (min-width: 992px) {
+    #copyright {
+        float: left;
+    }
+
+    #fedstellar-logo-footer {
+        float: right;
+    }
+}
+
+@media (max-width: 992px) {
+    #copyright {
+        text-align: center;
+    }
+
+    #fedstellar-logo-footer {
+        display: block;
+        margin: 0 auto;
+        text-align: center;
+    }
+}
+
+@media (max-width: 500px) {
+    #fedstellar-logo-footer img {
+        width: 100%;
+    }
+}
+
