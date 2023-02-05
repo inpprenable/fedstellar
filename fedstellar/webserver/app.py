@@ -280,6 +280,8 @@ def fedstellar_scenario():
                 return jsonify({'scenarios_status': 'not found in database'}), 200
             else:
                 return abort(401)
+    else:
+        return abort(401)
 
 
 #                                                   #
@@ -358,6 +360,8 @@ def fedstellar_scenario_monitoring(scenario_name):
                 return jsonify({'scenario_status': 'not exists'}), 200
             else:
                 return abort(401)
+    else:
+        return abort(401)
 
 
 def update_topology(scenario_name, nodes_list, nodes_config):
@@ -489,7 +493,7 @@ def fedstellar_stop_scenario(scenario_name):
         stop_scenario()
         return redirect(url_for('fedstellar_scenario'))
     else:
-        pass
+        return abort(401)
 
 
 def remove_scenario(scenario_name=None):
@@ -505,7 +509,7 @@ def fedstellar_remove_scenario(scenario_name):
         remove_scenario(scenario_name)
         return redirect(url_for('fedstellar_scenario'))
     else:
-        pass
+        return abort(401)
 
 
 #                                                   #
@@ -525,6 +529,8 @@ def fedstellar_scenario_statistics():
         url = re.sub(r'\d+$', '', url)
         url = url.replace(":", "")
         return render_template("statistics.html", endpoint_statistics=url, port_statistics=app.config['statistics_port'])
+    else:
+        return abort(401)
 
 
 @app.route("/scenario/<scenario_name>/statistics/download", methods=["GET"])
@@ -645,6 +651,8 @@ def fedstellar_scenario_deployment_reload(scenario_name):
         scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=scenario[3], description=scenario[4])
 
         return redirect(url_for("fedstellar_scenario"))
+    else:
+        return abort(401)
 
 
 if __name__ == "__main__":
