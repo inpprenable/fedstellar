@@ -247,6 +247,8 @@ class Controller:
             participant_config['scenario_args']['start_time'] = self.start_date_scenario
             participant_config['device_args']['idx'] = i
             participant_config['device_args']['uid'] = hashlib.sha1((str(participant_config["network_args"]["ip"]) + str(participant_config["network_args"]["port"]) + str(self.scenario_name)).encode()).hexdigest()
+            participant_config['geo_args']['latitude'], participant_config['geo_args']['longitude'] = TopologyManager.get_coordinates(random_geo=True)
+
             participant_config['tracking_args']['log_dir'] = self.log_dir
             participant_config['tracking_args']['config_dir'] = self.config_dir
             if participant_config["device_args"]["start"]:

@@ -3,6 +3,7 @@ import random
 
 import matplotlib
 import matplotlib.pyplot as plt
+
 matplotlib.use('Agg')
 plt.switch_backend('Agg')
 
@@ -146,6 +147,30 @@ class TopologyManager:
 
     def get_nodes(self):
         return self.nodes
+
+    @staticmethod
+    def get_coordinates(random_geo=True):
+        if random_geo:
+            if random.randint(0, 1) == 0:
+                # Spain bounds
+                min_latitude = 36.0
+                max_latitude = 43.0
+                min_longitude = -9.0
+                max_longitude = 4.0
+
+                latitude = random.uniform(min_latitude, max_latitude)
+                longitude = random.uniform(min_longitude, max_longitude)
+            else:
+                # Switzerland bounds
+                min_latitude = 45.8
+                max_latitude = 47.8
+                min_longitude = 5.9
+                max_longitude = 10.5
+
+                latitude = random.uniform(min_latitude, max_latitude)
+                longitude = random.uniform(min_longitude, max_longitude)
+
+            return latitude, longitude
 
     def add_nodes(self, nodes):
         self.nodes = nodes
