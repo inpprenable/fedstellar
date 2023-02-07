@@ -424,7 +424,7 @@ def fedstellar_logs():
         else:
             abort(404)
     else:
-        make_response("You are not authorized to access this page.", 401)
+        return abort(401)
 
 @app.route("/logs/erase", methods=["GET"])
 def fedstellar_logs_erase():
