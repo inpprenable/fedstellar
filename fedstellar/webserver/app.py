@@ -404,22 +404,22 @@ def fedstellar_update_node(scenario_name):
             return abort(400)
 
 
-@app.route("/scenario/<scenario_name>/node/<uid>/update/logs", methods=['POST'])
-def fedstellar_update_node_logs(scenario_name, uid):
-    if request.method == 'POST':
-        # Get the logs from the request (is not json)
-        logs = request.data.decode('utf-8')
-        # Update log file
-        with open(os.path.join(app.config['LOG_FOLDER_WEBSERVER'], f'{uid}.log'), "a") as f:
-            f.write(logs)
+# @app.route("/scenario/<scenario_name>/node/<uid>/update/logs", methods=['POST'])  # unused
+# def fedstellar_update_node_logs(scenario_name, uid):
+#     if request.method == 'POST':
+#         # Get the logs from the request (is not json)
+#         logs = request.data.decode('utf-8')
+#         # Update log file
+#         with open(os.path.join(app.config['LOG_FOLDER_WEBSERVER'], f'{uid}.log'), "a") as f:
+#             f.write(logs)
+#
+#         return make_response("Logs received successfully", 200)
 
-        return make_response("Logs received successfully", 200)
 
-
-@app.route("/scenario/<scenario_name>/node/<uid>/logfile", methods=["GET"])
-def fedstellar_monitoring_log(scenario_name, uid):
+@app.route("/scenario/<scenario_name>/node/<id>/infolog", methods=["GET"])
+def fedstellar_monitoring_log(scenario_name, id):
     if "user" in session.keys():
-        logs = os.path.join(app.config['LOG_FOLDER_WEBSERVER'], f'{uid}.log')
+        logs = os.path.join(app.config['log_dir'], scenario_name, f'participant_{id}.log')
         if os.path.exists(logs):
             return send_file(logs, mimetype='text/plain', as_attachment=True)
         else:
@@ -428,10 +428,10 @@ def fedstellar_monitoring_log(scenario_name, uid):
         make_response("You are not authorized to access this page.", 401)
 
 
-@app.route("/scenario/<scenario_name>/node/<uid>/debugfile", methods=["GET"])
-def fedstellar_monitoring_log_debug(scenario_name, uid):
+@app.route("/scenario/<scenario_name>/node/<id>/debuglog", methods=["GET"])
+def fedstellar_monitoring_log_debug(scenario_name, id):
     if "user" in session.keys():
-        logs = os.path.join(app.config['LOG_FOLDER_WEBSERVER'], f'{uid}_debug.log')
+        logs = os.path.join(app.config['log_dir'], scenario_name, f'participant_{id}_debug.log')
         if os.path.exists(logs):
             return send_file(logs, mimetype='text/plain', as_attachment=True)
         else:
@@ -440,13 +440,13 @@ def fedstellar_monitoring_log_debug(scenario_name, uid):
         make_response("You are not authorized to access this page.", 401)
 
 
-@app.route("/scenario/<scenario_name>/node/<uid>/logs/<number>", methods=["GET"])
-def fedstellar_monitoring_log_x(scenario_name, uid, number):
+@app.route("/scenario/<scenario_name>/node/<id>/infolog/<number>", methods=["GET"])
+def fedstellar_monitoring_log_x(scenario_name, id, number):
     if "user" in session.keys():
         # Send file (is not a json file) with the log
-        logs = os.path.join(app.config['LOG_FOLDER_WEBSERVER'], f'{uid}.log')
+        logs = os.path.join(app.config['log_dir'], scenario_name, f'participant_{id}.log')
         if os.path.exists(logs):
-            # Open file mantaining the file format (for example, new lines)
+            # Open file maintaining the file format (for example, new lines)
             with open(logs, 'r') as f:
                 # Read the last n lines of the file
                 lines = f.readlines()[-int(number):]
@@ -485,6 +485,7 @@ def stop_scenario(scenario_name=None):
 
     scenario_set_all_status_to_finished()
     Controller.remove_config_files()
+
 
 @app.route("/scenario/<scenario_name>/stop", methods=["GET"])
 def fedstellar_stop_scenario(scenario_name):

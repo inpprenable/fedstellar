@@ -859,7 +859,7 @@ class Node(BaseNode):
 
         elif event == Events.REPORT_STATUS_TO_CONTROLLER_EVENT:
             self.__report_status_to_controller()
-            self.__report_logs_to_controller()
+            # self.__report_logs_to_controller()
             self.__report_resources()
 
         elif event == Events.STORE_MODEL_PARAMETERS_EVENT:
@@ -905,29 +905,29 @@ class Node(BaseNode):
             logging.error(f'Error received from controller: {response.status_code}')
             logging.error(response.text)
 
-    def __report_logs_to_controller(self):
-        """
-        Report node logs to the controller.
-
-        Returns:
-
-        """
-
-        # Set the URL for the POST request
-        url = f'http://{self.config.participant["scenario_args"]["controller"]}/scenario/{self.config.participant["scenario_args"]["name"]}/node/{self.config.participant["device_args"]["uid"]}/update/logs'
-
-        # Send the POST request if the controller is available
-        try:
-            with open(self.log_filename + ".log", 'r') as f:
-                response = requests.post(url, data=f, headers={'Content-Type': 'text/plain'})
-        except requests.exceptions.ConnectionError:
-            logging.error(f'Error connecting to the controller at {url}')
-            return
-
-        # If endpoint is not available, log the error
-        if response.status_code != 200:
-            logging.error(f'Error received from controller: {response.status_code}')
-            logging.error(response.text)
+    # def __report_logs_to_controller(self):
+    #     """
+    #     Report node logs to the controller.
+    #
+    #     Returns:
+    #
+    #     """
+    #
+    #     # Set the URL for the POST request
+    #     url = f'http://{self.config.participant["scenario_args"]["controller"]}/scenario/{self.config.participant["scenario_args"]["name"]}/node/{self.config.participant["device_args"]["uid"]}/update/logs'
+    #
+    #     # Send the POST request if the controller is available
+    #     try:
+    #         with open(self.log_filename + ".log", 'r') as f:
+    #             response = requests.post(url, data=f, headers={'Content-Type': 'text/plain'})
+    #     except requests.exceptions.ConnectionError:
+    #         logging.error(f'Error connecting to the controller at {url}')
+    #         return
+    #
+    #     # If endpoint is not available, log the error
+    #     if response.status_code != 200:
+    #         logging.error(f'Error received from controller: {response.status_code}')
+    #         logging.error(response.text)
 
     def __report_resources(self):
         """

@@ -76,11 +76,11 @@
                             <input type="checkbox" class="form-check-input" id="logicon" style="pointer-events: all">
                             Show logs
                         </a>
-                        <a class="dropdown-item download" href="/scenario/{{ scenario_name }}/node/{{ uid }}/logfile">
+                        <a class="dropdown-item download" href="/scenario/{{ scenario_name }}/node/{{ idx }}/infolog">
                             <i class="fa fa-download"></i>
                             Download INFO logs
                         </a>
-                        <a class="dropdown-item download" href="/scenario/{{ scenario_name }}/node/{{ uid }}/debugfile">
+                        <a class="dropdown-item download" href="/scenario/{{ scenario_name }}/node/{{ idx }}/debuglog">
                             <i class="fa fa-download"></i>
                             Download DEBUG logs
                         </a>
@@ -90,7 +90,7 @@
         </tr>
         <tr class="dropdown-content" style="display: none;">
             <td colspan="12">
-                <div id="logscontainer" data-uid="{{ uid }}" data-scenario="{{ scenario_name }}">
+                <div id="logscontainer" data-id="{{ idx }}" data-scenario="{{ scenario_name }}">
                     <p id="logstext" style="color: black; font-weight: bold"></p>
                 </div>
             </td>
@@ -187,32 +187,68 @@
 </script>
 
 <script>
-    var logscontainers = document.querySelectorAll("#logscontainer");
-    // Get the icon element
-    //var icon = document.getElementById("icon");
-    logscontainers.forEach(function (logscontainer) {
-        var uid = logscontainer.getAttribute("data-uid");
-        var scenario = logscontainer.getAttribute("data-scenario");
-
-        setInterval(function () {
-            // Obtiene el log del servidor y lo muestra en la página
-            fetch('/scenario/' + scenario + '/node/' + uid + '/logs/20')
-                .then(function (response) {
-                    if (!response.ok) {
-                        logscontainer.innerHTML = '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>'
-                        return;
-                    }
-                    // Examine the text in the response (is not a json file)
-                    response.text().then(function (data) {
-                        // Change \n to <br>
-                        logscontainer.querySelector("#logstext").innerHTML = data.replace(/\n/g, "<br>");
+    // If dropdown is open, get logscontainer and get the logs every 5 seconds
+    // If not, not get the logs
+    setInterval(function () {
+        var dropdowns = document.querySelectorAll(".dropdown-content");
+        dropdowns.forEach(function (dropdown) {
+            if (dropdown.style.display === "table-row") {
+                var logscontainer = dropdown.querySelector("#logscontainer");
+                var participant_id = logscontainer.getAttribute("data-id");
+                var scenario = logscontainer.getAttribute("data-scenario");
+                fetch('/scenario/' + scenario + '/node/' + participant_id + '/infolog/10')
+                    .then(function (response) {
+                        if (!response.ok) {
+                            console.log("Error");
+                            return;
+                        }
+                        // Examine the text in the response (is not a json file)
+                        response.text().then(function (data) {
+                            // Change \n to <br>
+                            data = data.replace(/\n/g, "<br>");
+                            // Change ANSI color to HTML color
+                            data = data.replace(/\x1b\[36m/g, "<span class='ansi36'>");
+                            data = data.replace(/\x1b\[0m/g, "</span>");
+                            // Change the text
+                            logscontainer.innerHTML = data;
+                        });
                     });
-                })
-                .catch(function (err) {
-                    console.log('Fetch Error :-S', err);
-                });
-        }, 5000); // Actualiza el log cada 1 segundo
-    });
+            }
+        });
+    }, 2000);
+
+    // if (document.getElementById("logicon").checked) {
+    //     // Get the logscontainer
+    //     var logscontainers = document.querySelectorAll("#logscontainer");
+    //     // Get the icon element
+    //     //var icon = document.getElementById("icon");
+    //     logscontainers.forEach(function (logscontainer) {
+    //         var participant_id = logscontainer.getAttribute("data-id");
+    //         var scenario = logscontainer.getAttribute("data-scenario");
+    //
+    //         setInterval(function () {
+    //             // Obtiene el log del servidor y lo muestra en la página
+    //             fetch('/scenario/' + scenario + '/node/' + participant_id + '/infolog/10')
+    //                 .then(function (response) {
+    //                     if (!response.ok) {
+    //                         console.log("Error");
+    //                         return;
+    //                     }
+    //                     // Examine the text in the response (is not a json file)
+    //                     response.text().then(function (data) {
+    //                         // Change \n to <br>
+    //                         data = data.replace(/\n/g, "<br>");
+    //                         // Change ANSI color to HTML color
+    //                         data = data.replace(/\x1b\[36m/g, "<span class='ansi36'>");
+    //                         data = data.replace(/\x1b\[0m/g, "</span>");
+    //                         // Change the text
+    //                         logscontainer.innerHTML = data;
+    //                     });
+    //                 });
+    //         }, 3000);
+    //     });
+    // }
+
 
 </script>
 
@@ -408,7 +444,7 @@
     window.onload = async function () {
         await async_update_nodes_page();
     };
-    setInterval(async_update_nodes_page, 2000); // Update the nodes every 2 seconds
+    setInterval(async_update_nodes_page, 5000); // Update the nodes every 2 seconds
 </script>
 
 {% endif %}
