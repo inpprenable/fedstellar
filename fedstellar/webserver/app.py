@@ -614,6 +614,7 @@ def fedstellar_scenario_deployment_run():
                 participant_config["data_args"]["dataset"] = data["dataset"]
                 participant_config["model_args"]["model"] = data["model"]
                 participant_config["training_args"]["epochs"] = int(data["epochs"])
+                participant_config["device_args"]["accelerator"] = data["accelerator"]  # same for all nodes
 
                 with open(participant_file, 'w') as f:
                     json.dump(participant_config, f, sort_keys=False, indent=2)

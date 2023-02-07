@@ -68,6 +68,12 @@
         <div id="deployment-options" style="margin-left: 10px">
             <h4>Deployment options</h4>
             <p class="text-muted">Select the deployment options for the scenario.</p>
+            <h5 class="step-title">Accelerator definition</h5>
+            <select class="form-control" id="resourceUsage" name="resources" style="display: inline; width: 75%">
+                <option value="auto" selected>Auto selection (best effort)</option>
+                <option value="cpu">CPU usage</option>
+                <option value="gpu">GPU usage</option>
+            </select>
         </div>
         <div class="form-group row">
             <h4 class="step-number">Federation architecture</h4>
@@ -83,8 +89,8 @@
         <div id="networkTopologyForm" class="form-group row">
             <h4 class="step-number">Network topology</h4>
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="inlineNetworkTopology" id="custom-topology-btn" checked>
-                <label class="form-check-label" for="simulation-radio">Custom topology</label>
+                <input class="form-check-input" type="radio" name="inlineNetworkTopology" id="custom-topology-radio" checked>
+                <label class="form-check-label" for="custom-topology-radio">Custom topology</label>
                 <small id="topologyCustomHelp" class="form-text text-muted">
                     <i id="topologyCustomIcon" class="fa fa-info-circle"></i>
                 </small>
@@ -491,6 +497,7 @@
                         "start": Graph.graphData().nodes[i].start,
                     }
                 }
+                // Get resource usage from the DOM
                 var data = {
                     "scenario_title": document.getElementById("scenario-title").value,
                     "scenario_description": document.getElementById("scenario-description").value,
@@ -504,7 +511,7 @@
                     "dataset": document.getElementById("datasetSelect").value,
                     "model": document.getElementById("modelSelect").value,
                     "epochs": document.getElementById("epochs").value,
-
+                    "accelerator": document.getElementById("resourceUsage").value,
                 };
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", "/scenario/deployment/run", true);
