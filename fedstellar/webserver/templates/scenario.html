@@ -27,9 +27,13 @@
 <h4>There are no deployed scenarios</h4>
 <a href="{{ url_for('fedstellar_scenario_deployment') }}" class="btn btn-primary">Deploy scenario</a>
 <a href="{{ url_for('fedstellar_scenario_statistics') }}" class="btn btn-info">Scenario statistics</a>
+<!--<label id="eraseLogs" class="form-text text-muted" style="float: right; cursor: pointer">
+    <i id="eraseLogsIcon" class="fa fa-times-circle" data-original-title="" title=""></i>
+</label>
+<a href="{{ url_for('fedstellar_logs') }}" target="_blank" class="btn btn-info" style="float: right"><b>Fedstellar Core</b> Logs</a>-->
+
 
 {% elif scenario_running %}
-<hr>
 <h4>There is a scenario running.</h4>
 
 <h3>Scenario</h3>
@@ -43,6 +47,10 @@
 <a href="{{ url_for('fedstellar_stop_scenario', scenario_name=scenario_running[0]) }}" class="btn btn-danger">Stop scenario</a>
 <a id="new-scenario-btn" href="{{ url_for('fedstellar_scenario_deployment') }}" class="btn btn-primary">Deploy new scenario</a>
 <a href="{{ url_for('fedstellar_scenario_statistics') }}" class="btn btn-info">Scenario statistics</a>
+<!--<label id="eraseLogs" class="form-text text-muted" style="float: right; cursor: pointer">
+    <i id="eraseLogsIcon" class="fa fa-times-circle" data-original-title="" title=""></i>
+</label>
+<a href="{{ url_for('fedstellar_logs') }}" target="_blank" class="btn btn-info" style="float: right"><b>Fedstellar Core</b> Logs</a>-->
 <hr>
 
 {% endif %}
@@ -115,6 +123,17 @@
         $('#confirm-modal #confirm-modal-body').html('Are you sure you want to remove the scenario ' + scenario_name + '?<br><br><p style="color: red">Warning: this will remove the scenario from the database.</p>');
         $('#confirm-modal #yes-button').click(function () {
             window.location.href = "/scenario/" + scenario_name + "/remove";
+        });
+    });
+</script>
+
+<script>
+    $(document).on('click', '#eraseLogsIcon', function () {
+        $('#confirm-modal').modal('show');
+        $('#confirm-modal .modal-title').text('Erase logs');
+        $('#confirm-modal #confirm-modal-body').html('Are you sure you want to erase the logs?<br><br><p style="color: red">Warning: this will erase the logs of the FedStellar Core.</p>');
+        $('#confirm-modal #yes-button').click(function () {
+            window.location.href = "/logs/erase";
         });
     });
 </script>

@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -17,11 +18,25 @@ from fedstellar.utils.topologymanager import TopologyManager
 
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
+
 # Setup controller logger
-log_console_format = "\x1b[0;35m[%(levelname)s] - %(asctime)s - Controller -\x1b[0m %(message)s"
+class TermEscapeCodeFormatter(logging.Formatter):
+    """A class to strip the escape codes from the """
+
+    def __init__(self, fmt=None, datefmt=None, style='%', validate=True):
+        super().__init__(fmt, datefmt, style, validate)
+
+    def format(self, record):
+        escape_re = re.compile(r'\x1b\[[0-9;]*m')
+        record.msg = re.sub(escape_re, "", str(record.msg))
+        return super().format(record)
+
+
+log_console_format = "[%(levelname)s] - %(asctime)s - Controller - %(message)s"
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)
-console_handler.setFormatter(logging.Formatter(log_console_format))
+# console_handler.setFormatter(logging.Formatter(log_console_format))
+console_handler.setFormatter(TermEscapeCodeFormatter(log_console_format))
 logging.basicConfig(level=logging.DEBUG,
                     handlers=[
                         console_handler,
@@ -336,7 +351,7 @@ class Controller:
             logging.info("Starting node {} with configuration {}".format(idx, self.config.participants[idx]))
             self.start_node(idx)
 
-        time.sleep(3)
+        time.sleep(7)
         # Start the node with start flag
         logging.info("Starting node {} with configuration {}".format(idx_start_node, self.config.participants[idx_start_node]))
         self.start_node(idx_start_node)

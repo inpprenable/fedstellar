@@ -415,6 +415,28 @@ def fedstellar_update_node(scenario_name):
 #
 #         return make_response("Logs received successfully", 200)
 
+@app.route("/logs", methods=["GET"])
+def fedstellar_logs():
+    if "user" in session.keys():
+        logs = os.path.join(app.config['log_dir'], f'server.log')
+        if os.path.exists(logs):
+            return send_file(logs, mimetype='text/plain')
+        else:
+            abort(404)
+    else:
+        make_response("You are not authorized to access this page.", 401)
+
+@app.route("/logs/erase", methods=["GET"])
+def fedstellar_logs_erase():
+    if "user" in session.keys():
+        logs = os.path.join(app.config['log_dir'], f'server.log')
+        if os.path.exists(logs):
+            # Overwrite the file with "Fedstellar Core Logs" string
+            with open(logs, "w") as f:
+                f.write("Fedstellar Core Logs")
+            return redirect(url_for('fedstellar_logs'))
+        else:
+            abort(404)
 
 @app.route("/scenario/<scenario_name>/node/<id>/infolog", methods=["GET"])
 def fedstellar_monitoring_log(scenario_name, id):
@@ -426,19 +448,6 @@ def fedstellar_monitoring_log(scenario_name, id):
             abort(404)
     else:
         make_response("You are not authorized to access this page.", 401)
-
-
-@app.route("/scenario/<scenario_name>/node/<id>/debuglog", methods=["GET"])
-def fedstellar_monitoring_log_debug(scenario_name, id):
-    if "user" in session.keys():
-        logs = os.path.join(app.config['log_dir'], scenario_name, f'participant_{id}_debug.log')
-        if os.path.exists(logs):
-            return send_file(logs, mimetype='text/plain', as_attachment=True)
-        else:
-            abort(404)
-    else:
-        make_response("You are not authorized to access this page.", 401)
-
 
 @app.route("/scenario/<scenario_name>/node/<id>/infolog/<number>", methods=["GET"])
 def fedstellar_monitoring_log_x(scenario_name, id, number):
@@ -460,6 +469,30 @@ def fedstellar_monitoring_log_x(scenario_name, id, number):
         else:
             return Response("No logs available", mimetype='text/plain')
 
+    else:
+        make_response("You are not authorized to access this page.", 401)
+
+
+@app.route("/scenario/<scenario_name>/node/<id>/debuglog", methods=["GET"])
+def fedstellar_monitoring_log_debug(scenario_name, id):
+    if "user" in session.keys():
+        logs = os.path.join(app.config['log_dir'], scenario_name, f'participant_{id}_debug.log')
+        if os.path.exists(logs):
+            return send_file(logs, mimetype='text/plain', as_attachment=True)
+        else:
+            abort(404)
+    else:
+        make_response("You are not authorized to access this page.", 401)
+
+
+@app.route("/scenario/<scenario_name>/node/<id>/errorlog", methods=["GET"])
+def fedstellar_monitoring_log_error(scenario_name, id):
+    if "user" in session.keys():
+        logs = os.path.join(app.config['log_dir'], scenario_name, f'participant_{id}_error.log')
+        if os.path.exists(logs):
+            return send_file(logs, mimetype='text/plain', as_attachment=True)
+        else:
+            abort(404)
     else:
         make_response("You are not authorized to access this page.", 401)
 

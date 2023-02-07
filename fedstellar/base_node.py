@@ -120,8 +120,8 @@ class BaseNode(threading.Thread, Observer):
     def setup_logging(self, log_dir):
         CYAN = "\x1b[0;36m"
         RESET = "\x1b[0m"
-        info_file_format = f"{CYAN}%(asctime)s -{RESET} %(message)s"
-        debug_file_format = f"{CYAN}%(asctime)s -{RESET} %(message)s\n{CYAN}[in %(pathname)s:%(lineno)d]{RESET}"
+        info_file_format = f"%(asctime)s - %(message)s"
+        debug_file_format = f"%(asctime)s - %(message)s\n[in %(pathname)s:%(lineno)d]"
         log_console_format = f"{CYAN}[%(levelname)s] - %(asctime)s - {self.get_name_demo()}{RESET}\n%(message)s" if self.hostdemo else f"{CYAN}[%(levelname)s] - %(asctime)s - {self.get_name()}{RESET}\n%(message)s"
 
         console_handler = logging.StreamHandler()
