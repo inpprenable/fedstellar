@@ -404,7 +404,7 @@
                         var neighborhood = data['nodes_table'].filter(n => n[5].includes(node[2] + ":" + node[3]));
                         neighborhood.forEach(function (n) {
                             var marker_nei = L.marker([n[6], n[7]], {title: n[0]})
-                            L.polyline([marker.getLatLng(), marker_nei.getLatLng()], {color: 'red', opacity: 0.2, smoothFactor: 4}).addTo(map);
+                            L.polyline([marker.getLatLng(), marker_nei.getLatLng()], {color: 'red', opacity: 0.2, smoothFactor: 1}).addTo(map);
                         });
                     });
 
