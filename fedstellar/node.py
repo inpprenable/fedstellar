@@ -100,14 +100,10 @@ class Node(BaseNode):
             logging.info("[NODE] Tracking W&B enabled")
             logging.getLogger("wandb").setLevel(logging.ERROR)
             if self.hostdemo:
-                wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=f"participant_{self.idx}", mode="disabled")
+                wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=f"participant_{self.idx}")
             else:
-                wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=f"participant_{self.idx}", mode="disabled")
+                wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=f"participant_{self.idx}")
             wandblogger.watch(model, log="all")
-            if self.idx == 0:
-                import wandb
-                img_topology = wandb.Image(f"{self.log_dir}/topology.png", caption="Topology")
-                wandblogger.log_image(key="topology", images=[img_topology])
             self.learner = learner(model, data, config=self.config, logger=wandblogger)
         else:
             if self.config.participant['tracking_args']['local_tracking'] == 'csv':
