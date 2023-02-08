@@ -85,8 +85,6 @@ def main():
     logging.info(f"Neighbors: {node.get_neighbors()}")
     logging.info(f"Network nodes: {node.get_network_nodes()}")
 
-    time.sleep(1)
-
     start_node = config.participant["device_args"]["start"]
 
     if start_node:

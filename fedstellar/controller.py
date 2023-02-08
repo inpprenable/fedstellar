@@ -351,7 +351,7 @@ class Controller:
             logging.info("Starting node {} with configuration {}".format(idx, self.config.participants[idx]))
             self.start_node(idx)
 
-        time.sleep(7)
+        time.sleep(3)
         # Start the node with start flag
         logging.info("Starting node {} with configuration {}".format(idx_start_node, self.config.participants[idx_start_node]))
         self.start_node(idx_start_node)
