@@ -350,6 +350,8 @@
                 // Examine the json in the response
                 response.json().then(function (data) {
                     // Update the table with the values of the json and maintain the style of HTML
+                    var markers = Array();
+                    var markers_neighborhood = Array();
                     var latlngs = Array();
                     var nodes_offline = Array();
 
@@ -391,14 +393,20 @@
                                 }
                             });
                             if (!markerExists) {
-                                L.marker([node[6], node[7]], {title: node[0]}).addTo(map).bindPopup('UID: ' + node[0] + '<br>IP:' + node[2] + ':' + node[3] + '<br>CLUSTER: Spain-Switzerland');
+                                var marker = L.marker([node[6], node[7]], {title: node[0]}).addTo(map)
+                                marker.bindPopup('UID: ' + node[0] + '<br>IP:' + node[2] + ':' + node[3] + '<br>CLUSTER: Spain-Switzerland');
                             }
-                            latlngs.push(L.latLng(node[6], node[7]));
                         }
                     });
-                    if (!initizalization || Graph.graphData().nodes.length < data['nodes_table'].length) {
-                        L.polyline(latlngs, {color: 'red', opacity: 0.5, smoothFactor: 1}).addTo(map);
-                    }
+
+                    data['nodes_table'].forEach(function (node) {
+                        var marker = L.marker([node[6], node[7]], {title: node[0]})
+                        var neighborhood = data['nodes_table'].filter(n => n[5].includes(node[2] + ":" + node[3]));
+                        neighborhood.forEach(function (n) {
+                            var marker_nei = L.marker([n[6], n[7]], {title: n[0]})
+                            L.polyline([marker.getLatLng(), marker_nei.getLatLng()], {color: 'red', opacity: 0.2, smoothFactor: 4}).addTo(map);
+                        });
+                    });
 
                     // Add data to the Graph topology
                     // Check if there are new nodes to add to the graph
