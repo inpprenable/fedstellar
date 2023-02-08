@@ -136,7 +136,7 @@ class FedstellarLogger(Logger):
         __step = self.global_step + self.local_step
 
         metrics = _add_prefix(metrics, self._prefix, self.LOGGER_JOIN_CHAR)
-        logging.info(f"[Statisticslogger] Logging metrics: {metrics}, step: {__step}")
+        # logging.info(f"[Statisticslogger] Logging metrics: {metrics}, step: {__step}")
 
         for k, v in metrics.items():
             if isinstance(v, Tensor):

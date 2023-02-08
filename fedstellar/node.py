@@ -8,6 +8,7 @@ import math
 import os
 from datetime import datetime, timedelta
 
+from fedstellar.learning.pytorch.remotelogger import FedstellarWBLogger
 from fedstellar.learning.pytorch.statisticslogger import FedstellarLogger
 
 os.environ['WANDB_SILENT'] = 'true'
@@ -100,9 +101,9 @@ class Node(BaseNode):
             logging.info("[NODE] Tracking W&B enabled")
             logging.getLogger("wandb").setLevel(logging.ERROR)
             if self.hostdemo:
-                wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=f"participant_{self.idx}")
+                wandblogger = FedstellarWBLogger(project="framework-enrique", group=self.experiment_name, name=f"participant_{self.idx}")
             else:
-                wandblogger = WandbLogger(project="framework-enrique", group=self.experiment_name, name=f"participant_{self.idx}")
+                wandblogger = FedstellarWBLogger(project="framework-enrique", group=self.experiment_name, name=f"participant_{self.idx}")
             wandblogger.watch(model, log="all")
             self.learner = learner(model, data, config=self.config, logger=wandblogger)
         else:
