@@ -509,8 +509,8 @@ class Node(BaseNode):
             logging.warning("[NODE.__train_step] Role not implemented yet")
 
         # Gossip aggregated model
-        if self.round is not None:
-            self.__gossip_model_difusion()
+        #if self.round is not None:
+        #    self.__gossip_model_difusion()
 
         # Finish round
         if self.round is not None:
@@ -823,7 +823,7 @@ class Node(BaseNode):
                 )
                 # TODO: Testing 20-12-2022 (remove stop and add broadcast)
                 # self.stop()
-                self.broadcast(CommunicationProtocol.build_models_ready_msg(self.round))
+                # self.broadcast(CommunicationProtocol.build_models_ready_msg(self.round))
             try:
                 self.__finish_aggregation_lock.release()
                 logging.info("[NODE.__finish_aggregation_lock] __finish_aggregation_lock.release()")

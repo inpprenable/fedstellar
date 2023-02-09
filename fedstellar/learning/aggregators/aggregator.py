@@ -114,6 +114,8 @@ class Aggregator(threading.Thread, Observable):
             # Check if a node aggregator is in the list of nodes
             # if any([n.startswith("aggregator") for n in nodes.split()]):
             self.notify(Events.AGGREGATION_FINISHED_EVENT, model)
+        elif self.role == Role.TRAINER and self.config.participant["scenario_args"]["federation"] == "CFL":
+            return  # Do nothing
         else:
             if nodes is not None:
                 self.__lock.acquire()
@@ -137,8 +139,8 @@ class Aggregator(threading.Thread, Observable):
                 # Agrego
                 if len(self.__train_set) > len(models_added):
                     # Check if all nodes are in the train_set
-                    #if all([n in self.__train_set for n in nodes]):
-                        # Check if all nodes are not aggregated
+                    # if all([n in self.__train_set for n in nodes]):
+                    # Check if all nodes are not aggregated
                     if all([n not in models_added for n in nodes]):
                         # Aggregate model
                         self.__models[" ".join(nodes)] = (model, weight)
