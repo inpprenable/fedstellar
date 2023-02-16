@@ -96,6 +96,12 @@ class Aggregator(threading.Thread, Observable):
         logging.info("[Aggregator] set_waiting_aggregated_model = True")
         self.__waiting_aggregated_model = True
 
+    def get_waiting_aggregated_model(self):
+        """
+        Indicates that the node is waiting for an aggregation. It won't participate in aggregation process.
+        """
+        return self.__waiting_aggregated_model
+
     def add_model(self, model, nodes, weight):
         """
         Add a model. The first model to be added starts the `run` method (timeout).
@@ -106,19 +112,14 @@ class Aggregator(threading.Thread, Observable):
             weight: Number of samples used to get the model.
         """
         logging.info("[Aggregator.add_model] Entry point")
+        logging.info("[Aggregator.add_model] Nodes who contributed to the model: {}".format(nodes))
         # if self.__waiting_aggregated_model and self.__stored_models is not None:
         #    self.notify(Events.STORE_MODEL_PARAMETERS_EVENT, model)
-        if self.__waiting_aggregated_model and not self.__aggregated_waited_model:
-            logging.info("[Aggregator (TRAINER)] Received an aggregated model from {} --> Overwriting local model".format(nodes))
-            # self.__aggregated_waited_model = True  # TODO: 16 Feb 2023 - Check if this is needed
+        if self.__waiting_aggregated_model:
+            logging.info("[Aggregator] Received an aggregated model from {} --> Overwriting local model".format(nodes))
             # Check if a node aggregator is in the list of nodes
             # if any([n.startswith("aggregator") for n in nodes.split()]):
             self.notify(Events.AGGREGATION_FINISHED_EVENT, model)
-        elif self.role == Role.TRAINER and self.config.participant["scenario_args"]["federation"] == "CFL":
-            logging.info("[Aggregator (TRAINER CFL)] Step: Not aggregating model.")
-            logging.info("[Aggregator (TRAINER CFL)] Received an aggregated model from {} --> Overwriting local model".format(nodes))
-            self.notify(Events.AGGREGATION_FINISHED_EVENT, model)  # TODO: 16 Feb 2023 - Check if this is needed
-            return None  # Do nothing
         else:
             if nodes is not None:
                 self.__lock.acquire()
@@ -172,7 +173,8 @@ class Aggregator(threading.Thread, Observable):
                         )
                 else:
                     self.__lock.release()
-
+            else:
+                logging.debug("[Aggregator] __waiting_aggregated_model = False,  model received by difusion")
         return None
 
     def get_partial_aggregation(self, except_nodes):

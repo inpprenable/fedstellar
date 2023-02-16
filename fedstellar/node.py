@@ -438,10 +438,14 @@ class Node(BaseNode):
                 self.broadcast(
                     CommunicationProtocol.build_models_aggregated_msg([self.get_name()])
                 )
-                self.__gossip_model_aggregation()
+                if self.config.participant["device_args"]["role"] == Role.SERVER:
+                    self.__gossip_model_difusion()
+                else:
+                    self.__gossip_model_aggregation()
 
         elif self.config.participant["device_args"]["role"] == Role.TRAINER:
             logging.info("[NODE.__train_step] Role.TRAINER process...")
+            logging.info("[NODE.__train_step] __waiting_aggregated_model = {}".format(self.aggregator.get_waiting_aggregated_model()))
             if self.round is not None:
                 self.__connect_and_set_aggregator()
 
@@ -455,13 +459,13 @@ class Node(BaseNode):
 
             # Aggregate Model
             if self.round is not None:
-                if self.config.participant["scenario_args"]["federation"] != "CFL":
-                    logging.info("[NODE.__train_step] self.aggregator.add_model with MY MODEL")
-                    self.aggregator.add_model(
-                        self.learner.get_parameters(),
-                        [self.get_name()],
-                        self.learner.get_num_samples()[0],
-                    )
+                logging.info("[NODE.__train_step] self.aggregator.add_model with MY MODEL")
+                # Node has to aggregate its own model before sending it to the aggregator
+                self.aggregator.add_model(
+                    self.learner.get_parameters(),
+                    [self.get_name()],
+                    self.learner.get_num_samples()[0],
+                )
 
                 logging.info("[NODE.__train_step] self.broadcast with MODELS_AGGREGATED = MY_NAME")
                 self.broadcast(
@@ -471,6 +475,7 @@ class Node(BaseNode):
                 self.__gossip_model_aggregation()
 
                 self.aggregator.set_waiting_aggregated_model()
+                time.sleep(5)
 
         elif self.config.participant["device_args"]["role"] == Role.PROXY:
             # If the node is a proxy, it stores the parameters received from the neighbors.
@@ -729,7 +734,7 @@ class Node(BaseNode):
             logging.info("------------------------------------------------------------------")
 
             nei = [nc for nc in self.get_neighbors() if candidate_condition(nc)]
-            logging.info("[NODE.__gossip_model] Selected based on condition: {}".format(nei))
+            logging.info("[NODE.__gossip_model] Selected (to exclude) based on condition: {}".format(nei))
 
             # Determine end of gossip
             if not nei:
@@ -757,7 +762,7 @@ class Node(BaseNode):
             # Select a random subset of neighbors
             samples = min(self.config.participant["GOSSIP_MODELS_PER_ROUND"], len(nei))
             nei = random.sample(nei, samples)
-            logging.info("[NODE.__gossip_model] Selected a random subset of neighbors: {}".format(nei))
+            logging.info("[NODE.__gossip_model] Selected a random subset of neighbors (to exclude): {}".format(nei))
 
             # Generate and Send Model Partial Aggregations (model, node_contributors)
             for nc in nei:
@@ -847,6 +852,7 @@ class Node(BaseNode):
             self.__stop_learning()
 
         elif event == Events.PARAMS_RECEIVED_EVENT:
+            logging.info("[NODE] Params received")
             self.add_model(obj)
 
         elif event == Events.METRICS_RECEIVED_EVENT:
