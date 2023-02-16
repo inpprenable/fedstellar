@@ -720,9 +720,11 @@ class Node(BaseNode):
             logging.info("---------------------Feedback about neighbors---------------------")
             logging.info("[NODE.__gossip_model] Neighbors: {}".format(self.get_neighbors()))
             for nc in self.get_neighbors():
+                logging.info("---------------------Feedback about neighbor {}---------------------".format(nc))
                 logging.info("[NODE.__gossip_model] Neighbor: {} | My __train_set: {} | Nc.modelsaggregated: {}".format(nc, self.__train_set, nc.get_models_aggregated()))
                 logging.info("[NODE.__gossip_model] Neighbor: {} | Candidate_condition return: {}".format(nc, candidate_condition(nc)))
                 logging.info("[NODE.__gossip_model] Neighbor: {} | Status_function return: {}".format(nc, status_function(nc)))
+                logging.info("---------------------End of feedback about neighbor {}---------------------".format(nc))
             logging.info("------------------------------------------------------------------")
 
             nei = [nc for nc in self.get_neighbors() if candidate_condition(nc)]
