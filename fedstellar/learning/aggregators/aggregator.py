@@ -109,12 +109,13 @@ class Aggregator(threading.Thread, Observable):
         # if self.__waiting_aggregated_model and self.__stored_models is not None:
         #    self.notify(Events.STORE_MODEL_PARAMETERS_EVENT, model)
         if self.__waiting_aggregated_model and not self.__aggregated_waited_model:
-            logging.info("[Aggregator (TRAINER)] Received an aggregated model from {}".format(nodes))
-            self.__aggregated_waited_model = True
+            logging.info("[Aggregator (TRAINER)] Received an aggregated model from {} --> Overwriting local model".format(nodes))
+            # self.__aggregated_waited_model = True  # TODO: 16 Feb 2023 - Check if this is needed
             # Check if a node aggregator is in the list of nodes
             # if any([n.startswith("aggregator") for n in nodes.split()]):
             self.notify(Events.AGGREGATION_FINISHED_EVENT, model)
         elif self.role == Role.TRAINER and self.config.participant["scenario_args"]["federation"] == "CFL":
+            logging.info("Role is TRAINER and scenario is CFL. Step: Not aggregating model.")
             return  # Do nothing
         else:
             if nodes is not None:
