@@ -717,14 +717,16 @@ class Node(BaseNode):
                 return
 
             # Get nodes which need models
+            logging.info("---------------------Feedback about neighbors---------------------")
             logging.info("[NODE.__gossip_model] Neighbors: {}".format(self.get_neighbors()))
             for nc in self.get_neighbors():
                 logging.info("[NODE.__gossip_model] Neighbor: {} | My __train_set: {} | Nc.modelsaggregated: {}".format(nc, self.__train_set, nc.get_models_aggregated()))
                 logging.info("[NODE.__gossip_model] Neighbor: {} | Candidate_condition return: {}".format(nc, candidate_condition(nc)))
                 logging.info("[NODE.__gossip_model] Neighbor: {} | Status_function return: {}".format(nc, status_function(nc)))
+            logging.info("------------------------------------------------------------------")
 
             nei = [nc for nc in self.get_neighbors() if candidate_condition(nc)]
-            logging.info("[NODE.__gossip_model] Selected based on condition: {}".format(self.get_neighbors(), nei))
+            logging.info("[NODE.__gossip_model] Selected based on condition: {}".format(nei))
 
             # Determine end of gossip
             if not nei:
@@ -752,6 +754,7 @@ class Node(BaseNode):
             # Select a random subset of neighbors
             samples = min(self.config.participant["GOSSIP_MODELS_PER_ROUND"], len(nei))
             nei = random.sample(nei, samples)
+            logging.info("[NODE.__gossip_model] Selected a random subset of neighbors: {}".format(nei))
 
             # Generate and Send Model Partial Aggregations (model, node_contributors)
             for nc in nei:
@@ -768,6 +771,7 @@ class Node(BaseNode):
                     )
                     logging.info("[NODE.__gossip_model] Building params message | Contributors: {}".format(contributors))
                     encoded_msgs = CommunicationProtocol.build_params_msg(encoded_model, self.config.participant["BLOCK_SIZE"])
+                    logging.info("[NODE.__gossip_model] Sending params message to {}".format(nc))
                     # Send Fragments
                     for msg in encoded_msgs:
                         nc.send(msg)
