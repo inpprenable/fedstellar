@@ -455,12 +455,13 @@ class Node(BaseNode):
 
             # Aggregate Model
             if self.round is not None:
-                logging.info("[NODE.__train_step] self.aggregator.add_model with MY MODEL")
-                self.aggregator.add_model(
-                    self.learner.get_parameters(),
-                    [self.get_name()],
-                    self.learner.get_num_samples()[0],
-                )
+                if self.config.participant["scenario_args"]["federation"] != "CFL":
+                    logging.info("[NODE.__train_step] self.aggregator.add_model with MY MODEL")
+                    self.aggregator.add_model(
+                        self.learner.get_parameters(),
+                        [self.get_name()],
+                        self.learner.get_num_samples()[0],
+                    )
 
                 logging.info("[NODE.__train_step] self.broadcast with MODELS_AGGREGATED = MY_NAME")
                 self.broadcast(
