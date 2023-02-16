@@ -613,8 +613,11 @@ class Node(BaseNode):
                 self.rm_neighbor(nc)
         # Set Next Round
         self.aggregator.clear()
+        logging.info("[NODE] Finalizing round: {}".format(self.round))
         self.learner.finalize_round()  # TODO: Fix to improve functionality
         self.round = self.round + 1
+        self.learner.logger.log_metrics({"Round": self.round}, step=self.learner.logger.global_step)
+        logging.info("[LightningLearner] Starting round: {}".format(self.round))
         # Clear node aggregation
         for nc in self.get_neighbors():
             nc.clear_models_aggregated()

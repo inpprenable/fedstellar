@@ -145,12 +145,8 @@ class LightningLearner(NodeLearner):
             pass
 
     def finalize_round(self):
-        logging.info("[LightningLearner] Finalizing round: {}".format(self.round))
         self.logger.global_step = self.logger.global_step + self.logger.local_step
         self.logger.local_step = 0
-        self.round = self.round + 1
-        self.logger.log_metrics({"Round": self.round}, step=self.logger.global_step)
-        logging.info("[LightningLearner] Starting round: {}".format(self.round))
         pass
 
     def create_trainer(self):
