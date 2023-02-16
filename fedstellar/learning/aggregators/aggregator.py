@@ -115,8 +115,10 @@ class Aggregator(threading.Thread, Observable):
             # if any([n.startswith("aggregator") for n in nodes.split()]):
             self.notify(Events.AGGREGATION_FINISHED_EVENT, model)
         elif self.role == Role.TRAINER and self.config.participant["scenario_args"]["federation"] == "CFL":
-            logging.info("Role is TRAINER and scenario is CFL. Step: Not aggregating model.")
-            return  # Do nothing
+            logging.info("[Aggregator (TRAINER CFL)] Step: Not aggregating model.")
+            logging.info("[Aggregator (TRAINER CFL)] Received an aggregated model from {} --> Overwriting local model".format(nodes))
+            self.notify(Events.AGGREGATION_FINISHED_EVENT, model)  # TODO: 16 Feb 2023 - Check if this is needed
+            return None  # Do nothing
         else:
             if nodes is not None:
                 self.__lock.acquire()
