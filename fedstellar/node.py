@@ -358,11 +358,11 @@ class Node(BaseNode):
                     else:
                         raise ModelNotMatchingError("Not matching models")
                 else:
+                    self.__model_initialized = True
+                    logging.info("[NODE] Initialization Model Weights")
                     # Initialize model
                     model, _, _ = self.learner.decode_parameters(m)
                     self.learner.set_parameters(model)
-                    self.__model_initialized = True
-                    logging.info("[NODE] Initialization Model Weights")
                     self.__wait_init_model_lock.release()
                     self.broadcast(CommunicationProtocol.build_model_initialized_msg())
 
