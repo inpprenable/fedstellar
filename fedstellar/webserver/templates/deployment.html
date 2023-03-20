@@ -856,22 +856,6 @@
 
     function gDataUpdate() {
         console.log("gDataUpdate");
-        console.log(gData);
-        // cross-link node objects
-        // gData.links.forEach(link => {
-        //     const a = gData.nodes[link.source];
-        //     const b = gData.nodes[link.target];
-        //     console.log(a, b);
-        //     !a.neighbors && (a.neighbors = []);
-        //     !b.neighbors && (b.neighbors = []);
-        //     a.neighbors.push(b);
-        //     b.neighbors.push(a);
-        //
-        //     !a.links && (a.links = []);
-        //     !b.links && (b.links = []);
-        //     a.links.push(link);
-        //     b.links.push(link);
-        // });
         // Remove duplicated links
         for (var i = 0; i < gData.links.length; i++) {
             for (var j = i + 1; j < gData.links.length; j++) {
@@ -882,17 +866,22 @@
             }
         }
         // Update neighbors of each node in gData
+        console.log("Update neighbors of each node in gData");
         gData.links.forEach(function (link) {
+            console.log(link);
             for (var i = 0; i < gData.nodes.length; i++) {
-                if (gData.nodes[i].id === link.source.id) {
-                    gData.nodes[i].neighbors.push(link.target.id);
+                if (gData.nodes[i].id === link.source) {
+                    console.log("Update neighbor of node " + gData.nodes[i].id + " with node " + link.target);
+                    gData.nodes[i].neighbors.push(link.target);
                 }
-                if (gData.nodes[i].id === link.target.id) {
-                    gData.nodes[i].neighbors.push(link.source.id);
+                if (gData.nodes[i].id === link.target) {
+                    console.log("Update neighbor of node " + gData.nodes[i].id + " with node " + link.source);
+                    gData.nodes[i].neighbors.push(link.source);
                 }
             }
 
         });
+        console.log(gData);
     }
 
     const width = document.getElementById('3d-graph').offsetWidth;
@@ -984,7 +973,7 @@
                 document.getElementById("predefined-topology").style.display = "none";
                 const newNode = {id: gData.nodes.length, ip: "127.0.0.1", port: "4500" + gData.nodes.length.toString(), role: 'trainer', start: false};
                 newNode.neighbors = [node];
-                node.neighbors.push(newNode);
+                node.neighbors.push(newNode.id);
                 // Update the graph
                 gData.nodes.push(newNode);
                 gData.links.push({source: newNode, target: node});
@@ -1061,15 +1050,14 @@
                 selectedNodes.delete(node);
             }
             if (selectedNodes.size === 2) {
+                console.log("Two nodes selected");
                 // Activate custom topology
                 document.getElementById("custom-topology-btn").checked = true;
                 document.getElementById("predefined-topology").style.display = "none";
                 const [a, b] = selectedNodes;
                 const link = {source: a, target: b};
-                a.neighbors.push(b);
-                b.neighbors.push(a);
-                a.links.push(link);
-                b.links.push(link);
+                a.neighbors.push(b.id);
+                b.neighbors.push(a.id);
                 gData.links.push(link);
                 selectedNodes.clear();
             }
