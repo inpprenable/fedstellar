@@ -233,14 +233,14 @@ class Controller:
         os.system(command)
 
     @staticmethod
-    def killdockers(self):
-        if self.docker:
+    def killdockers():
+        try:
             # kill all the docker containers
             time.sleep(1)
             command = '''docker kill $(docker ps -q) > /dev/null 2>&1'''
             os.system(command)
-        else:
-            raise ValueError("Docker is not enabled")
+        except Exception as e:
+            raise Exception("Error while killing docker containers: {}".format(e))
 
     def load_configurations_and_start_nodes(self):
         if not self.scenario_name:
