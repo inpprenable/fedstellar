@@ -81,11 +81,16 @@ class Controller:
         self.webserver_port = args.webport if hasattr(args, "webport") else 5000
         self.statistics_port = args.statsport if hasattr(args, "statsport") else 5100
         self.simulation = args.simulation
+        self.docker = args.docker if hasattr(args, 'docker') else None
         self.config_dir = args.config
         self.log_dir = args.logs
         self.env_path = args.env
         self.python_path = args.python
         self.matrix = args.matrix if hasattr(args, 'matrix') else None
+
+        # Network configuration (nodes deployment in a network)
+        self.network_subnet = args.network_subnet if hasattr(args, 'network_subnet') else None
+        self.network_gateway = args.network_gateway if hasattr(args, 'network_gateway') else None
 
         self.config = Config(entity="controller")
         self.topologymanager = None
@@ -116,6 +121,7 @@ class Controller:
 
         # Save the configuration in environment variables
         logging.info("Saving configuration in environment variables...")
+        os.environ["FEDSTELLAR_ROOT"] = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         os.environ["FEDSTELLAR_LOGS_DIR"] = self.log_dir
         os.environ["FEDSTELLAR_CONFIG_DIR"] = self.config_dir
         os.environ["FEDSTELLAR_PYTHON_PATH"] = self.python_path
@@ -226,6 +232,16 @@ class Controller:
 
         os.system(command)
 
+    @staticmethod
+    def killdockers(self):
+        if self.docker:
+            # kill all the docker containers
+            time.sleep(1)
+            command = '''docker kill $(docker ps -q) > /dev/null 2>&1'''
+            os.system(command)
+        else:
+            raise ValueError("Docker is not enabled")
+
     def load_configurations_and_start_nodes(self):
         if not self.scenario_name:
             self.scenario_name = f'fedstellar_{self.federation}_{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}'
@@ -283,11 +299,11 @@ class Controller:
         self.topologymanager.update_nodes(self.config.participants)
         self.topologymanager.draw_graph(path=f"{self.log_dir}/{self.scenario_name}/topology.png", plot=False)
 
-        # topology_json_path = f"{self.config_dir}/topology.json"
-        # self.topologymanager.update_topology_3d_json(participants=self.config.participants, path=topology_json_path)
-
         if self.simulation:
-            self.start_nodes(idx_start_node)
+            if self.docker:
+                self.start_nodes_docker(idx_start_node)
+            else:
+                self.start_nodes_cmd(idx_start_node)
         else:
             logging.info("Simulation mode is disabled, waiting for nodes to start...")
 
@@ -326,6 +342,74 @@ class Controller:
         topologymanager.add_nodes(nodes_ip_port)
         return topologymanager
 
+    def start_nodes_docker(self, idx_start_node):
+        logging.info("Starting nodes using Docker Compose...")
+        docker_compose_template = """
+        version: "3.9"
+        services:
+        {}
+        """
+        participant_template = """
+                  participant{}:
+                    image: fedstellar
+                    volumes:
+                        - {}:/fedstellar
+                    command:
+                        - /bin/bash
+                        - -c
+                        - |
+                          ifconfig && python3.8 /fedstellar/fedstellar/node_start.py {}
+                    networks:
+                        fedstellar-net:
+                            ipv4_address: {}
+                """
+        network_template = """
+        networks:
+            fedstellar-net:
+                driver: bridge
+                ipam:
+                    config:
+                        - subnet: {}
+                          gateway: {}
+        """
+
+        # Generate the Docker Compose file dynamically
+        services = ""
+        for idx in range(0, self.n_nodes):
+            if idx == idx_start_node:
+                continue
+            # path = self.config.participants[idx]
+            path = f"/fedstellar/app/config/{self.scenario_name}/participant_{idx}.json"
+            logging.info("Starting node {} with configuration {}".format(idx, path))
+            # Add one service for each participant
+            services += participant_template.format(idx,
+                                                    os.environ["FEDSTELLAR_ROOT"],
+                                                    path,
+                                                    self.config.participants[idx]['network_args']['ip'])
+        # Add the start node at the end
+        services += participant_template.format(idx_start_node,
+                                                os.environ["FEDSTELLAR_ROOT"],
+                                                f"/fedstellar/app/config/{self.scenario_name}/participant_{idx_start_node}.json",
+                                                self.config.participants[idx_start_node]['network_args']['ip'])
+        docker_compose_file = docker_compose_template.format(services)
+        docker_compose_file += network_template.format(self.network_subnet, self.network_gateway)
+        # Write the Docker Compose file in config directory
+        with open(f"{self.config_dir}/docker-compose.yml", "w") as f:
+            f.write(docker_compose_file)
+
+        # Change log and config directory in dockers to /fedstellar/app, and change controller endpoint
+        for idx in range(0, self.n_nodes):
+            self.config.participants[idx]['tracking_args']['log_dir'] = "/fedstellar/app/logs"
+            self.config.participants[idx]['tracking_args']['config_dir'] = f"/fedstellar/app/config/{self.scenario_name}"
+            self.config.participants[idx]['scenario_args']['controller'] = "host.docker.internal:5000"
+
+            # Write the config file in config directory
+            with open(f"{self.config_dir}/participant_{idx}.json", "w") as f:
+                json.dump(self.config.participants[idx], f, indent=4)
+
+        # Start the Docker Compose file
+        subprocess.check_call(["docker-compose", "-f", f"{self.config_dir}/docker-compose.yml", "up", "-d"])
+
     def start_node(self, idx):
         command = f'cd {os.path.dirname(os.path.realpath(__file__))}; {self.python_path} -u node_start.py {str(self.config.participants_path[idx])} 2>&1'
         print("Starting node {} with command: {}".format(idx, command))
@@ -343,7 +427,7 @@ class Controller:
         else:
             raise ValueError("Unknown operating system")
 
-    def start_nodes(self, idx_start_node):
+    def start_nodes_cmd(self, idx_start_node):
         # Start the nodes
         # Get directory path of the current file
         for idx in range(0, self.n_nodes):

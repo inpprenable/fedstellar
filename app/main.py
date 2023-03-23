@@ -21,6 +21,8 @@ argparser.add_argument('-wp', '--webport', dest='webport', default=5000,
 argparser.add_argument('-sp', '--statsport', dest='statsport', default=5100,
                        help='Statistics port (default: 5100)')
 argparser.add_argument('-s', '--simulation', action='store_false', dest='simulation', help='Run simulation')
+argparser.add_argument('-d', '--docker', dest='docker', action='store_true', default=False,
+                       help='Run framework in docker (default: False)')
 argparser.add_argument('-c', '--config', dest='config', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config'),
                        help='Config directory path')
 argparser.add_argument('-l', '--logs', dest='logs', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'),

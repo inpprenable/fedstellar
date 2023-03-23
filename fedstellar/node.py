@@ -956,8 +956,11 @@ class Node(BaseNode):
         cpu_percent = psutil.cpu_percent()
         # Gather CPU temperature information
         cpu_temp = 0
-        if sys.platform == "linux":
-            cpu_temp = psutil.sensors_temperatures()['coretemp'][0].current
+        try:
+            if sys.platform == "linux":
+                cpu_temp = psutil.sensors_temperatures()['coretemp'][0].current
+        except Exception as e:
+            logging.error(f'Error getting CPU temperature: {e}')
         # Gather RAM usage information
         ram_percent = psutil.virtual_memory().percent
         # Gather disk usage information

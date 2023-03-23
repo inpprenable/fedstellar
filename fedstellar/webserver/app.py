@@ -515,6 +515,7 @@ def stop_scenario(scenario_name=None):
     for node in nodes:
         # Kill the node
         Controller.killport(node[3])
+        Controller.killdockers()
 
     scenario_set_all_status_to_finished()
     Controller.remove_config_files()
@@ -613,9 +614,12 @@ def fedstellar_scenario_deployment_run():
                 "federation": data["federation"],
                 "topology": data["topology"],
                 "simulation": data["simulation"],
+                "docker": data["docker"],
                 "env": None,
                 "webserver": True,
                 "python": app.config['python_path'],
+                "network_subnet": data["network_subnet"],
+                "network_gateway": data["network_gateway"],
             }
             # Save args in a file
             scenario_path = os.path.join(app.config['config_dir'], scenario_name)
