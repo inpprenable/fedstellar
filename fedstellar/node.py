@@ -515,7 +515,7 @@ class Node(BaseNode):
             logging.warning("[NODE.__train_step] Role not implemented yet")
 
         # Gossip aggregated model
-        #if self.round is not None:
+        # if self.round is not None:
         #    self.__gossip_model_difusion()
 
         # Finish round
@@ -918,30 +918,6 @@ class Node(BaseNode):
             logging.error(f'Error received from controller: {response.status_code}')
             logging.error(response.text)
 
-    # def __report_logs_to_controller(self):
-    #     """
-    #     Report node logs to the controller.
-    #
-    #     Returns:
-    #
-    #     """
-    #
-    #     # Set the URL for the POST request
-    #     url = f'http://{self.config.participant["scenario_args"]["controller"]}/scenario/{self.config.participant["scenario_args"]["name"]}/node/{self.config.participant["device_args"]["uid"]}/update/logs'
-    #
-    #     # Send the POST request if the controller is available
-    #     try:
-    #         with open(self.log_filename + ".log", 'r') as f:
-    #             response = requests.post(url, data=f, headers={'Content-Type': 'text/plain'})
-    #     except requests.exceptions.ConnectionError:
-    #         logging.error(f'Error connecting to the controller at {url}')
-    #         return
-    #
-    #     # If endpoint is not available, log the error
-    #     if response.status_code != 200:
-    #         logging.error(f'Error received from controller: {response.status_code}')
-    #         logging.error(response.text)
-
     def __report_resources(self):
         """
         Report node resources to the controller.
@@ -965,8 +941,6 @@ class Node(BaseNode):
         ram_percent = psutil.virtual_memory().percent
         # Gather disk usage information
         disk_percent = psutil.disk_usage("/").percent
-        logging.info(f'Resources: CPU {cpu_percent}%, CPU temp {cpu_temp}C, RAM {ram_percent}%, Disk {disk_percent}%')
-        self.learner.logger.log_metrics({"Resources/CPU_percent": cpu_percent, "Resources/CPU_temp": cpu_temp, "Resources/RAM_percent": ram_percent, "Resources/Disk_percent": disk_percent}, step=step)
 
         # Gather network usage information
         net_io_counters = psutil.net_io_counters()
@@ -975,11 +949,14 @@ class Node(BaseNode):
         packets_sent = net_io_counters.packets_sent
         packets_recv = net_io_counters.packets_recv
 
-        logging.info(f'Resources: Bytes sent {bytes_sent}, Bytes recv {bytes_recv}, Packets sent {packets_sent}, Packets recv {packets_recv}')
-        self.learner.logger.log_metrics({"Resources/Bytes_sent": bytes_sent, "Resources/Bytes_recv": bytes_recv, "Resources/Packets_sent": packets_sent, "Resources/Packets_recv": packets_recv}, step=step)
-
         # Log uptime information
         uptime = psutil.boot_time()
+
+        # Logging and reporting
+        logging.info(f'Resources: CPU {cpu_percent}%, CPU temp {cpu_temp}C, RAM {ram_percent}%, Disk {disk_percent}%')
+        self.learner.logger.log_metrics({"Resources/CPU_percent": cpu_percent, "Resources/CPU_temp": cpu_temp, "Resources/RAM_percent": ram_percent, "Resources/Disk_percent": disk_percent}, step=step)
+        logging.info(f'Resources: Bytes sent {bytes_sent}, Bytes recv {bytes_recv}, Packets sent {packets_sent}, Packets recv {packets_recv}')
+        self.learner.logger.log_metrics({"Resources/Bytes_sent": bytes_sent, "Resources/Bytes_recv": bytes_recv, "Resources/Packets_sent": packets_sent, "Resources/Packets_recv": packets_recv}, step=step)
         logging.info(f'Resources: Uptime {uptime}')
         self.learner.logger.log_metrics({"Resources/Uptime": uptime}, step=step)
 

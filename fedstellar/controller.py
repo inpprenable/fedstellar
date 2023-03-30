@@ -406,9 +406,13 @@ class Controller:
             # Write the config file in config directory
             with open(f"{self.config_dir}/participant_{idx}.json", "w") as f:
                 json.dump(self.config.participants[idx], f, indent=4)
-
-        # Start the Docker Compose file
-        subprocess.check_call(["docker-compose", "-f", f"{self.config_dir}/docker-compose.yml", "up", "-d"])
+        # Start the Docker Compose file, catch error if any
+        try:
+            subprocess.check_call(["docker-compose", "-f", f"{self.config_dir}/docker-compose.yml", "up", "-d"])
+        except subprocess.CalledProcessError as e:
+            logging.error("Docker Compose failed to start, please check if Docker is running and Docker Compose is installed.")
+            logging.error(e)
+            raise e
 
     def start_node(self, idx):
         command = f'cd {os.path.dirname(os.path.realpath(__file__))}; {self.python_path} -u node_start.py {str(self.config.participants_path[idx])} 2>&1'

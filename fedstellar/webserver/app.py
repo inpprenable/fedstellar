@@ -658,12 +658,16 @@ def fedstellar_scenario_deployment_run():
 
             # Create a argparse object
             import argparse
+            import subprocess
             args = argparse.Namespace(**args)
             controller = Controller(args)  # Generate an instance of controller in this new process
-            controller.load_configurations_and_start_nodes()
+            try:
+                controller.load_configurations_and_start_nodes()
+            except subprocess.CalledProcessError as e:
+                print("Error docker-compose up:", e)
+                return redirect(url_for("fedstellar_scenario_deployment"))
             # Generate/Update the scenario in the database
             scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=data["scenario_title"], description=data["scenario_description"])
-
             return redirect(url_for("fedstellar_scenario"))
         else:
             return abort(401)
