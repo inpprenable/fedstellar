@@ -667,7 +667,7 @@ def fedstellar_scenario_deployment_run():
                 print("Error docker-compose up:", e)
                 return redirect(url_for("fedstellar_scenario_deployment"))
             # Generate/Update the scenario in the database
-            scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=data["scenario_title"], description=data["scenario_description"])
+            scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=data["scenario_title"], description=data["scenario_description"], network_subnet=data["network_subnet"])
             return redirect(url_for("fedstellar_scenario"))
         else:
             return abort(401)

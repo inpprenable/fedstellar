@@ -52,6 +52,7 @@ def signal_handler(sig, frame):
     logging.info('Finishing all scenarios and nodes...')
     Controller.killports("tensorboa")
     Controller.killports("python")
+    Controller.killdockers()
     if sys.platform == "darwin":
         os.system("""osascript -e 'tell application "Terminal" to quit'""")
     elif sys.platform == "linux":
@@ -235,9 +236,13 @@ class Controller:
     @staticmethod
     def killdockers():
         try:
-            # kill all the docker containers
+            # kill all the docker containers which contain the word "fedstellar"
+            command = '''docker kill $(docker ps -q --filter ancestor=fedstellar) > /dev/null 2>&1'''
             time.sleep(1)
-            command = '''docker kill $(docker ps -q) > /dev/null 2>&1'''
+            os.system(command)
+            # remove all docker networks which contain the word "fedstellar"
+            command = '''docker network rm $(docker network ls | grep fedstellar | awk '{print $1}') > /dev/null 2>&1'''
+            time.sleep(1)
             os.system(command)
         except Exception as e:
             raise Exception("Error while killing docker containers: {}".format(e))
