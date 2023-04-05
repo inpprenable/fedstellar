@@ -423,14 +423,19 @@ class Controller:
         for idx in range(0, self.n_nodes):
             self.config.participants[idx]['tracking_args']['log_dir'] = "/fedstellar/app/logs"
             self.config.participants[idx]['tracking_args']['config_dir'] = f"/fedstellar/app/config/{self.scenario_name}"
-            self.config.participants[idx]['scenario_args']['controller'] = "host.docker.internal:5000"
+            if sys.platform == "linux":
+                self.config.participants[idx]['scenario_args']['controller'] = self.network_gateway + ":" + str(self.webserver_port)
+            elif sys.platform == "darwin":
+                self.config.participants[idx]['scenario_args']['controller'] = "host.docker.internal" + ":" + str(self.webserver_port)
+            else:
+                raise ValueError("Windows is not supported yet for Docker Compose.")
 
             # Write the config file in config directory
             with open(f"{self.config_dir}/participant_{idx}.json", "w") as f:
                 json.dump(self.config.participants[idx], f, indent=4)
         # Start the Docker Compose file, catch error if any
         try:
-            subprocess.check_call(["docker-compose", "-f", f"{self.config_dir}/docker-compose.yml", "up", "-d"])
+            subprocess.check_call(["docker", "compose", "-f", f"{self.config_dir}/docker-compose.yml", "up", "-d"])
         except subprocess.CalledProcessError as e:
             logging.error("Docker Compose failed to start, please check if Docker is running and Docker Compose is installed.")
             logging.error(e)
@@ -478,5 +483,5 @@ class Controller:
     @classmethod
     def remove_files_by_scenario(cls, scenario_name):
         import shutil
-        shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_CONFIG_DIR"], scenario_name))
-        shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_LOGS_DIR"], scenario_name))
+        shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_CONFIG_DIR"], scenario_name), ignore_errors=True)
+        shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_LOGS_DIR"], scenario_name), ignore_errors=True)

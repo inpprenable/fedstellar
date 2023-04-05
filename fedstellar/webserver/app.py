@@ -620,6 +620,7 @@ def fedstellar_scenario_deployment_run():
                 "python": app.config['python_path'],
                 "network_subnet": data["network_subnet"],
                 "network_gateway": data["network_gateway"],
+                "webserver_port": request.host.split(":")[1],
             }
             # Save args in a file
             scenario_path = os.path.join(app.config['config_dir'], scenario_name)
