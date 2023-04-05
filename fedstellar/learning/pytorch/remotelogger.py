@@ -24,18 +24,13 @@ import torch.nn as nn
 from lightning_utilities.core.imports import RequirementCache
 from torch import Tensor
 
-from lightning_lite.utilities.types import _PATH
-from pytorch_lightning.callbacks import Checkpoint
-from pytorch_lightning.loggers.logger import Logger, rank_zero_experiment
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from pytorch_lightning.utilities.logger import (
-    _add_prefix,
-    _convert_params,
-    _flatten_dict,
-    _sanitize_callable_params,
-    _scan_checkpoints,
-)
-from pytorch_lightning.utilities.rank_zero import rank_zero_only, rank_zero_warn
+from lightning.fabric.utilities.logger import _add_prefix, _convert_params, _flatten_dict, _sanitize_callable_params
+from lightning.fabric.utilities.types import _PATH
+from lightning.pytorch.callbacks.model_checkpoint import ModelCheckpoint
+from lightning.pytorch.loggers.logger import Logger, rank_zero_experiment
+from lightning.pytorch.loggers.utilities import _scan_checkpoints
+from lightning.pytorch.utilities.exceptions import MisconfigurationException
+from lightning.pytorch.utilities.rank_zero import rank_zero_only, rank_zero_warn
 
 try:
     import wandb
@@ -331,7 +326,7 @@ class FedstellarWBLogger(Logger):
         self._prefix = prefix
         self._experiment = experiment
         self._logged_model_time: Dict[str, float] = {}
-        self._checkpoint_callback: Optional[Checkpoint] = None
+        self._checkpoint_callback: Optional[ModelCheckpoint] = None
 
         # paths are processed as strings
         if save_dir is not None:
@@ -520,7 +515,7 @@ class FedstellarWBLogger(Logger):
         # don't create an experiment if we don't have one
         return self._experiment.id if self._experiment else self._id
 
-    def after_save_checkpoint(self, checkpoint_callback: Checkpoint) -> None:
+    def after_save_checkpoint(self, checkpoint_callback: ModelCheckpoint) -> None:
         # log checkpoints as artifacts
         if (
             self._log_model == "all"
@@ -581,7 +576,7 @@ class FedstellarWBLogger(Logger):
         if self._checkpoint_callback and self._experiment is not None:
             self._scan_and_log_checkpoints(self._checkpoint_callback)
 
-    def _scan_and_log_checkpoints(self, checkpoint_callback: Checkpoint) -> None:
+    def _scan_and_log_checkpoints(self, checkpoint_callback: ModelCheckpoint) -> None:
         # get checkpoints to be saved with associated score
         checkpoints = _scan_checkpoints(checkpoint_callback, self._logged_model_time)
 

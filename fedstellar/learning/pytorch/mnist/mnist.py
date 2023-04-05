@@ -8,7 +8,7 @@ from math import floor
 
 # To Avoid Crashes with a lot of nodes
 import torch.multiprocessing
-from pytorch_lightning import LightningDataModule
+from lightning import LightningDataModule
 from torch.utils.data import DataLoader, Subset, random_split
 from torchvision import transforms
 from torchvision.datasets import MNIST

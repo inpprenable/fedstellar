@@ -12,7 +12,7 @@ from collections import defaultdict
 # To Avoid Crashes with a lot of nodes
 import torch.multiprocessing
 from PIL import Image
-from pytorch_lightning import LightningDataModule
+from lightning import LightningDataModule
 from torch.utils.data import DataLoader, Subset, random_split, Dataset
 from torchvision.datasets import MNIST, utils
 from torchvision import transforms

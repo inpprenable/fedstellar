@@ -9,8 +9,8 @@ import time
 from collections import OrderedDict
 
 import torch
-from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks import ModelSummary, TQDMProgressBar
+from lightning import Trainer
+from lightning.pytorch.callbacks import ModelSummary, TQDMProgressBar
 
 from fedstellar.learning.exceptions import DecodingParamsError, ModelNotMatchingError
 from fedstellar.learning.learner import NodeLearner
@@ -40,8 +40,7 @@ class LightningLearner(NodeLearner):
         self.logger = logger
         self.__trainer = None
         self.epochs = 1
-        # To avoid GPU/TPU printings
-        logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
+        logging.getLogger("lightning.pytorch").setLevel(logging.WARNING)
 
         # FL information
         self.round = 0
@@ -155,7 +154,7 @@ class LightningLearner(NodeLearner):
             callbacks=[ModelSummary(max_depth=1), TQDMProgressBar(refresh_rate=200)],
             max_epochs=self.epochs,
             accelerator=self.config.participant["device_args"]["accelerator"],
-            devices=self.config.participant["device_args"]["devices"] if self.config.participant["device_args"]["accelerator"] != "cpu" else None,
+            devices="auto",
             # strategy=self.config.participant["device_args"]["strategy"] if self.config.participant["device_args"]["accelerator"] != "auto" else None,
             logger=self.logger,
             log_every_n_steps=20,

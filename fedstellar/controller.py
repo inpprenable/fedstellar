@@ -364,6 +364,22 @@ class Controller:
                         - -c
                         - |
                           ifconfig && python3.8 /fedstellar/fedstellar/node_start.py {}
+                    depends_on:
+                        - participant{}
+                    networks:
+                        fedstellar-net:
+                            ipv4_address: {}
+                """
+        participant_template_start = """
+                  participant{}:
+                    image: fedstellar
+                    volumes:
+                        - {}:/fedstellar
+                    command:
+                        - /bin/bash
+                        - -c
+                        - |
+                          /bin/sleep 5 && ifconfig && python3.8 /fedstellar/fedstellar/node_start.py {}
                     networks:
                         fedstellar-net:
                             ipv4_address: {}
@@ -390,9 +406,10 @@ class Controller:
             services += participant_template.format(idx,
                                                     os.environ["FEDSTELLAR_ROOT"],
                                                     path,
+                                                    idx_start_node,
                                                     self.config.participants[idx]['network_args']['ip'])
         # Add the start node at the end
-        services += participant_template.format(idx_start_node,
+        services += participant_template_start.format(idx_start_node,
                                                 os.environ["FEDSTELLAR_ROOT"],
                                                 f"/fedstellar/app/config/{self.scenario_name}/participant_{idx_start_node}.json",
                                                 self.config.participants[idx_start_node]['network_args']['ip'])

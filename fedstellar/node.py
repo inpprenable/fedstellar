@@ -24,7 +24,7 @@ import random
 import threading
 import time
 
-from pytorch_lightning.loggers import WandbLogger, CSVLogger
+from lightning.pytorch.loggers import WandbLogger, CSVLogger
 
 from fedstellar.base_node import BaseNode
 from fedstellar.communication_protocol import CommunicationProtocol
@@ -936,7 +936,8 @@ class Node(BaseNode):
             if sys.platform == "linux":
                 cpu_temp = psutil.sensors_temperatures()['coretemp'][0].current
         except Exception as e:
-            logging.error(f'Error getting CPU temperature: {e}')
+            pass
+            # logging.error(f'Error getting CPU temperature: {e}')
         # Gather RAM usage information
         ram_percent = psutil.virtual_memory().percent
         # Gather disk usage information
@@ -953,11 +954,11 @@ class Node(BaseNode):
         uptime = psutil.boot_time()
 
         # Logging and reporting
-        logging.info(f'Resources: CPU {cpu_percent}%, CPU temp {cpu_temp}C, RAM {ram_percent}%, Disk {disk_percent}%')
+        # logging.info(f'Resources: CPU {cpu_percent}%, CPU temp {cpu_temp}C, RAM {ram_percent}%, Disk {disk_percent}%')
         self.learner.logger.log_metrics({"Resources/CPU_percent": cpu_percent, "Resources/CPU_temp": cpu_temp, "Resources/RAM_percent": ram_percent, "Resources/Disk_percent": disk_percent}, step=step)
-        logging.info(f'Resources: Bytes sent {bytes_sent}, Bytes recv {bytes_recv}, Packets sent {packets_sent}, Packets recv {packets_recv}')
+        # logging.info(f'Resources: Bytes sent {bytes_sent}, Bytes recv {bytes_recv}, Packets sent {packets_sent}, Packets recv {packets_recv}')
         self.learner.logger.log_metrics({"Resources/Bytes_sent": bytes_sent, "Resources/Bytes_recv": bytes_recv, "Resources/Packets_sent": packets_sent, "Resources/Packets_recv": packets_recv}, step=step)
-        logging.info(f'Resources: Uptime {uptime}')
+        # logging.info(f'Resources: Uptime {uptime}')
         self.learner.logger.log_metrics({"Resources/Uptime": uptime}, step=step)
 
         # Check if pynvml is available
@@ -971,10 +972,11 @@ class Node(BaseNode):
                 gpu_temp = pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
                 gpu_mem = pynvml.nvmlDeviceGetMemoryInfo(handle)
                 gpu_mem_percent = gpu_mem.used / gpu_mem.total * 100
-                logging.info(f'Resources: GPU-{i} {gpu_percent}%, GPU temp {gpu_temp}C, GPU mem {gpu_mem_percent}%')
+                # logging.info(f'Resources: GPU-{i} {gpu_percent}%, GPU temp {gpu_temp}C, GPU mem {gpu_mem_percent}%')
                 self.learner.logger.log_metrics({f"Resources/GPU{i}_percent": gpu_percent, f"Resources/GPU{i}_temp": gpu_temp, f"Resources/GPU{i}_mem_percent": gpu_mem_percent}, step=step)
         except ModuleNotFoundError:
-            logging.info(f'pynvml not found, skipping GPU usage')
+            pass
+            # logging.info(f'pynvml not found, skipping GPU usage')
 
     def __store_model_parameters(self, obj):
         """

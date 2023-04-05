@@ -1,9 +1,10 @@
-import pytorch_lightning as pl
+from typing import List, Dict
+import lightning as pl
 import torch
-from pytorch_lightning.utilities.types import EPOCH_OUTPUT
 from torch.nn import functional as F
 from torchmetrics import Accuracy
 
+EPOCH_OUTPUT = List[Dict[str, torch.Tensor]]
 
 ###############################
 #    Multilayer Perceptron    #
@@ -56,11 +57,6 @@ class MLP(pl.LightningModule):
         loss = F.cross_entropy(self(x), y)
         self.log("Train/Loss", loss, prog_bar=True)
         return loss
-
-    def training_epoch_end(self, outputs: EPOCH_OUTPUT) -> None:
-        """ """
-        loss = torch.stack([x["loss"] for x in outputs]).mean()
-        self.log("TrainEnd/Loss", loss, prog_bar=True)
 
     def validation_step(self, batch, batch_idx):
         """ """
