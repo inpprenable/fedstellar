@@ -22,3 +22,4 @@ sphinx-autoapi==2.0.0
 tensorboard==2.11.2
 psutil==5.9.4
 wandb==0.13.9
+rich==13.3.4
