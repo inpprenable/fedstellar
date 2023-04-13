@@ -13,7 +13,7 @@ class CNN(pl.LightningModule):
 
     def __init__(
             self,
-            in_channels=1,
+            in_channels=28,
             out_channels=62,
             metric=Accuracy(num_classes=62, task="multiclass"),
             lr_rate=0.001,
