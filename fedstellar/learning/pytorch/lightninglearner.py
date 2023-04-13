@@ -163,7 +163,7 @@ class LightningLearner(NodeLearner):
                 processing_speed="grey82",
                 metrics="grey82",
             ),
-            leave=False,
+            leave=True,
         )
         self.__trainer = Trainer(
             callbacks=[RichModelSummary(max_depth=1), progress_bar],
