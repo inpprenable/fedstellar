@@ -10,7 +10,9 @@ from collections import OrderedDict
 
 import torch
 from lightning import Trainer
-from lightning.pytorch.callbacks import ModelSummary, TQDMProgressBar
+from lightning.pytorch.callbacks import ModelSummary
+from lightning.pytorch.callbacks import RichProgressBar, RichModelSummary
+from lightning.pytorch.callbacks.progress.rich_progress import RichProgressBarTheme
 
 from fedstellar.learning.exceptions import DecodingParamsError, ModelNotMatchingError
 from fedstellar.learning.learner import NodeLearner
@@ -150,8 +152,21 @@ class LightningLearner(NodeLearner):
 
     def create_trainer(self):
         logging.info("[Learner] Creating trainer with accelerator: {}".format(self.config.participant["device_args"]["accelerator"]))
+        progress_bar = RichProgressBar(
+            theme=RichProgressBarTheme(
+                description="green_yellow",
+                progress_bar="green1",
+                progress_bar_finished="green1",
+                progress_bar_pulse="#6206E0",
+                batch_progress="green_yellow",
+                time="grey82",
+                processing_speed="grey82",
+                metrics="grey82",
+            ),
+            leave=False,
+        )
         self.__trainer = Trainer(
-            callbacks=[ModelSummary(max_depth=1), TQDMProgressBar(refresh_rate=200)],
+            callbacks=[RichModelSummary(max_depth=1), progress_bar],
             max_epochs=self.epochs,
             accelerator=self.config.participant["device_args"]["accelerator"],
             devices="auto",
