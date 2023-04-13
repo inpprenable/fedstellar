@@ -3,23 +3,19 @@ import torch
 from torch import nn
 from torchmetrics import Accuracy
 
-###############################
-#    Multilayer Perceptron    #
-###############################
-
 IMAGE_SIZE = 28
 
 
 class CNN(pl.LightningModule):
     """
-    Convolutional Neural Network (CNN) to solve MNIST with PyTorch Lightning.
+    Convolutional Neural Network (CNN) to solve FEMNIST
     """
 
     def __init__(
             self,
             in_channels=1,
             out_channels=62,
-            metric=Accuracy(num_classes=10, task="multiclass"),
+            metric=Accuracy(num_classes=62, task="multiclass"),
             lr_rate=0.001,
             momentum=0,
             seed=None,
@@ -44,7 +40,7 @@ class CNN(pl.LightningModule):
 
     def forward(self, x):
         """ """
-        x = x.reshape(-1, 1, 28, 28)
+        x = x.view(-1, 1, IMAGE_SIZE, IMAGE_SIZE)
         x = self.pool(self.relu(self.conv1(x)))
         x = self.pool(self.relu(self.conv2(x)))
         x = x.flatten(1)
@@ -59,7 +55,7 @@ class CNN(pl.LightningModule):
         """ """
         x, y = batch
         loss = self.loss_fn(self(x), y)
-        self.log("train_loss", loss, prog_bar=True)
+        self.log("Train/Loss", loss, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -69,8 +65,8 @@ class CNN(pl.LightningModule):
         loss = self.loss_fn(self(x), y)
         out = torch.argmax(logits, dim=1)
         metric = self.metric(out, y)
-        self.log("val_loss", loss, prog_bar=True)
-        self.log("val_accuracy", metric, prog_bar=True)
+        self.log("Validation/Loss", loss, prog_bar=True)
+        self.log("Validation/Accuracy", metric, prog_bar=True)
         return loss
 
     def test_step(self, batch, batch_idx):
@@ -80,6 +76,6 @@ class CNN(pl.LightningModule):
         loss = self.loss_fn(self(x), y)
         out = torch.argmax(logits, dim=1)
         metric = self.metric(out, y)
-        self.log("test_loss", loss, prog_bar=True)
-        self.log("test_metric", metric, prog_bar=True)
+        self.log("Test/Loss", loss, prog_bar=True)
+        self.log("Test/Accuracy", metric, prog_bar=True)
         return loss

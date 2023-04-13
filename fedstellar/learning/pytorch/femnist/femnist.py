@@ -39,6 +39,8 @@ class FEMNIST(MNIST):
                 self.dataset_download()
             else:
                 raise RuntimeError('Dataset not found, set parameter download=True to download')
+        else:
+            print('FEMNIST dataset already downloaded')
 
         if self.train:
             data_file = self.training_file
@@ -64,7 +66,8 @@ class FEMNIST(MNIST):
             if not os.path.exists(path):
                 os.makedirs(path)
 
-        # download files
+        # download files only if they do not exist
+        print('Downloading FEMNIST dataset...')
         filename = self.download_link.split('/')[-1]
         utils.download_and_extract_archive(self.download_link, download_root=f'{self.root}/FEMNIST/raw/', filename=filename, md5=self.file_md5)
 
@@ -91,6 +94,8 @@ class FEMNISTDataModule(LightningDataModule):
     The FEMNIST dataset is naturally non-iid
 
     IMPORTANT: The data is generated using ./preprocess.sh -s niid --sf 0.05 -k 0 -t sample (small-sized dataset)
+
+    Details: 62 different classes (10 digits, 26 lowercase, 26 uppercase), images are 28 by 28 pixels (with option to make them all 128 by 128 pixels), 3500 users
 
     Args:
 
@@ -131,7 +136,7 @@ class FEMNISTDataModule(LightningDataModule):
         self.test = FEMNIST(sub_id=self.sub_id, number_sub=self.number_sub, root_dir=root_dir, train=False, transform=transform_data, target_transform=None, download=True)
 
         if len(self.test) < self.number_sub:
-            raise ("Too much partitions")
+            raise ValueError("Too many partitions")
 
         # Training / validation set
         trainset = self.train
@@ -153,7 +158,6 @@ class FEMNISTDataModule(LightningDataModule):
         te_subset = Subset(
             testset, range(self.sub_id * rows_by_sub, (self.sub_id + 1) * rows_by_sub)
         )
-
 
         # DataLoaders
         self.train_loader = DataLoader(
