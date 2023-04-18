@@ -543,39 +543,39 @@ class Node(BaseNode):
         # Set Models To Aggregate
         self.aggregator.set_nodes_to_aggregate(self.__train_set)
         logging.info("[NODE.__connect_and_set_aggregator] Aggregator set to: {}".format(self.__train_set))
-        for node in self.__train_set:
-            if node != self.get_name():
-                h, p = node.split(":")
-                if p.isdigit():
-                    nc = self.get_neighbor(h, int(p))
-                    # If the node is not connected, connect it (to avoid duplicated connections only a node connects to the other)
-                    if nc is None and self.get_name() > node:
-                        self.connect_to(h, int(p), force=True)
-                else:
-                    logging.info(
-                        "[NODE] Node {} has an invalid port".format(
-                            node.split(":")
-                        )
-                    )
-
-        # Wait connections
-        count = 0
-        begin = time.time()
-        while True:
-            count = count + (time.time() - begin)
-            if count > self.config.participant["TRAIN_SET_CONNECT_TIMEOUT"]:
-                logging.info("[NODE] Timeout for train set connections.")
-                break
-            if (len(self.__train_set) == len(
-                    [
-                        nc
-                        for nc in self.get_neighbors()
-                        if nc.get_name() in self.__train_set
-                    ]
-            ) + 1
-            ):
-                break
-            time.sleep(0.1)
+        # for node in self.__train_set:
+        #     if node != self.get_name():
+        #         h, p = node.split(":")
+        #         if p.isdigit():
+        #             nc = self.get_neighbor(h, int(p))
+        #             # If the node is not connected, connect it (to avoid duplicated connections only a node connects to the other)
+        #             if nc is None and self.get_name() > node:
+        #                 self.connect_to(h, int(p), force=True)
+        #         else:
+        #             logging.info(
+        #                 "[NODE] Node {} has an invalid port".format(
+        #                     node.split(":")
+        #                 )
+        #             )
+        #
+        # # Wait connections
+        # count = 0
+        # begin = time.time()
+        # while True:
+        #     count = count + (time.time() - begin)
+        #     if count > self.config.participant["TRAIN_SET_CONNECT_TIMEOUT"]:
+        #         logging.info("[NODE] Timeout for train set connections.")
+        #         break
+        #     if (len(self.__train_set) == len(
+        #             [
+        #                 nc
+        #                 for nc in self.get_neighbors()
+        #                 if nc.get_name() in self.__train_set
+        #             ]
+        #     ) + 1
+        #     ):
+        #         break
+        #     time.sleep(0.1)
 
     ############################
     #    Train and Evaluate    #
@@ -591,7 +591,7 @@ class Node(BaseNode):
         results = self.learner.evaluate()
         if results is not None:
             logging.info(
-                "[NODE] Evaluated. Losss: {}, Metric: {}".format(
+                "[NODE] Evaluated. Loss: {}, Metric: {}".format(
                     results[0], results[1]
                 )
             )
