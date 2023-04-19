@@ -1,6 +1,7 @@
 from typing import List, Dict
 import lightning as pl
 import torch
+import torchmetrics
 from torch.nn import functional as F
 from torchmetrics import Accuracy
 
@@ -26,6 +27,7 @@ class MLP(pl.LightningModule):
             torch.cuda.manual_seed_all(seed)
 
         super().__init__()
+        self.example_input_array = torch.zeros(1, 1, 28, 28)
         self.lr_rate = lr_rate
         self.metric = metric(num_classes=10, task="multiclass")
 

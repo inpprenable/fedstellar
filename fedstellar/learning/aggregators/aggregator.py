@@ -66,9 +66,8 @@ class Aggregator(threading.Thread, Observable):
         )
         if n_model_aggregated != len(self.__train_set):
             logging.info(
-                "[Aggregator] __models={} | __train_set={} || Missing models: {}".format(
-                    self.__models, self.__train_set, set(self.__train_set) - set(self.__models.keys())
-                )
+                "[Aggregator] __train_set={} || Missing models: {}".format(self.__train_set, set(self.__train_set) - set(self.__models.keys())
+                                                                           )
             )
         else:
             logging.info("[Aggregator] Aggregating models.")

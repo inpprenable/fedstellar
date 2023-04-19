@@ -173,7 +173,7 @@ class FedstellarLogger(Logger):
         else:
             input_array = model._on_before_batch_transfer(input_array)
             input_array = model._apply_batch_transfer_handler(input_array)
-            with pl.core.module._jit_is_scripting():
+            with pl.pytorch.core.module._jit_is_scripting():
                 self.experiment.add_graph(model, input_array)
 
     @rank_zero_only
