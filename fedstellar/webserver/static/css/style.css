@@ -63,6 +63,11 @@ td {
     vertical-align: middle !important;
 }
 
+td .td-icons {
+    min-width: 200px;
+}
+
+
 .fa {
     padding: 3px;
 }
