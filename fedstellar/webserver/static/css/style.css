@@ -1,18 +1,18 @@
 @media (min-width: 1200px) {
     .container {
-        width: 80%;
+        width: 90%;
     }
 }
 
 @media (min-width: 992px) {
     .container {
-        width: 80%;
+        width: 90%;
     }
 }
 
 @media (min-width: 768px) {
     .container {
-        width: 80%;
+        width: 90%;
     }
 }
 
@@ -63,8 +63,20 @@ td {
     vertical-align: middle !important;
 }
 
-td .td-icons {
-    min-width: 200px;
+.truncate-text {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.tooltip-inner {
+    max-width: 500px !important;
+}
+
+.td-icons {
+    min-width: 200px !important;
 }
 
 

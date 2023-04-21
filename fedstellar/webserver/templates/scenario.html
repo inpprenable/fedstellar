@@ -68,8 +68,8 @@
             <td id="name">{{ name }}</td>
             <td id="start_time">{{ start_time }}</td>
             <td id="end_time">{{ end_time }}</td>
-            <td id="title">{{ title }}</td>
-            <td id="description">{{ description }}</td>
+            <td id="title" class="truncate-text" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{{ title }}">{{ title }}</td>
+            <td id="description" class="truncate-text" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{{ description }}">{{ description }}</td>
             <td id="network_subnet">{{ network_subnet }}</td>
             {% if status == "running" %}
             <td id="status"><span class="label label-success">Running</span></td>
@@ -95,6 +95,9 @@
 {% endif %}
 
 <script>
+    $(function () {
+      $('[data-toggle="tooltip"]').tooltip();
+    });
     // When clicking on reload-btn (there are many in the document), show a modal to confirm the action
     $(document).on('click', '#reload-btn', function () {
         var scenario_name = $(this).data('scenario-name');
