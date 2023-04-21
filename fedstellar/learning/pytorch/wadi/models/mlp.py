@@ -1,10 +1,9 @@
-from typing import List, Dict
 import lightning as pl
 import torch
 from torch.nn import functional as F
-from torchmetrics.classification import MulticlassAccuracy, MulticlassRecall, MulticlassPrecision, MulticlassF1Score, MulticlassConfusionMatrix
+from torch import nn
+from torchmetrics.classification import BinaryConfusionMatrix, BinaryAccuracy, BinaryF1Score, BinaryPrecision, BinaryRecall
 
-EPOCH_OUTPUT = List[Dict[str, torch.Tensor]]
 
 ###############################
 #    Multilayer Perceptron    #
@@ -13,15 +12,15 @@ EPOCH_OUTPUT = List[Dict[str, torch.Tensor]]
 
 class MLP(pl.LightningModule):
     """
-    Multilayer Perceptron (MLP) to solve MNIST with PyTorch Lightning.
+    Multilayer Perceptron (MLP) to solve WADI with PyTorch Lightning.
     """
 
     def __init__(
             self,
-            metric=[MulticlassAccuracy, MulticlassPrecision, MulticlassRecall, MulticlassF1Score, MulticlassConfusionMatrix],
-            out_channels=10,
-            lr_rate=0.001,
-            seed=None
+            metric=[BinaryAccuracy, BinaryPrecision, BinaryRecall, BinaryF1Score, BinaryConfusionMatrix],
+            out_channels=1, 
+            lr_rate=0.001, 
+            seed=1000
     ):  # low lr to avoid overfitting
 
         # Set seed for reproducibility iniciialization
@@ -30,10 +29,18 @@ class MLP(pl.LightningModule):
             torch.cuda.manual_seed_all(seed)
 
         super().__init__()
+        self.example_input_array = torch.zeros(1, 123)
         self.lr_rate = lr_rate
-        self.l1 = torch.nn.Linear(28 * 28, 256)
-        self.l2 = torch.nn.Linear(256, 128)
-        self.l3 = torch.nn.Linear(128, out_channels)
+
+        self.l1 = torch.nn.Linear(123, 1024)
+        self.l2 = torch.nn.Linear(1024, 512)
+        self.l3 = torch.nn.Linear(512, 256)
+        self.l4 = torch.nn.Linear(256, 128)
+        self.l5 = torch.nn.Linear(128, 64)
+        self.l6 = torch.nn.Linear(64, 32)
+        self.l7 = torch.nn.Linear(32, 16)
+        self.l8 = torch.nn.Linear(16, 8)
+        self.l9 = torch.nn.Linear(8, out_channels)
 
         self.training_step_outputs = []
         self.training_step_real = []
@@ -46,28 +53,40 @@ class MLP(pl.LightningModule):
         self.metric=[]
         if type(metric) is list:
             for m in metric:
-                self.metric.append(m(num_classes=10))
+                self.metric.append(m())
         else:
-            self.metric = metric(num_classes=10)
+            self.metric = metric()
 
     def forward(self, x):
         """ """
-        batch_size, channels, width, height = x.size()
+        batch_size, features = x.size()
 
         # (b, 1, 28, 28) -> (b, 1*28*28)
-        x = x.view(batch_size, -1)
+        #x = x.view(batch_size, -1)
         x = self.l1(x)
         x = torch.relu(x)
         x = self.l2(x)
         x = torch.relu(x)
         x = self.l3(x)
-        x = torch.log_softmax(x, dim=1)
+        x = torch.relu(x)
+        x = self.l4(x)
+        x = torch.relu(x)
+        x = self.l5(x)
+        x = torch.relu(x)
+        x = self.l6(x)
+        x = torch.relu(x)
+        x = self.l7(x)
+        x = torch.relu(x)
+        x = self.l8(x)
+        x = torch.relu(x)
+        x = self.l9(x)
+        x = torch.sigmoid(x)
         return x
 
     def configure_optimizers(self):
         """ """
         return torch.optim.Adam(self.parameters(), lr=self.lr_rate)
-    
+
     def log_metrics(self, phase, y_pred, y, print_cm = True):
         if type(self.metric) is list:
             for m in self.metric:
@@ -84,16 +103,36 @@ class MLP(pl.LightningModule):
     def training_step(self, batch, batch_id):
         """ """
         x, y = batch
-        logits = self(x)
-        loss = F.cross_entropy(logits, y)
-        out = torch.argmax(logits, dim=1)
+        out = self(x)
         self.training_step_outputs.append(out)
-        self.training_step_real.append(y)
-        
+        self.training_step_real.append(y.unsqueeze(1).float())
+        loss = F.binary_cross_entropy(out, y.unsqueeze(1).float())
         self.log("Train/Loss", loss, prog_bar=True)
         self.log_metrics("Train", out, y, print_cm=False)
-        
         return loss
+
+    def validation_step(self, batch, batch_idx):
+        """ """
+        x, y = batch
+        out = self(x)
+        self.validation_step_outputs.append(out)
+        self.validation_step_real.append(y.unsqueeze(1).float())
+        loss = F.binary_cross_entropy(out, y.unsqueeze(1).float())
+        self.log("Validation/Loss", loss, prog_bar=True)
+        self.log_metrics("Validation", out, y, print_cm=False)
+        return loss
+
+    def test_step(self, batch, batch_idx):
+        """ """
+        x, y = batch
+        out = self(x)
+        self.test_step_outputs.append(out)
+        self.test_step_real.append(y.unsqueeze(1).float())
+        loss = F.binary_cross_entropy(out, y.unsqueeze(1).float())
+        self.log("Test/Loss", loss, prog_bar=True)
+        self.log_metrics("Test", out, y, print_cm=False)
+        return loss
+
 
     def on_train_epoch_end(self):
         out = torch.cat(self.training_step_outputs)
@@ -103,18 +142,6 @@ class MLP(pl.LightningModule):
         self.training_step_outputs.clear()  # free memory
         self.training_step_real.clear()
 
-    def validation_step(self, batch, batch_idx):
-        """ """
-        x, y = batch
-        logits = self(x)
-        loss = F.cross_entropy(logits, y)
-        out = torch.argmax(logits, dim=1)
-        self.validation_step_outputs.append(out)
-        self.validation_step_real.append(y)
-        self.log("Validation/Loss", loss, prog_bar=True)
-        self.log_metrics("Validation", out, y, print_cm=False)
-        return loss
-    
     def on_validation_epoch_end(self):
         out = torch.cat(self.validation_step_outputs)
         y = torch.cat(self.validation_step_real)
@@ -122,19 +149,7 @@ class MLP(pl.LightningModule):
 
         self.validation_step_outputs.clear()  # free memory
         self.validation_step_real.clear()
-
-    def test_step(self, batch, batch_idx):
-        """ """
-        x, y = batch
-        logits = self(x)
-        loss = F.cross_entropy(logits, y)
-        out = torch.argmax(logits, dim=1)
-        self.test_step_outputs.append(out)
-        self.test_step_real.append(y)
-        self.log("Test/Loss", loss, prog_bar=True)
-        self.log_metrics("Test", out, y, print_cm=False)
-        return loss
-
+    
     def on_test_epoch_end(self):
         out = torch.cat(self.test_step_outputs)
         y = torch.cat(self.test_step_real)
