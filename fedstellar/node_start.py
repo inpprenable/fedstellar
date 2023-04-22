@@ -23,7 +23,7 @@ def main():
 
     n_nodes = config.participant["scenario_args"]["n_nodes"]
     experiment_name = config.participant["scenario_args"]["name"]
-    model = config.participant["model_args"]["model"]
+    model_name = config.participant["model_args"]["model"]
     idx = config.participant["device_args"]["idx"]
     hostdemo = config.participant["network_args"]["ipdemo"]
     host = config.participant["network_args"]["ip"]
@@ -37,19 +37,20 @@ def main():
 
 
     dataset = config.participant["data_args"]["dataset"]
+    model = None
     if dataset == "MNIST":
         dataset = MNISTDataModule(sub_id=idx, number_sub=n_nodes, iid=True)
-        if model == "MLP":
+        if model_name == "MLP":
             model = MLP()
-        elif model == "CNN":
+        elif model_name == "CNN":
             model = CNN_mnist()
         else:
             raise ValueError(f"Model {model} not supported")
     elif dataset == "FEMNIST":
         dataset = FEMNISTDataModule(sub_id=idx, number_sub=n_nodes, root_dir=f"{sys.path[0]}/data")
-        if model == "MLP":
+        if model_name == "MLP":
             model = MLP()
-        elif model == "CNN":
+        elif model_name == "CNN":
             model = CNN_femnist()
         else:
             raise ValueError(f"Model {model} not supported")

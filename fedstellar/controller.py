@@ -424,7 +424,7 @@ class Controller:
             self.config.participants[idx]['tracking_args']['log_dir'] = "/fedstellar/app/logs"
             self.config.participants[idx]['tracking_args']['config_dir'] = f"/fedstellar/app/config/{self.scenario_name}"
             if sys.platform == "linux":
-                self.config.participants[idx]['scenario_args']['controller'] = self.network_gateway + ":" + str(self.webserver_port)
+                self.config.participants[idx]['scenario_args']['controller'] = "host.docker.internal" + ":" + str(self.webserver_port)
             elif sys.platform == "darwin":
                 self.config.participants[idx]['scenario_args']['controller'] = "host.docker.internal" + ":" + str(self.webserver_port)
             else:
