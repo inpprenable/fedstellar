@@ -6,6 +6,7 @@ from torchmetrics.classification import MulticlassAccuracy, MulticlassRecall, Mu
 
 EPOCH_OUTPUT = List[Dict[str, torch.Tensor]]
 
+
 ###############################
 #    Multilayer Perceptron    #
 ###############################
@@ -18,13 +19,24 @@ class MLP(pl.LightningModule):
 
     def __init__(
             self,
-            metric=[MulticlassAccuracy, MulticlassPrecision, MulticlassRecall, MulticlassF1Score, MulticlassConfusionMatrix],
+            metrics=None,
             out_channels=10,
             lr_rate=0.001,
             seed=None
     ):  # low lr to avoid overfitting
 
-        # Set seed for reproducibility iniciialization
+        if metrics is None:
+            metrics = [MulticlassAccuracy, MulticlassPrecision, MulticlassRecall, MulticlassF1Score, MulticlassConfusionMatrix]
+
+        self.metrics = []
+        if type(metrics) is list:
+            try:
+                for m in metrics:
+                    self.metrics.append(m(num_classes=10))
+            except TypeError:
+                raise TypeError("metrics must be a list of torchmetrics.Metric")
+
+        # Set seed for reproducibility initialization
         if seed is not None:
             torch.manual_seed(seed)
             torch.cuda.manual_seed_all(seed)
@@ -35,20 +47,11 @@ class MLP(pl.LightningModule):
         self.l2 = torch.nn.Linear(256, 128)
         self.l3 = torch.nn.Linear(128, out_channels)
 
-        self.training_step_outputs = []
-        self.training_step_real = []
+        self.epoch_num_steps = {"Train": 0, "Validation": 0, "Test": 0}
+        self.epoch_loss_sum = {"Train": 0.0, "Validation": 0.0, "Test": 0.0}
 
-        self.validation_step_outputs = []
-        self.validation_step_real = []
-
-        self.test_step_outputs = []
-        self.test_step_real = []
-        self.metric=[]
-        if type(metric) is list:
-            for m in metric:
-                self.metric.append(m(num_classes=10))
-        else:
-            self.metric = metric(num_classes=10)
+        self.epoch_output = {"Train": [], "Validation": [], "Test": []}
+        self.epoch_real = {"Train": [], "Validation": [], "Test": []}
 
     def forward(self, x):
         """ """
@@ -67,78 +70,96 @@ class MLP(pl.LightningModule):
     def configure_optimizers(self):
         """ """
         return torch.optim.Adam(self.parameters(), lr=self.lr_rate)
-    
-    def log_metrics(self, phase, y_pred, y, print_cm = True):
-        if type(self.metric) is list:
-            for m in self.metric:
-                if (isinstance(m, MulticlassConfusionMatrix)):
-                    if print_cm:
-                        print(phase+"/CM\n", m(y_pred, y))
-                    else:
-                        pass
-                else:
-                    self.log(phase+"/"+m.__class__.__name__.replace("Multiclass", ""), m(y_pred, y))
-        else:
-            self.log(phase+"/"+self.metric.__class__.__name__.replace("Multiclass", ""), self.metric(y_pred, y))
+
+    def log_epoch_metrics_and_loss(self, phase, print_cm=True):
+        # Log loss
+        epoch_loss = self.epoch_loss_sum[phase] / self.epoch_num_steps[phase]
+        self.log(f"{phase}Epoch/Loss", epoch_loss, prog_bar=True, logger=True)
+        self.epoch_loss_sum[phase] = 0.0
+
+        # Log metrics
+        for metric in self.metrics:
+            if isinstance(metric, MulticlassConfusionMatrix):
+                print(f"{phase}Epoch/CM\n", metric(torch.cat(self.epoch_output[phase]), torch.cat(self.epoch_real[phase]))) if print_cm else None
+            else:
+                metric_name = metric.__class__.__name__.replace("Multiclass", "")
+                metric_value = metric(torch.cat(self.epoch_output[phase]), torch.cat(self.epoch_real[phase])).detach()
+                self.log(f"{phase}Epoch/{metric_name}", metric_value, prog_bar=True, logger=True)
+
+            metric.reset()
+
+        self.epoch_output[phase].clear()
+        self.epoch_real[phase].clear()
+
+        # Reset step count
+        self.epoch_num_steps[phase] = 0
+
+    def log_metrics(self, phase, y_pred, y, print_cm=False):
+        self.epoch_output[phase].append(y_pred.detach())
+        self.epoch_real[phase].append(y.detach())
+
+        for metric in self.metrics:
+            if isinstance(metric, MulticlassConfusionMatrix):
+                print(f"{phase}/CM\n", metric(y_pred, y)) if print_cm else None
+            else:
+                metric_name = metric.__class__.__name__.replace("Multiclass", "")
+                metric_value = metric(y_pred, y)
+                self.log(f"{phase}/{metric_name}", metric_value, prog_bar=True, logger=True)
+
+    def step(self, batch, phase):
+        x, y = batch
+        logits = self(x)
+        loss = F.cross_entropy(logits, y)
+        y_pred = torch.argmax(logits, dim=1)
+
+        # Get metrics for each batch and log them
+        self.log(f"{phase}/Loss", loss, prog_bar=True)
+        self.log_metrics(phase, y_pred, y, print_cm=False)
+
+        # Avoid memory leak when logging loss values
+        self.epoch_loss_sum[phase] += loss
+        self.epoch_num_steps[phase] += 1
+
+        return loss
 
     def training_step(self, batch, batch_id):
-        """ """
-        x, y = batch
-        logits = self(x)
-        loss = F.cross_entropy(logits, y)
-        out = torch.argmax(logits, dim=1)
-        self.training_step_outputs.append(out)
-        self.training_step_real.append(y)
-        
-        self.log("Train/Loss", loss, prog_bar=True)
-        self.log_metrics("Train", out, y, print_cm=False)
-        
-        return loss
+        """
+        Training step for the model.
+        Args:
+            batch:
+            batch_id:
+
+        Returns:
+        """
+        return self.step(batch, "Train")
 
     def on_train_epoch_end(self):
-        out = torch.cat(self.training_step_outputs)
-        y = torch.cat(self.training_step_real)
-        self.log_metrics("TrainEpoch", out, y, print_cm=True)
-
-        self.training_step_outputs.clear()  # free memory
-        self.training_step_real.clear()
+        self.log_epoch_metrics_and_loss("Train")
 
     def validation_step(self, batch, batch_idx):
-        """ """
-        x, y = batch
-        logits = self(x)
-        loss = F.cross_entropy(logits, y)
-        out = torch.argmax(logits, dim=1)
-        self.validation_step_outputs.append(out)
-        self.validation_step_real.append(y)
-        self.log("Validation/Loss", loss, prog_bar=True)
-        self.log_metrics("Validation", out, y, print_cm=False)
-        return loss
-    
-    def on_validation_epoch_end(self):
-        out = torch.cat(self.validation_step_outputs)
-        y = torch.cat(self.validation_step_real)
-        self.log_metrics("ValidationEpoch", out, y, print_cm=True)
+        """
+        Validation step for the model.
+        Args:
+            batch:
+            batch_idx:
 
-        self.validation_step_outputs.clear()  # free memory
-        self.validation_step_real.clear()
+        Returns:
+        """
+        return self.step(batch, "Validation")
+
+    def on_validation_epoch_end(self):
+        self.log_epoch_metrics_and_loss("Validation")
 
     def test_step(self, batch, batch_idx):
-        """ """
-        x, y = batch
-        logits = self(x)
-        loss = F.cross_entropy(logits, y)
-        out = torch.argmax(logits, dim=1)
-        self.test_step_outputs.append(out)
-        self.test_step_real.append(y)
-        self.log("Test/Loss", loss, prog_bar=True)
-        self.log_metrics("Test", out, y, print_cm=False)
-        return loss
+        """
+        Test step for the model.
+        Args:
+            batch:
+            batch_idx:
+
+        Returns:
+        """
+        return self.step(batch, "Test")
 
     def on_test_epoch_end(self):
-        out = torch.cat(self.test_step_outputs)
-        y = torch.cat(self.test_step_real)
-        self.log_metrics("TestEpoch", out, y, print_cm=True)
-
-        self.test_step_outputs.clear()  # free memory
-        self.test_step_real.clear()
+        self.log_epoch_metrics_and_loss("Test")

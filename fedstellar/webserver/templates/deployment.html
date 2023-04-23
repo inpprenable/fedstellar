@@ -563,6 +563,8 @@
 
 <script>
     // If the user clicks on docker-radio, show the docker options. Otherwise, hide them
+    document.getElementById("docker-options").style.display = "block";
+
     document.getElementById("docker-radio").addEventListener("click", function () {
         document.getElementById("docker-options").style.display = "block";
         updateGraph();
