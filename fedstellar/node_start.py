@@ -48,9 +48,7 @@ def main():
             raise ValueError(f"Model {model} not supported")
     elif dataset == "FEMNIST":
         dataset = FEMNISTDataModule(sub_id=idx, number_sub=n_nodes, root_dir=f"{sys.path[0]}/data")
-        if model_name == "MLP":
-            model = MLP()
-        elif model_name == "CNN":
+        if model_name == "CNN":
             model = CNN_femnist()
         else:
             raise ValueError(f"Model {model} not supported")

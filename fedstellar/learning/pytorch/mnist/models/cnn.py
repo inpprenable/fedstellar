@@ -41,6 +41,7 @@ class CNN(pl.LightningModule):
             torch.cuda.manual_seed_all(seed)
 
         super().__init__()
+        self.example_input_array = torch.zeros(1, 1, 28, 28)
         self.lr_rate = lr_rate
         self.conv1 = nn.Conv2d(
             in_channels=in_channels, out_channels=32, kernel_size=(5, 5), padding="same"
@@ -55,6 +56,8 @@ class CNN(pl.LightningModule):
         self.l2 = nn.Linear(2048, out_channels)
 
         self.loss_fn = nn.CrossEntropyLoss()
+
+        self.epoch_global_number = {"Train": 0, "Validation": 0, "Test": 0}
 
         self.epoch_num_steps = {"Train": 0, "Validation": 0, "Test": 0}
         self.epoch_loss_sum = {"Train": 0.0, "Validation": 0.0, "Test": 0.0}
@@ -80,7 +83,7 @@ class CNN(pl.LightningModule):
         """ """
         return torch.optim.Adam(self.parameters(), lr=self.lr_rate)
 
-    def log_epoch_metrics_and_loss(self, phase, print_cm=True):
+    def log_epoch_metrics_and_loss(self, phase, print_cm=True, plot_cm=True):
         # Log loss
         epoch_loss = self.epoch_loss_sum[phase] / self.epoch_num_steps[phase]
         self.log(f"{phase}Epoch/Loss", epoch_loss, prog_bar=True, logger=True)
@@ -89,7 +92,22 @@ class CNN(pl.LightningModule):
         # Log metrics
         for metric in self.metrics:
             if isinstance(metric, MulticlassConfusionMatrix):
-                print(f"{phase}Epoch/CM\n", metric(torch.cat(self.epoch_output[phase]), torch.cat(self.epoch_real[phase]))) if print_cm else None
+                cm = metric(torch.cat(self.epoch_output[phase]), torch.cat(self.epoch_real[phase]))
+                print(f"{phase}Epoch/CM\n", cm) if print_cm else None
+                if plot_cm:
+                    import seaborn as sns
+                    import matplotlib.pyplot as plt
+                    plt.figure(figsize=(10, 7))
+                    ax = sns.heatmap(cm.numpy(), annot=True, fmt="d", cmap="Blues")
+                    ax.set_xlabel("Predicted labels")
+                    ax.set_ylabel("True labels")
+                    ax.set_title("Confusion Matrix")
+                    ax.set_xticks(range(10))
+                    ax.set_yticks(range(10))
+                    ax.xaxis.set_ticklabels([i for i in range(10)])
+                    ax.yaxis.set_ticklabels([i for i in range(10)])
+                    self.logger.experiment.add_figure(f"{phase}Epoch/CM", ax.get_figure(), global_step=self.epoch_global_number[phase])
+                    plt.close()
             else:
                 metric_name = metric.__class__.__name__.replace("Multiclass", "")
                 metric_value = metric(torch.cat(self.epoch_output[phase]), torch.cat(self.epoch_real[phase])).detach()
@@ -102,6 +120,9 @@ class CNN(pl.LightningModule):
 
         # Reset step count
         self.epoch_num_steps[phase] = 0
+
+        # Increment epoch number
+        self.epoch_global_number[phase] += 1
 
     def log_metrics(self, phase, y_pred, y, print_cm=False):
         self.epoch_output[phase].append(y_pred.detach())

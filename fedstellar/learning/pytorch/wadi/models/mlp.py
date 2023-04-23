@@ -29,7 +29,7 @@ class MLP(pl.LightningModule):
         if type(metrics) is list:
             try:
                 for m in metrics:
-                    self.metrics.append(m(num_classes=10))
+                    self.metrics.append(m(num_classes=2))
             except TypeError:
                 raise TypeError("metrics must be a list of torchmetrics.Metric")
 
@@ -51,6 +51,8 @@ class MLP(pl.LightningModule):
         self.l7 = torch.nn.Linear(32, 16)
         self.l8 = torch.nn.Linear(16, 8)
         self.l9 = torch.nn.Linear(8, out_channels)
+
+        self.epoch_global_number = {"Train": 0, "Validation": 0, "Test": 0}
 
         self.epoch_num_steps = {"Train": 0, "Validation": 0, "Test": 0}
         self.epoch_loss_sum = {"Train": 0.0, "Validation": 0.0, "Test": 0.0}
@@ -88,7 +90,7 @@ class MLP(pl.LightningModule):
         """ """
         return torch.optim.Adam(self.parameters(), lr=self.lr_rate)
 
-    def log_epoch_metrics_and_loss(self, phase, print_cm=True):
+    def log_epoch_metrics_and_loss(self, phase, print_cm=True, plot_cm=True):
         # Log loss
         epoch_loss = self.epoch_loss_sum[phase] / self.epoch_num_steps[phase]
         self.log(f"{phase}Epoch/Loss", epoch_loss, prog_bar=True, logger=True)
@@ -97,7 +99,22 @@ class MLP(pl.LightningModule):
         # Log metrics
         for metric in self.metrics:
             if isinstance(metric, BinaryConfusionMatrix):
-                print(f"{phase}Epoch/CM\n", metric(torch.cat(self.epoch_output[phase]), torch.cat(self.epoch_real[phase]))) if print_cm else None
+                cm = metric(torch.cat(self.epoch_output[phase]), torch.cat(self.epoch_real[phase]))
+                print(f"{phase}Epoch/CM\n", cm) if print_cm else None
+                if plot_cm:
+                    import seaborn as sns
+                    import matplotlib.pyplot as plt
+                    plt.figure(figsize=(10, 7))
+                    ax = sns.heatmap(cm.numpy(), annot=True, fmt="d", cmap="Blues")
+                    ax.set_xlabel("Predicted labels")
+                    ax.set_ylabel("True labels")
+                    ax.set_title("Confusion Matrix")
+                    ax.set_xticks([0.5, 1.5])
+                    ax.set_yticks([0.5, 1.5])
+                    ax.xaxis.set_ticklabels(["Normal", "Attack"])
+                    ax.yaxis.set_ticklabels(["Normal", "Attack"])
+                    self.logger.experiment.add_figure(f"{phase}Epoch/CM", ax.get_figure(), global_step=self.epoch_global_number[phase])
+                    plt.close()
             else:
                 metric_name = metric.__class__.__name__.replace("Binary", "")
                 metric_value = metric(torch.cat(self.epoch_output[phase]), torch.cat(self.epoch_real[phase])).detach()
@@ -110,6 +127,9 @@ class MLP(pl.LightningModule):
 
         # Reset step count
         self.epoch_num_steps[phase] = 0
+
+        # Increment epoch number
+        self.epoch_global_number[phase] += 1
 
     def log_metrics(self, phase, y_pred, y, print_cm=False):
         self.epoch_output[phase].append(y_pred.detach())
