@@ -128,8 +128,8 @@
             </div>
             <div class="form-group">
                 <h5 class="step-title">Distance between participants</h5>
-                <input type="range" class="form-range" id="rangeInput" min="0" max="1000" value="20" style="width: 75%; display: inline">
-                <input type="number" class="form-control" id="rangeValue" min="0" max="1000" value="20" style="display:inline; width: 20%">
+                <input type="range" class="form-range" id="distanceInput" min="0" max="1000" value="50" style="width: 75%; display: inline">
+                <input type="number" class="form-control" id="distanceValue" min="0" max="1000" value="50" style="display:inline; width: 20%">
             </div>
         </div>
         <div class="form-group row">
@@ -553,7 +553,7 @@
                 document.getElementById("spinner").style.display = "block";
                 setTimeout(function () {
                     window.location.href = "/scenario/";
-                }, 20000);
+                }, 10000);
 
             });
         }
@@ -1172,7 +1172,7 @@
                         : (node.role === "aggregator" ? '#D55E00' : undefined))))
         .linkColor(link => link.color ? 'red' : 'black')
         .linkOpacity(0.6)
-        .linkWidth(1)
+        .linkWidth(0.5)
         .graphData(gData);
 
     getNumberOfNodesAndUpdate();
@@ -1256,10 +1256,10 @@
 
 <script>
     // Change the distance between nodes in the network topology
-    // Change the value of the range input when the value of the number input is changed
+    // Change the value of the distance input when the value of the number input is changed
     const Settings = function () {
-        this.solidDistance = 20;
-        this.Distance = 20;
+        this.solidDistance = 50;
+        this.Distance = 50;
     };
     const settings = new Settings();
 
@@ -1274,20 +1274,20 @@
         Graph.numDimensions(3); // Re-heat simulation
     }
 
-    const rangeInput = document.getElementById('rangeInput');
-    const rangeValue = document.getElementById('rangeValue');
+    const distanceInput = document.getElementById('distanceInput');
+    const distanceValue = document.getElementById('distanceValue');
 
-    rangeInput.addEventListener('input', function () {
-        console.log('rangeInput');
-        rangeValue.value = rangeInput.value;
-        settings.Distance = rangeInput.value;
+    distanceInput.addEventListener('input', function () {
+        console.log('distanceInput');
+        distanceValue.value = distanceInput.value;
+        settings.Distance = distanceInput.value;
         updateLinkDistance();
     });
 
-    rangeValue.addEventListener('input', function () {
-        console.log('rangeValue');
-        rangeInput.value = rangeValue.value;
-        settings.Distance = rangeValue.value;
+    distanceValue.addEventListener('input', function () {
+        console.log('distanceValue');
+        distanceInput.value = distanceValue.value;
+        settings.Distance = distanceValue.value;
         updateLinkDistance();
     });
 </script>
