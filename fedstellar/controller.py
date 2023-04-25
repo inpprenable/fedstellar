@@ -53,14 +53,14 @@ def signal_handler(sig, frame):
     Controller.killports("tensorboa")
     Controller.killports("python")
     Controller.killdockers()
-    if sys.platform == "darwin":
-        os.system("""osascript -e 'tell application "Terminal" to quit'""")
-    elif sys.platform == "linux":
-        # Kill all python processes
-        os.system("""killall python""")
-    else:
-        os.system("""taskkill /IM cmd.exe /F""")
-        os.system("""taskkill /IM powershell.exe /F""")
+    # if sys.platform == "darwin":
+    #     os.system("""osascript -e 'tell application "Terminal" to quit'""")
+    # elif sys.platform == "linux":
+    #     # Kill all python processes
+    #     os.system("""killall python""")
+    # else:
+    #     os.system("""taskkill /IM cmd.exe /F""")
+    #     os.system("""taskkill /IM powershell.exe /F""")
     sys.exit(0)
 
 
@@ -473,15 +473,19 @@ class Controller:
         self.start_node(idx_start_node)
 
     @classmethod
-    def remove_config_files(cls):
-        # Remove all json and png files in the folder os.environ["FEDSTELLAR_CONFIG_DIR"]
-        for file in glob.glob(os.path.join(os.environ["FEDSTELLAR_CONFIG_DIR"], "*.json")):
-            os.remove(file)
-        for file in glob.glob(os.path.join(os.environ["FEDSTELLAR_CONFIG_DIR"], "*.png")):
-            os.remove(file)
-
-    @classmethod
     def remove_files_by_scenario(cls, scenario_name):
         import shutil
-        shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_CONFIG_DIR"], scenario_name), ignore_errors=True)
-        shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_LOGS_DIR"], scenario_name), ignore_errors=True)
+        shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_CONFIG_DIR"], scenario_name))
+        try:
+            shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_LOGS_DIR"], scenario_name))
+        except PermissionError:
+            # Avoid error if the user does not have enough permissions to remove the tf.events files
+            logging.warning("Not enough permissions to remove the files, moving them to tmp folder")
+            os.makedirs(os.path.join(os.environ["FEDSTELLAR_ROOT"], "app", "tmp", scenario_name), exist_ok=True)
+            shutil.move(os.path.join(os.environ["FEDSTELLAR_LOGS_DIR"], scenario_name), os.path.join(os.environ["FEDSTELLAR_ROOT"], "app", "tmp", scenario_name))
+        except FileNotFoundError:
+            logging.warning("Files not found, nothing to remove")
+        except Exception as e:
+            logging.error("Unknown error while removing files")
+            logging.error(e)
+            raise e

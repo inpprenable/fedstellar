@@ -511,14 +511,13 @@ def fedstellar_monitoring_image(scenario_name):
 
 def stop_scenario(scenario_name=None):
     from fedstellar.controller import Controller
-    nodes = list_nodes()
-    for node in nodes:
-        # Kill the node
-        Controller.killport(node[3])
-        Controller.killdockers()
+    Controller.killdockers()
+    # nodes = list_nodes()
+    # for node in nodes:
+    #     # Kill the node
+    #     Controller.killport(node[3])
 
     scenario_set_all_status_to_finished()
-    Controller.remove_config_files()
 
 
 @app.route("/scenario/<scenario_name>/stop", methods=["GET"])
