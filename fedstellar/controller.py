@@ -362,7 +362,7 @@ class Controller:
                         - /bin/bash
                         - -c
                         - |
-                          ifconfig && python3.8 /fedstellar/fedstellar/node_start.py {}
+                          ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
                     depends_on:
                         - participant{}
                     networks:
@@ -380,7 +380,7 @@ class Controller:
                         - /bin/bash
                         - -c
                         - |
-                          /bin/sleep 5 && ifconfig && python3.8 /fedstellar/fedstellar/node_start.py {}
+                          /bin/sleep 5 && ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
                     networks:
                         fedstellar-net:
                             ipv4_address: {}
@@ -406,14 +406,16 @@ class Controller:
             # Add one service for each participant
             services += participant_template.format(idx,
                                                     os.environ["FEDSTELLAR_ROOT"],
+                                                    self.network_gateway,
                                                     path,
                                                     idx_start_node,
                                                     self.config.participants[idx]['network_args']['ip'])
         # Add the start node at the end
         services += participant_template_start.format(idx_start_node,
-                                                os.environ["FEDSTELLAR_ROOT"],
-                                                f"/fedstellar/app/config/{self.scenario_name}/participant_{idx_start_node}.json",
-                                                self.config.participants[idx_start_node]['network_args']['ip'])
+                                                      os.environ["FEDSTELLAR_ROOT"],
+                                                      self.network_gateway,
+                                                      f"/fedstellar/app/config/{self.scenario_name}/participant_{idx_start_node}.json",
+                                                      self.config.participants[idx_start_node]['network_args']['ip'])
         docker_compose_file = docker_compose_template.format(services)
         docker_compose_file += network_template.format(self.network_subnet, self.network_gateway)
         # Write the Docker Compose file in config directory
