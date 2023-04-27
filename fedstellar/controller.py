@@ -356,6 +356,8 @@ class Controller:
                     image: fedstellar
                     volumes:
                         - {}:/fedstellar
+                    extra_hosts:
+                        - "host.docker.internal:host-gateway"
                     command:
                         - /bin/bash
                         - -c
@@ -372,6 +374,8 @@ class Controller:
                     image: fedstellar
                     volumes:
                         - {}:/fedstellar
+                    extra_hosts:
+                        - "host.docker.internal:host-gateway"
                     command:
                         - /bin/bash
                         - -c
