@@ -73,13 +73,13 @@ def main():
     )
 
     node.start()
-    time.sleep(1)
+    time.sleep(20)  # Wait for the participant to start and register in the network
 
-    # Node Connection
+    # Node Connection to the neighbors
     for i in neighbors:
         print(f"Connecting to {i}")
         node.connect_to(i.split(':')[0], int(i.split(':')[1]), full=False)
-        time.sleep(1)
+        time.sleep(2)
 
     logging.info(f"Neighbors: {node.get_neighbors()}")
     logging.info(f"Network nodes: {node.get_network_nodes()}")
