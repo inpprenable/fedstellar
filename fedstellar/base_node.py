@@ -62,6 +62,7 @@ class BaseNode(threading.Thread, Observer):
             self.__node_socket.bind((host, 0))  # gets a random free port
             self.port = self.__node_socket.getsockname()[1]
         else:
+            logging.info("[BASENODE] Trying to bind to {}:{}".format(host, port))
             self.__node_socket.bind((host, port))
         self.__node_socket.listen(50)  # no more than 50 connections at queue
 
@@ -355,12 +356,11 @@ class BaseNode(threading.Thread, Observer):
                 )
                 self.__nei_lock.release()
                 return None
-
         except Exception as e:
             logging.info(
                 "{} Can't connect to the node {}:{}".format(self.get_name(), h, p)
             )
-            logging.exception(e)
+            # logging.exception(e)
             try:
                 self.__nei_lock.release()
             except Exception as e:

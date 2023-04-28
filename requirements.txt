@@ -27,3 +27,4 @@ psutil==5.9.4
 wandb==0.13.9
 rich==13.3.4
 seaborn==0.12.2
+scikit-learn==1.2.2

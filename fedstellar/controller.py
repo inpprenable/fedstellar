@@ -354,6 +354,7 @@ class Controller:
         participant_template = """
                   participant{}:
                     image: fedstellar
+                    restart: always
                     volumes:
                         - {}:/fedstellar
                     extra_hosts:
@@ -372,6 +373,7 @@ class Controller:
         participant_template_start = """
                   participant{}:
                     image: fedstellar
+                    restart: always
                     volumes:
                         - {}:/fedstellar
                     extra_hosts:
@@ -380,7 +382,7 @@ class Controller:
                         - /bin/bash
                         - -c
                         - |
-                          /bin/sleep 10 && ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
+                          /bin/sleep 60 && ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
                     networks:
                         fedstellar-net:
                             ipv4_address: {}
@@ -397,25 +399,26 @@ class Controller:
 
         # Generate the Docker Compose file dynamically
         services = ""
-        for idx in range(0, self.n_nodes):
-            if idx == idx_start_node:
-                continue
-            # path = self.config.participants[idx]
+        self.config.participants.sort(key=lambda x: x['device_args']['idx'])
+        for node in self.config.participants:
+            idx = node['device_args']['idx']
             path = f"/fedstellar/app/config/{self.scenario_name}/participant_{idx}.json"
             logging.info("Starting node {} with configuration {}".format(idx, path))
+            logging.info("Node {} is listening on ip {}".format(idx, node['network_args']['ip']))
             # Add one service for each participant
-            services += participant_template.format(idx,
-                                                    os.environ["FEDSTELLAR_ROOT"],
-                                                    self.network_gateway,
-                                                    path,
-                                                    idx_start_node,
-                                                    self.config.participants[idx]['network_args']['ip'])
-        # Add the start node at the end
-        services += participant_template_start.format(idx_start_node,
-                                                      os.environ["FEDSTELLAR_ROOT"],
-                                                      self.network_gateway,
-                                                      f"/fedstellar/app/config/{self.scenario_name}/participant_{idx_start_node}.json",
-                                                      self.config.participants[idx_start_node]['network_args']['ip'])
+            if idx != idx_start_node:
+                services += participant_template.format(idx,
+                                                        os.environ["FEDSTELLAR_ROOT"],
+                                                        self.network_gateway,
+                                                        path,
+                                                        idx_start_node,
+                                                        node['network_args']['ip'])
+            else:
+                services += participant_template_start.format(idx,
+                                                              os.environ["FEDSTELLAR_ROOT"],
+                                                              self.network_gateway,
+                                                              path,
+                                                              node['network_args']['ip'])
         docker_compose_file = docker_compose_template.format(services)
         docker_compose_file += network_template.format(self.network_subnet, self.network_gateway)
         # Write the Docker Compose file in config directory
@@ -423,19 +426,19 @@ class Controller:
             f.write(docker_compose_file)
 
         # Change log and config directory in dockers to /fedstellar/app, and change controller endpoint
-        for idx in range(0, self.n_nodes):
-            self.config.participants[idx]['tracking_args']['log_dir'] = "/fedstellar/app/logs"
-            self.config.participants[idx]['tracking_args']['config_dir'] = f"/fedstellar/app/config/{self.scenario_name}"
+        for node in self.config.participants:
+            node['tracking_args']['log_dir'] = "/fedstellar/app/logs"
+            node['tracking_args']['config_dir'] = f"/fedstellar/app/config/{self.scenario_name}"
             if sys.platform == "linux":
-                self.config.participants[idx]['scenario_args']['controller'] = "host.docker.internal" + ":" + str(self.webserver_port)
+                node['scenario_args']['controller'] = "host.docker.internal" + ":" + str(self.webserver_port)
             elif sys.platform == "darwin":
-                self.config.participants[idx]['scenario_args']['controller'] = "host.docker.internal" + ":" + str(self.webserver_port)
+                node['scenario_args']['controller'] = "host.docker.internal" + ":" + str(self.webserver_port)
             else:
                 raise ValueError("Windows is not supported yet for Docker Compose.")
 
             # Write the config file in config directory
-            with open(f"{self.config_dir}/participant_{idx}.json", "w") as f:
-                json.dump(self.config.participants[idx], f, indent=4)
+            with open(f"{self.config_dir}/participant_{node['device_args']['idx']}.json", "w") as f:
+                json.dump(node, f, indent=4)
         # Start the Docker Compose file, catch error if any
         try:
             subprocess.check_call(["docker", "compose", "-f", f"{self.config_dir}/docker-compose.yml", "up", "-d"])
