@@ -647,7 +647,7 @@ def fedstellar_scenario_deployment_run():
                 participant_config['network_args']['ip'] = node_config["ip"]
                 participant_config['network_args']['ipdemo'] = node_config["ipdemo"]  # legacy code
                 participant_config['network_args']['port'] = int(node_config["port"])
-                # participant_config['device_args']['idx'] = i
+                participant_config['device_args']['idx'] = node_config["id"]
                 participant_config["device_args"]["start"] = node_config["start"]
                 participant_config["device_args"]["role"] = node_config["role"]
                 # The following parameters have to be same for all nodes (for now)

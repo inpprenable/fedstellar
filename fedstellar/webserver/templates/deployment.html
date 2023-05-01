@@ -44,53 +44,33 @@
 <form id="form-configurations">
     <div class="col-md-4">
         <div class="form-group row">
-            <h4 class="step-number">Scenario information</h4>
+            <h4 class="step-number">Scenario Information <i class="fa fa-file-text"></i></h4>
             <h5 class="step-title">Scenario title</h5>
             <input type="text" class="form-control" id="scenario-title" style="width: 75%" placeholder="Example scenario">
             <h5 class="step-title">Scenario description</h5>
             <input type="text" class="form-control" id="scenario-description" style="width: 75%" placeholder="Write a description for the scenario">
         </div>
         <div class="form-group row" id="deployment-group">
-            <h4 class="step-number">Deployment</h4>
+            <h4 class="step-number">Deployment <i class="fa fa-cloud-upload"></i></h4>
             <div style="margin-left: 10px">
-                <h4>Deployment location</h4>
+                <h4>Deployment Location</h4>
                 <p class="text-muted">Select the location for the scenario.</p>
                 <div class="form-check form-check-inline">
                     <input class="form-check-input" type="radio" name="locationRadioOptions" id="simulation-radio" value="simulation" checked>
                     <label class="form-check-label" for="simulation-radio">Simulation</label>
                 </div>
                 <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="locationRadioOptions" id="real-radio" value="real">
+                    <input class="form-check-input" type="radio" name="locationRadioOptions" id="real-radio" value="real" disabled>
                     <label class="form-check-label" for="real-radio">Real devices</label>
                 </div>
                 <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="locationRadioOptions" id="datacenter-radio" value="datacenter">
+                    <input class="form-check-input" type="radio" name="locationRadioOptions" id="datacenter-radio" value="datacenter" disabled>
                     <label class="form-check-label" for="datacenter-radio">Datacenter (computer server)</label>
-                </div>
-            </div>
-            <div style="margin-left: 10px">
-                <h4>Deployment options</h4>
-                <p class="text-muted">Select the deployment options for the scenario.</p>
-                <h5 class="step-title">Accelerator definition</h5>
-                <select class="form-control" id="resourceUsage" name="resources" style="display: inline; width: 75%">
-                    <option value="cpu" selected>CPU usage</option>
-                    <option value="gpu">GPU usage</option>
-                </select>
-            </div>
-            <div style="margin-left: 10px">
-                <h5 class="step-title">Deployment type</h5>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="typeRadioOptions" id="process-radio" value="process" disabled>
-                    <label class="form-check-label" for="process-radio">Processes</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="typeRadioOptions" id="docker-radio" value="docker" checked>
-                    <label class="form-check-label" for="docker-radio">Dockers</label>
                 </div>
             </div>
         </div>
         <div class="form-group row">
-            <h4 class="step-number">Federation architecture</h4>
+            <h4 class="step-number">Federation architecture <i class="fa fa-connectdevelop"></i></h4>
             <select class="form-control" id="federationArchitecture" name="federation" style="display: inline; width: 50%">
                 <option selected>DFL</option>
                 <option>SDFL</option>
@@ -101,7 +81,7 @@
             </small>
         </div>
         <div id="networkTopologyForm" class="form-group row">
-            <h4 class="step-number">Network topology</h4>
+            <h4 class="step-number">Network Topology <i class="fa fa-sitemap"></i></h4>
             <div class="form-check form-check-inline">
                 <input class="form-check-input" type="radio" name="inlineNetworkTopology" id="custom-topology-btn" checked>
                 <label class="form-check-label" for="custom-topology-btn">Custom topology</label>
@@ -126,21 +106,32 @@
                 <input type="number" class="form-control" id="predefined-topology-nodes" placeholder="Number of nodes" min="0" value="3" style="display: inline; width: 40%">
                 <i id="networkTopologyRandom" class="fa fa-refresh"></i>
             </div>
-            <div class="form-group">
-                <h5 class="step-title">Distance between participants</h5>
-                <input type="range" class="form-range" id="distanceInput" min="0" max="1000" value="50" style="width: 75%; display: inline">
-                <input type="number" class="form-control" id="distanceValue" min="0" max="1000" value="50" style="display:inline; width: 20%">
-            </div>
         </div>
         <div class="form-group row">
-            <h4 class="step-number">Dataset</h4>
+            <h4 class="step-number">Dataset <i class="fa fa-database"></i></h4>
             <select class="form-control" id="datasetSelect" name="dataset" style="display: inline; width: 50%">
                 <option selected>MNIST</option>
                 <option>FEMNIST</option>
+                <option>SYSCALL</option>
             </select>
             <small id="datasetHelp" class="form-text text-muted">
                 <i id="datasetHelpIcon" class="fa fa-info-circle"></i>
             </small>
+        </div>
+        <div class="form-group row">
+            <h4 class="step-number">Training <i class="fa fa-cogs"></i></h4>
+            <h5>Model</h5>
+            <select class="form-control" id="modelSelect" name="model" style="display: inline; width: 50%">
+                <option selected>MLP</option>
+                <option>CNN</option>
+            </select>
+        </div>
+        <div class="form-group row">
+            <h4 class="step-number">Aggregation <i class="fa fa-cogs"></i></h4>
+            <h5>Aggregation algorithm</h5>
+            <select class="form-control" id="aggregationSelect" name="aggregation" style="display: inline; width: 50%">
+                <option selected>FedAvg</option>
+            </select>
         </div>
     </div>
     <div id="topology-container" class="col-md-8 text-center" style="border: 2px solid black">
@@ -181,20 +172,40 @@
     <div id="extra-container" class="col-md-4"></div>
     <div id="submit-container" class="col-md-8">
         <button id="user-btn" type="button" class="btn" style="margin-top: 10px;background-color: rgba(29,113,182,0.49)" disabled>User mode</button>
-        <button id="expert-btn" type="button" class="btn" style="margin-top: 10px;background-color: rgba(172,182,29,0.49)">Expert mode</button>
+        <button id="expert-btn" type="button" class="btn" style="margin-top: 10px;background-color: rgba(172,182,29,0.49)">Advanced mode</button>
         <button id="run-btn" type="button" class="btn" style="margin-top: 10px;background-color: rgba(182,29,29,0.49);float: right">Run Fedstellar</button>
     </div>
     <div id="expert-container" class="col-md-12" style="display: none">
         <div class="form-group row">
-            <h4 class="step-number">Participants</h4>
+            <h4 class="step-number">Participants <i class="fa fa-users"></i></h4>
             <h5>Number of rounds</h5>
             <input type="number" class="form-control" id="rounds" placeholder="Number of rounds" value="10" style="display: inline; width: 20%">
             <h5>Individual participants</h5>
             <div id="participant-items"></div>
         </div>
         <div class="form-group row">
-            <h4 class="step-number">Communications</h4>
-            <div id="docker-options" style="display: none">
+            <h4 class="step-number">Advanced Deployment <i class="fa fa-cloud-upload"></i></h4>
+            <div style="margin-left: 10px">
+                <h4>Deployment Options</h4>
+                <p class="text-muted">Select the deployment options for the scenario.</p>
+                <h5 class="step-title">Accelerator definition</h5>
+                <select class="form-control" id="resourceUsage" name="resources" style="display: inline; width: 20%">
+                    <option value="cpu" selected>CPU usage</option>
+                    <option value="gpu">GPU usage</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group row">
+            <h4 class="step-number">Advanced Topology <i class="fa fa-sitemap"></i></h4>
+            <div>
+                <h5 class="step-title">Distance between participants</h5>
+                <input type="range" class="form-range" id="distanceInput" min="0" max="1000" value="50" style="width: 20%; display: inline">
+                <input type="number" class="form-control" id="distanceValue" min="0" max="1000" value="50" style="display:inline; width: 10%">
+            </div>
+        </div>
+        <div class="form-group row">
+            <h4 class="step-number">Advanced Communications <i class="fa fa-wifi"></i></h4>
+            <div id="docker-options">
                 <h5 class="step-title">Network address</h5>
                 <input type="text" class="form-control" id="network-subnet" style="width: 20%" value="192.168.50.1/24">
                 <h5 class="step-title">Network gateway</h5>
@@ -202,21 +213,12 @@
             </div>
         </div>
         <div class="form-group row">
-            <h4 class="step-number">Training</h4>
-            <h5>Model</h5>
-            <select class="form-control" id="modelSelect" name="model" style="display: inline; width: 20%">
-                <option selected>MLP</option>
-                <option>CNN</option>
-            </select>
+            <h4 class="step-number">Advanced Training <i class="fa fa-cogs"></i></h4>
             <h5>Number of Epochs</h5>
             <input type="number" class="form-control" id="epochs" placeholder="Number of Epochs" value="3" style="display: inline; width: 20%">
         </div>
         <div class="form-group row">
-            <h4 class="step-number">Aggregation</h4>
-            <h5>Aggregation algorithm</h5>
-            <select class="form-control" id="aggregationSelect" name="aggregation" style="display: inline; width: 20%">
-                <option selected>FedAvg</option>
-            </select>
+            <h4 class="step-number">Advanced Aggregation <i class="fa fa-calculator"></i></h4>
         </div>
     </div>
 </form>
@@ -251,6 +253,11 @@
         color: #fff;
         text-align: center;
         margin-right: 10px;
+    }
+
+    #expert-container .step-number::before {
+        background-color: #3333338a;
+        color: #fff;
     }
 
     .participant-started {
@@ -381,6 +388,7 @@
     contentDatasetHelp = '<ul>\n' +
         '                    <li>MNIST: The MNIST dataset</li>\n' +
         '                    <li>FEMNIST: The FEMNIST dataset</li>\n' +
+        '                    <li>SYSCALL: The SYSCALL dataset</li>\n' +
         '                </ul>'
     $('#topologyCustomIcon').popover({
         title: 'Network topology',
@@ -534,15 +542,15 @@
                     "matrix": getMatrix(Graph.graphData().nodes, Graph.graphData().links),
                     "federation": document.getElementById("federationArchitecture").value,
                     "simulation": true,
-                    "docker": document.getElementById("docker-radio").checked,
+                    "docker": true,
                     "topology": document.getElementById("predefined-topology-btn").checked ? document.getElementById("predefined-topology-select").value : "Custom",
                     "rounds": document.getElementById("rounds").value,
                     "dataset": document.getElementById("datasetSelect").value,
                     "model": document.getElementById("modelSelect").value,
                     "epochs": document.getElementById("epochs").value,
                     "accelerator": document.getElementById("resourceUsage").value,
-                    "network_subnet": document.getElementById("docker-radio").checked ? document.getElementById("network-subnet").value : "127.0.0.1",
-                    "network_gateway": document.getElementById("docker-radio").checked ? document.getElementById("network-gateway").value : "127.0.0.1"
+                    "network_subnet": document.getElementById("network-subnet").value,
+                    "network_gateway": document.getElementById("network-gateway").value
                 };
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", "/scenario/deployment/run", true);
@@ -557,21 +565,6 @@
 
             });
         }
-    });
-
-</script>
-
-<script>
-    // If the user clicks on docker-radio, show the docker options. Otherwise, hide them
-    document.getElementById("docker-options").style.display = "block";
-
-    document.getElementById("docker-radio").addEventListener("click", function () {
-        document.getElementById("docker-options").style.display = "block";
-        updateGraph();
-    });
-    document.getElementById("process-radio").addEventListener("click", function () {
-        document.getElementById("docker-options").style.display = "none";
-        updateGraph();
     });
 
 </script>
@@ -929,17 +922,7 @@
 
         });
 
-        // If process-radio is checked, all nodes have to have 127.0.0.1 as IP
-        if (document.getElementById("process-radio").checked) {
-            var nodes = gData.nodes;
-            for (var i = 0; i < nodes.length; i++) {
-                nodes[i].ip = "127.0.0.1";
-            }
-            gData.nodes = nodes;
-        }
-
-        // If docker-radio is checked, all nodes have to have the IP from the input docker-options-network-address. Each node have the IP plus 1, starting from the IP in the input plus 1
-        if (document.getElementById("docker-radio").checked) {
+        // All nodes have to have the IP from the input docker-options-network-address. Each node have the IP plus 1, starting from the IP in the input plus 1
             var nodes = gData.nodes;
             var ip = document.getElementById("network-subnet").value;
             var ip_split = ip.split("/");
@@ -949,7 +932,6 @@
                 nodes[i].ip = ip_split[0] + "." + ip_split[1] + "." + ip_split[2] + "." + (ip_last + i + 1);
             }
             gData.nodes = nodes;
-        }
 
         console.log(gData);
     }

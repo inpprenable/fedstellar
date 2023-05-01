@@ -5,13 +5,15 @@ import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))  # Parent directory where is the fedml_api module
 
+from fedstellar.learning.pytorch.mnist.mnist import MNISTDataModule
 from fedstellar.learning.pytorch.femnist.femnist import FEMNISTDataModule
+from fedstellar.learning.pytorch.syscall.syscall import SYSCALLDataModule
 
 from fedstellar.config.config import Config
-from fedstellar.learning.pytorch.mnist.mnist import MNISTDataModule
 from fedstellar.learning.pytorch.mnist.models.mlp import MLP
 from fedstellar.learning.pytorch.mnist.models.cnn import CNN as CNN_mnist
 from fedstellar.learning.pytorch.femnist.models.cnn import CNN as CNN_femnist
+from fedstellar.learning.pytorch.syscall.models.mlp import MLP as MLP_syscall
 from fedstellar.node import Node
 
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
@@ -35,7 +37,6 @@ def main():
 
     aggregation_algorithm = config.participant["aggregator_args"]["algorithm"]
 
-
     dataset = config.participant["data_args"]["dataset"]
     model = None
     if dataset == "MNIST":
@@ -50,6 +51,12 @@ def main():
         dataset = FEMNISTDataModule(sub_id=idx, number_sub=n_nodes, root_dir=f"{sys.path[0]}/data")
         if model_name == "CNN":
             model = CNN_femnist()
+        else:
+            raise ValueError(f"Model {model} not supported")
+    elif dataset == "SYSCALL":
+        dataset = SYSCALLDataModule(sub_id=idx, number_sub=n_nodes, root_dir=f"{sys.path[0]}/data")
+        if model_name == "MLP":
+            model = MLP_syscall()
         else:
             raise ValueError(f"Model {model} not supported")
     else:
