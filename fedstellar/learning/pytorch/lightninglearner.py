@@ -116,12 +116,14 @@ class LightningLearner(NodeLearner):
         try:
             if self.epochs > 0:
                 self.create_trainer()
-                results = self.__trainer.test(self.model, self.data, verbose=True)
-                loss = results[0]["Test/Loss"]
-                metric = results[0]["Test/Accuracy"]
+                self.__trainer.test(self.model, self.data, verbose=True)
                 self.__trainer = None
-                self.log_validation_metrics(loss, metric, self.round)
-                return loss, metric
+                # results = self.__trainer.test(self.model, self.data, verbose=True)
+                # loss = results[0]["Test/Loss"]
+                # metric = results[0]["Test/Accuracy"]
+                # self.__trainer = None
+                # self.log_validation_metrics(loss, metric, self.round)
+                # return loss, metric
             else:
                 return None
         except Exception as e:

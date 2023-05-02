@@ -8,25 +8,18 @@ EPOCH_OUTPUT = List[Dict[str, torch.Tensor]]
 
 
 ###############################
-#    Multilayer Perceptron    #
+#         Autoencoder         #
 ###############################
 
-
-class MLP(pl.LightningModule):
-    """
-    Multilayer Perceptron (MLP) to solve SYSCALL with PyTorch Lightning.
-    """
-
-    def __init__(
-            self,
-            metrics=None,
-            out_channels=9,
-            lr_rate=0.01,
-            seed=None
-    ):  # low lr to avoid overfitting
+class AutoencoderDNN(pl.LightningModule):
+    def __init__(self,
+                 metrics=None,
+                 input_len=17,
+                 lr_rate=0.01,
+                 seed=None):
 
         if metrics is None:
-            metrics = [MulticlassAccuracy, MulticlassPrecision, MulticlassRecall, MulticlassF1Score, MulticlassConfusionMatrix]
+            metrics = []
 
         self.metrics = []
         if type(metrics) is list:
@@ -41,15 +34,15 @@ class MLP(pl.LightningModule):
             torch.manual_seed(seed)
             torch.cuda.manual_seed_all(seed)
 
-        super().__init__()
-        self.example_input_array = torch.rand(1, 17)
+        super(AutoencoderDNN, self).__init__()
+        self.example_input_array = torch.rand(1, input_len)
         self.lr_rate = lr_rate
-        self.l1 = torch.nn.Linear(17, 256)
-        self.batchnorm1 = torch.nn.BatchNorm1d(256)
-        self.dropout = torch.nn.Dropout(0.5)
-        self.l2 = torch.nn.Linear(256, 128)
-        self.batchnorm2 = torch.nn.BatchNorm1d(128)
-        self.l3 = torch.nn.Linear(128, out_channels)
+        self.fc1 = torch.nn.Linear(input_len, 64)
+        self.fc2 = torch.nn.Linear(64, 16)
+        self.fc3 = torch.nn.Linear(16, 8)
+        self.fc4 = torch.nn.Linear(8, 16)
+        self.fc5 = torch.nn.Linear(16, 64)
+        self.fc6 = torch.nn.Linear(64, input_len)
 
         self.epoch_global_number = {"Train": 0, "Validation": 0, "Test": 0}
 
@@ -59,23 +52,26 @@ class MLP(pl.LightningModule):
         self.epoch_output = {"Train": [], "Validation": [], "Test": []}
         self.epoch_real = {"Train": [], "Validation": [], "Test": []}
 
+    def encode(self, x):
+        z = torch.relu(self.fc1(x))
+        z = torch.relu(self.fc2(z))
+        z = torch.relu(self.fc3(z))
+        return z
+
+    def decode(self, x):
+        z = torch.relu(self.fc4(x))
+        z = torch.relu(self.fc5(z))
+        z = torch.relu(self.fc6(z))
+        return z
+
     def forward(self, x):
-        """ """
-        x = self.l1(x)
-        x = self.batchnorm1(x)
-        x = torch.relu(x)
-        x = self.dropout(x)
-        x = self.l2(x)
-        x = self.batchnorm2(x)
-        x = torch.relu(x)
-        x = self.dropout(x)
-        x = self.l3(x)
-        x = torch.log_softmax(x, dim=1)
-        return x
+        z = self.encode(x)
+        z = self.decode(z)
+        return z
 
     def configure_optimizers(self):
-        """ """
-        return torch.optim.Adam(self.parameters(), lr=self.lr_rate)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr_rate)
+        return optimizer
 
     def log_epoch_metrics_and_loss(self, phase, print_cm=True, plot_cm=True):
         # Log loss
@@ -133,8 +129,9 @@ class MLP(pl.LightningModule):
     def step(self, batch, phase):
         x, y = batch
         logits = self(x)
-        loss = F.cross_entropy(logits, y)
-        y_pred = torch.argmax(logits, dim=1)
+        loss_func = torch.nn.MSELoss()
+        loss = loss_func(logits, x)
+        y_pred = logits
 
         # Get metrics for each batch and log them
         self.log(f"{phase}/Loss", loss, prog_bar=True)

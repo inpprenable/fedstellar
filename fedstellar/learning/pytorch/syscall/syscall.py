@@ -142,7 +142,7 @@ class SYSCALLDataModule(LightningDataModule):
             number_sub=1,
             batch_size=32,
             num_workers=4,
-            val_percent=0.1,
+            val_percent=0.01,
             root_dir=None,
     ):
         super().__init__()

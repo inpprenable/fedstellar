@@ -588,25 +588,26 @@ class Node(BaseNode):
 
     def __evaluate(self):
         logging.info("[NODE.__evaluate] Start evaluation...")
-        results = self.learner.evaluate()
-        if results is not None:
-            logging.info(
-                "[NODE] Evaluated. Loss: {}, Metric: {}".format(
-                    results[0], results[1]
-                )
-            )
-            logging.info("[NODE.__evaluate] Finish evaluation...")
-
-            if self.shared_metrics:
-                logging.info(
-                    "[NODE] Broadcasting metrics.".format(
-                        len(self.get_neighbors())
-                    )
-                )
-                encoded_msgs = CommunicationProtocol.build_metrics_msg(
-                    self.get_name(), self.round, results[0], results[1]
-                )
-                self.broadcast(encoded_msgs)
+        self.learner.evaluate()
+        logging.info("[NODE.__evaluate] Finish evaluation...")
+        # if results is not None:
+        #     logging.info(
+        #         "[NODE] Evaluated. Loss: {}, Metric: {}".format(
+        #             results[0], results[1]
+        #         )
+        #     )
+        #     logging.info("[NODE.__evaluate] Finish evaluation...")
+        #
+        #     if self.shared_metrics:
+        #         logging.info(
+        #             "[NODE] Broadcasting metrics.".format(
+        #                 len(self.get_neighbors())
+        #             )
+        #         )
+        #         encoded_msgs = CommunicationProtocol.build_metrics_msg(
+        #             self.get_name(), self.round, results[0], results[1]
+        #         )
+        #         self.broadcast(encoded_msgs)
 
     ######################
     #    Round finish    #
@@ -856,8 +857,9 @@ class Node(BaseNode):
             self.add_model(obj)
 
         elif event == Events.METRICS_RECEIVED_EVENT:
-            name, round, loss, metric = obj
-            self.learner.log_validation_metrics(loss, metric, round=round, name=name)
+            # name, round, loss, metric = obj
+            # self.learner.log_validation_metrics(loss, metric, round=round, name=name)
+            pass
 
         elif event == Events.TRAIN_SET_VOTE_RECEIVED_EVENT:
             node, votes = obj

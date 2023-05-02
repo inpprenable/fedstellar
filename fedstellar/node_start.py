@@ -14,6 +14,7 @@ from fedstellar.learning.pytorch.mnist.models.mlp import MLP
 from fedstellar.learning.pytorch.mnist.models.cnn import CNN as CNN_mnist
 from fedstellar.learning.pytorch.femnist.models.cnn import CNN as CNN_femnist
 from fedstellar.learning.pytorch.syscall.models.mlp import MLP as MLP_syscall
+from fedstellar.learning.pytorch.syscall.models.autoencoder import AutoencoderDNN as AutoencoderDNN_syscall
 from fedstellar.node import Node
 
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
@@ -57,6 +58,8 @@ def main():
         dataset = SYSCALLDataModule(sub_id=idx, number_sub=n_nodes, root_dir=f"{sys.path[0]}/data")
         if model_name == "MLP":
             model = MLP_syscall()
+        elif model_name == "Autoencoder":
+            model = AutoencoderDNN_syscall()
         else:
             raise ValueError(f"Model {model} not supported")
     else:
@@ -80,6 +83,7 @@ def main():
     )
 
     node.start()
+    print("Node started, grace time for network start-up (30s)")
     time.sleep(30)  # Wait for the participant to start and register in the network
 
     # Node Connection to the neighbors
