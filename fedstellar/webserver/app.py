@@ -426,6 +426,7 @@ def fedstellar_logs():
     else:
         return abort(401)
 
+
 @app.route("/logs/erase", methods=["GET"])
 def fedstellar_logs_erase():
     if "user" in session.keys():
@@ -438,6 +439,7 @@ def fedstellar_logs_erase():
         else:
             abort(404)
 
+
 @app.route("/scenario/<scenario_name>/node/<id>/infolog", methods=["GET"])
 def fedstellar_monitoring_log(scenario_name, id):
     if "user" in session.keys():
@@ -448,6 +450,7 @@ def fedstellar_monitoring_log(scenario_name, id):
             abort(404)
     else:
         make_response("You are not authorized to access this page.", 401)
+
 
 @app.route("/scenario/<scenario_name>/node/<id>/infolog/<number>", methods=["GET"])
 def fedstellar_monitoring_log_x(scenario_name, id, number):
@@ -518,6 +521,12 @@ def stop_scenario(scenario_name):
     #     Controller.killport(node[3])
 
     scenario_set_status_to_finished(scenario_name)
+
+
+def stop_all_scenarios():
+    from fedstellar.controller import Controller
+    Controller.killdockers()
+    scenario_set_all_status_to_finished()
 
 
 @app.route("/scenario/<scenario_name>/stop", methods=["GET"])
@@ -602,7 +611,7 @@ def fedstellar_scenario_deployment_run():
         # Receive a JSON data with the scenario configuration
         if request.is_json:
             # Stop the running scenario
-            stop_scenario()
+            stop_all_scenarios()
 
             data = request.get_json()
             nodes = data['nodes']
@@ -683,7 +692,7 @@ def fedstellar_scenario_deployment_run():
 def fedstellar_scenario_deployment_reload(scenario_name):
     if "user" in session.keys():
         # Stop the running scenario
-        stop_scenario()
+        stop_all_scenarios()
         # Load the scenario configuration
         scenario = get_scenario_by_name(scenario_name)
         controller_config = os.path.join(app.config['config_dir'], scenario_name, 'controller.json')
