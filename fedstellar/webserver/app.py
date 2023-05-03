@@ -18,7 +18,7 @@ from fedstellar.controller import Controller
 from flask import Flask, session, url_for, redirect, render_template, request, abort, flash, send_file, make_response, jsonify, Response
 from werkzeug.utils import secure_filename
 from fedstellar.webserver.database import list_users, verify, delete_user_from_db, add_user, scenario_update_record, scenario_set_all_status_to_finished, get_running_scenario, get_user_info, get_scenario_by_name, list_nodes_by_scenario_name, get_all_scenarios, remove_nodes_by_scenario_name, \
-    remove_scenario_by_name
+    remove_scenario_by_name, scenario_set_status_to_finished
 from fedstellar.webserver.database import read_note_from_db, write_note_into_db, delete_note_from_db, match_user_id_with_note_id
 from fedstellar.webserver.database import image_upload_record, list_images_for_user, match_user_id_with_image_uid, delete_image_from_db, get_image_file_name, update_node_record, list_nodes
 
@@ -509,7 +509,7 @@ def fedstellar_monitoring_image(scenario_name):
         make_response("You are not authorized to access this page.", 401)
 
 
-def stop_scenario(scenario_name=None):
+def stop_scenario(scenario_name):
     from fedstellar.controller import Controller
     Controller.killdockers()
     # nodes = list_nodes()
@@ -517,14 +517,14 @@ def stop_scenario(scenario_name=None):
     #     # Kill the node
     #     Controller.killport(node[3])
 
-    scenario_set_all_status_to_finished()
+    scenario_set_status_to_finished(scenario_name)
 
 
 @app.route("/scenario/<scenario_name>/stop", methods=["GET"])
 def fedstellar_stop_scenario(scenario_name):
     # Stop the scenario
     if "user" in session.keys():
-        stop_scenario()
+        stop_scenario(scenario_name)
         return redirect(url_for('fedstellar_scenario'))
     else:
         return abort(401)

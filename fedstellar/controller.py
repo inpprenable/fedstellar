@@ -359,6 +359,8 @@ class Controller:
                         - {}:/fedstellar
                     extra_hosts:
                         - "host.docker.internal:host-gateway"
+                    ipc: host
+                    privileged: true
                     command:
                         - /bin/bash
                         - -c
@@ -378,6 +380,8 @@ class Controller:
                         - {}:/fedstellar
                     extra_hosts:
                         - "host.docker.internal:host-gateway"
+                    ipc: host
+                    privileged: true
                     command:
                         - /bin/bash
                         - -c
