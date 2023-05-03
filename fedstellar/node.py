@@ -583,13 +583,17 @@ class Node(BaseNode):
 
     def __train(self):
         logging.info("[NODE.__train] Start training...")
+        print("[NODE.__train] Start training...")
         self.learner.fit()
         logging.info("[NODE.__train] Finish training...")
+        print("[NODE.__train] Finish training...")
 
     def __evaluate(self):
         logging.info("[NODE.__evaluate] Start evaluation...")
+        print("[NODE.__evaluate] Start evaluation...")
         self.learner.evaluate()
         logging.info("[NODE.__evaluate] Finish evaluation...")
+        print("[NODE.__evaluate] Finish evaluation...")
         # if results is not None:
         #     logging.info(
         #         "[NODE] Evaluated. Loss: {}, Metric: {}".format(
