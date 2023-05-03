@@ -8,6 +8,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))  # Parent directo
 from fedstellar.learning.pytorch.mnist.mnist import MNISTDataModule
 from fedstellar.learning.pytorch.femnist.femnist import FEMNISTDataModule
 from fedstellar.learning.pytorch.syscall.syscall import SYSCALLDataModule
+from fedstellar.learning.pytorch.cifar10.cifar10 import LitCIFAR10DataModule
 
 from fedstellar.config.config import Config
 from fedstellar.learning.pytorch.mnist.models.mlp import MLP
@@ -15,6 +16,8 @@ from fedstellar.learning.pytorch.mnist.models.cnn import CNN as CNN_mnist
 from fedstellar.learning.pytorch.femnist.models.cnn import CNN as CNN_femnist
 from fedstellar.learning.pytorch.syscall.models.mlp import MLP as MLP_syscall
 from fedstellar.learning.pytorch.syscall.models.autoencoder import AutoencoderDNN as AutoencoderDNN_syscall
+from fedstellar.learning.pytorch.cifar10.models.litresnet import LitCIFAR10Model
+from fedstellar.learning.pytorch.syscall.models.svm import SGDOneClassSVM as SVM_syscall
 from fedstellar.node import Node
 
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
@@ -58,8 +61,16 @@ def main():
         dataset = SYSCALLDataModule(sub_id=idx, number_sub=n_nodes, root_dir=f"{sys.path[0]}/data")
         if model_name == "MLP":
             model = MLP_syscall()
+        elif model_name == "SVM":
+            model = SVM_syscall()
         elif model_name == "Autoencoder":
             model = AutoencoderDNN_syscall()
+        else:
+            raise ValueError(f"Model {model} not supported")
+    elif dataset == "CIFAR10":
+        dataset = LitCIFAR10DataModule(sub_id=idx, number_sub=n_nodes, root_dir=f"{sys.path[0]}/data")
+        if model_name == "ResNet":
+            model = LitCIFAR10Model()
         else:
             raise ValueError(f"Model {model} not supported")
     else:
