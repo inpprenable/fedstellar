@@ -572,7 +572,10 @@ def fedstellar_scenario_statistics():
         url = re.sub(r'\d+$', '', url)
         url = url.replace(":", "")
         if url == "federatedlearning.inf.um.es":
-            url = "https://federatedlearning.inf.um.es/statistics/"
+            if request.is_secure:
+                url = "https://federatedlearning.inf.um.es/statistics/"
+            else:
+                url = "http://federatedlearning.inf.um.es/statistics/"
         else:
             url = f"http://{url}:{app.config['statistics_port']}"
         return render_template("statistics.html", endpoint_statistics=url)
