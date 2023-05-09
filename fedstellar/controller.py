@@ -353,7 +353,7 @@ class Controller:
         """
         participant_template = """
                   participant{}:
-                    image: {}
+                    image: fedstellar
                     restart: always
                     volumes:
                         - {}:/fedstellar
@@ -374,7 +374,7 @@ class Controller:
                 """
         participant_template_start = """
                   participant{}:
-                    image: {}
+                    image: fedstellar
                     restart: always
                     volumes:
                         - {}:/fedstellar
@@ -391,6 +391,60 @@ class Controller:
                         fedstellar-net:
                             ipv4_address: {}
                 """
+        participant_gpu_template = """
+                          participant{}:
+                            image: fedstellar-gpu
+                            restart: always
+                            volumes:
+                                - {}:/fedstellar
+                            extra_hosts:
+                                - "host.docker.internal:host-gateway"
+                            ipc: host
+                            privileged: true
+                            command:
+                                - /bin/bash
+                                - -c
+                                - |
+                                  ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
+                            depends_on:
+                                - participant{}
+                            deploy:
+                                resources:
+                                    reservations:
+                                        devices:
+                                            - driver: nvidia
+                                                count: all
+                                                capabilities: [gpu]
+                            networks:
+                                fedstellar-net:
+                                    ipv4_address: {}
+                        """
+        participant_gpu_template_start = """
+                          participant{}:
+                            image: fedstellar-gpu
+                            restart: always
+                            volumes:
+                                - {}:/fedstellar
+                            extra_hosts:
+                                - "host.docker.internal:host-gateway"
+                            ipc: host
+                            privileged: true
+                            command:
+                                - /bin/bash
+                                - -c
+                                - |
+                                  /bin/sleep 60 && ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
+                            deploy:
+                                resources:
+                                    reservations:
+                                        devices:
+                                            - driver: nvidia
+                                                count: all
+                                                capabilities: [gpu]
+                            networks:
+                                fedstellar-net:
+                                    ipv4_address: {}
+                        """
         network_template = """
         networks:
             fedstellar-net:
@@ -411,20 +465,33 @@ class Controller:
             logging.info("Node {} is listening on ip {}".format(idx, node['network_args']['ip']))
             # Add one service for each participant
             if idx != idx_start_node:
-                services += participant_template.format(idx,
-                                                        "fedstellar" if node['device_args']['accelerator'] == "cpu" else "fedstellar-gpu",
-                                                        os.environ["FEDSTELLAR_ROOT"],
-                                                        self.network_gateway,
-                                                        path,
-                                                        idx_start_node,
-                                                        node['network_args']['ip'])
-            else:
-                services += participant_template_start.format(idx,
-                                                              "fedstellar" if node['device_args']['accelerator'] == "cpu" else "fedstellar-gpu",
-                                                              os.environ["FEDSTELLAR_ROOT"],
-                                                              self.network_gateway,
-                                                              path,
-                                                              node['network_args']['ip'])
+                if node['device_args']['accelerator'] == "gpu":
+                    services += participant_gpu_template.format(idx,
+                                                                os.environ["FEDSTELLAR_ROOT"],
+                                                                self.network_gateway,
+                                                                path,
+                                                                idx_start_node,
+                                                                node['network_args']['ip'])
+                else:
+                    services += participant_template.format(idx,
+                                                            os.environ["FEDSTELLAR_ROOT"],
+                                                            self.network_gateway,
+                                                            path,
+                                                            idx_start_node,
+                                                            node['network_args']['ip'])
+            else:  # Start the node with a delay of 60 seconds
+                if node['device_args']['accelerator'] == "gpu":
+                    services += participant_gpu_template_start.format(idx,
+                                                                      os.environ["FEDSTELLAR_ROOT"],
+                                                                      self.network_gateway,
+                                                                      path,
+                                                                      node['network_args']['ip'])
+                else:
+                    services += participant_template_start.format(idx,
+                                                                  os.environ["FEDSTELLAR_ROOT"],
+                                                                  self.network_gateway,
+                                                                  path,
+                                                                  node['network_args']['ip'])
         docker_compose_file = docker_compose_template.format(services)
         docker_compose_file += network_template.format(self.network_subnet, self.network_gateway)
         # Write the Docker Compose file in config directory
