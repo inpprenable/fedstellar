@@ -53,7 +53,7 @@ class FEMNIST(MNIST):
 
     def __getitem__(self, index):
         img, target = self.data[index], int(self.targets[index])
-        img = Image.fromarray(img.numpy(), mode='F')
+        img = Image.fromarray(img.cpu().numpy(), mode='F')
         if self.transform is not None:
             img = self.transform(img)
         if self.target_transform is not None:

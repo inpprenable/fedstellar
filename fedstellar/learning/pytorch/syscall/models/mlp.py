@@ -72,7 +72,7 @@ class SyscallModelMLP(pl.LightningModule):
         self.log_dict(output, prog_bar=True, logger=True)
 
         if self.cm is not None:
-            cm = self.cm.compute()
+            cm = self.cm.compute().cpu()
             print(f"{phase}Epoch/CM\n", cm) if print_cm else None
             if plot_cm:
                 import seaborn as sns

@@ -171,11 +171,12 @@ class LightningLearner(NodeLearner):
             callbacks=[RichModelSummary(max_depth=1), progress_bar],
             max_epochs=self.epochs,
             accelerator=self.config.participant["device_args"]["accelerator"],
-            devices="auto",
+            devices="auto" if self.config.participant["device_args"]["accelerator"] == "cpu" else "1",  # TODO: only one GPU for now
+            # strategy="ddp" if self.config.participant["device_args"]["accelerator"] != "auto" else None,
             # strategy=self.config.participant["device_args"]["strategy"] if self.config.participant["device_args"]["accelerator"] != "auto" else None,
             logger=self.logger,
             log_every_n_steps=20,
             enable_checkpointing=False,
             enable_model_summary=False,
-            enable_progress_bar=True,
+            enable_progress_bar=True
         )
