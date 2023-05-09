@@ -238,10 +238,25 @@ class Controller:
             command = '''docker kill $(docker ps -q --filter ancestor=fedstellar) > /dev/null 2>&1'''
             time.sleep(1)
             os.system(command)
+            command = '''docker rm $(docker ps -a -q --filter ancestor=fedstellar) > /dev/null 2>&1'''
+            time.sleep(1)
+            os.system(command)
+
+            # the same but for fedstellar-gpu
+            command = '''docker kill $(docker ps -q --filter ancestor=fedstellar-gpu) > /dev/null 2>&1'''
+            time.sleep(1)
+            os.system(command)
+            command = '''docker rm $(docker ps -a -q --filter ancestor=fedstellar-gpu) > /dev/null 2>&1'''
+            time.sleep(1)
+            os.system(command)
+
             # remove all docker networks which contain the word "fedstellar"
             command = '''docker network rm $(docker network ls | grep fedstellar | awk '{print $1}') > /dev/null 2>&1'''
             time.sleep(1)
             os.system(command)
+
+
+
         except Exception as e:
             raise Exception("Error while killing docker containers: {}".format(e))
 
