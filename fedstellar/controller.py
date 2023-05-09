@@ -466,6 +466,7 @@ class Controller:
             # Add one service for each participant
             if idx != idx_start_node:
                 if node['device_args']['accelerator'] == "gpu":
+                    logging.info("Node {} is using GPU".format(idx))
                     services += participant_gpu_template.format(idx,
                                                                 os.environ["FEDSTELLAR_ROOT"],
                                                                 self.network_gateway,
@@ -473,6 +474,7 @@ class Controller:
                                                                 idx_start_node,
                                                                 node['network_args']['ip'])
                 else:
+                    logging.info("Node {} is using CPU".format(idx))
                     services += participant_template.format(idx,
                                                             os.environ["FEDSTELLAR_ROOT"],
                                                             self.network_gateway,
@@ -481,12 +483,14 @@ class Controller:
                                                             node['network_args']['ip'])
             else:  # Start the node with a delay of 60 seconds
                 if node['device_args']['accelerator'] == "gpu":
+                    logging.info("Node {} is using GPU".format(idx))
                     services += participant_gpu_template_start.format(idx,
                                                                       os.environ["FEDSTELLAR_ROOT"],
                                                                       self.network_gateway,
                                                                       path,
                                                                       node['network_args']['ip'])
                 else:
+                    logging.info("Node {} is using CPU".format(idx))
                     services += participant_template_start.format(idx,
                                                                   os.environ["FEDSTELLAR_ROOT"],
                                                                   self.network_gateway,
