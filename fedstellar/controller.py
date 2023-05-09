@@ -363,7 +363,6 @@ class Controller:
     def start_nodes_docker(self, idx_start_node):
         logging.info("Starting nodes using Docker Compose...")
         docker_compose_template = textwrap.dedent("""
-            version: "2.3"
             services:
             {}
         """)
@@ -429,7 +428,13 @@ class Controller:
                         ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
                 depends_on:
                     - participant{}
-                runtime: nvidia
+                deploy:
+                    resources:
+                        reservations:
+                            devices:
+                                - driver: nvidia
+                                    count: all
+                                    capabilities: [gpu]
                 networks:
                     fedstellar-net:
                         ipv4_address: {}
@@ -452,6 +457,13 @@ class Controller:
                     - |
                         /bin/sleep 60 && ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
                 runtime: nvidia
+                deploy:
+                    resources:
+                        reservations:
+                            devices:
+                                - driver: nvidia
+                                    count: all
+                                    capabilities: [gpu]
                 networks:
                     fedstellar-net:
                         ipv4_address: {}
