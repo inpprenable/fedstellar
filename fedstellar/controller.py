@@ -353,7 +353,7 @@ class Controller:
         """
         participant_template = """
                   participant{}:
-                    image: fedstellar
+                    image: {}
                     restart: always
                     volumes:
                         - {}:/fedstellar
@@ -374,7 +374,7 @@ class Controller:
                 """
         participant_template_start = """
                   participant{}:
-                    image: fedstellar
+                    image: {}
                     restart: always
                     volumes:
                         - {}:/fedstellar
@@ -412,6 +412,7 @@ class Controller:
             # Add one service for each participant
             if idx != idx_start_node:
                 services += participant_template.format(idx,
+                                                        "fedstellar" if node['device_args']['accelerator'] == "cpu" else "fedstellar-gpu",
                                                         os.environ["FEDSTELLAR_ROOT"],
                                                         self.network_gateway,
                                                         path,
@@ -419,6 +420,7 @@ class Controller:
                                                         node['network_args']['ip'])
             else:
                 services += participant_template_start.format(idx,
+                                                              "fedstellar" if node['device_args']['accelerator'] == "cpu" else "fedstellar-gpu",
                                                               os.environ["FEDSTELLAR_ROOT"],
                                                               self.network_gateway,
                                                               path,
