@@ -9,15 +9,14 @@ import torch.multiprocessing
 torch.multiprocessing.set_sharing_strategy("file_system")
 
 import lightning as pl
+from torch import nn
 from torchmetrics.classification import MulticlassAccuracy, MulticlassRecall, MulticlassPrecision, MulticlassF1Score, MulticlassConfusionMatrix
 from torchmetrics import MetricCollection
 
-IMAGE_SIZE = 28
 
-
-class MNISTModelCNN(pl.LightningModule):
+class SimpleMobileNetV1(pl.LightningModule):
     """
-    LightningModule for MNIST.
+    LightningModule for CIFAR10.
     """
 
     def process_metrics(self, phase, y_pred, y, loss=None):
@@ -91,13 +90,11 @@ class MNISTModelCNN(pl.LightningModule):
                 self.logger.experiment.add_figure(f"{phase}Epoch/CM", ax.get_figure(), global_step=self.epoch_global_number[phase])
                 plt.close()
 
-        # Reset metrics
-
         self.epoch_global_number[phase] += 1
 
     def __init__(
             self,
-            in_channels=1,
+            in_channels=3,
             out_channels=10,
             learning_rate=1e-3,
             metrics=None,
@@ -126,41 +123,58 @@ class MNISTModelCNN(pl.LightningModule):
             torch.manual_seed(seed)
             torch.cuda.manual_seed_all(seed)
 
-        self.example_input_array = torch.zeros(1, 1, 28, 28)
+        self.example_input_array = torch.rand(1, 3, 32, 32)
         self.learning_rate = learning_rate
+
+        def conv_dw(in_channels, out_channels, stride):
+            return nn.Sequential(
+                nn.Conv2d(in_channels, in_channels, 3, stride, 1, groups=in_channels, bias=False),
+                nn.BatchNorm2d(in_channels),
+                nn.ReLU(inplace=True),
+
+                nn.Conv2d(in_channels, out_channels, 1, 1, 0, bias=False),
+                nn.BatchNorm2d(out_channels),
+                nn.ReLU(inplace=True),
+            )
 
         self.criterion = torch.nn.CrossEntropyLoss()
 
-        self.conv1 = torch.nn.Conv2d(
-            in_channels=in_channels, out_channels=32, kernel_size=(5, 5), padding="same"
+        self.model = nn.Sequential(
+            nn.Conv2d(3, 32, 3, 1, 1, bias=False),
+            nn.BatchNorm2d(32),
+            nn.ReLU(inplace=True),
+
+            conv_dw(32, 64, 1),
+            conv_dw(64, 128, 2),
+            conv_dw(128, 128, 1),
+            conv_dw(128, 256, 2),
+            conv_dw(256, 256, 1),
+
+            nn.AdaptiveAvgPool2d(1),
         )
-        self.relu = torch.nn.ReLU()
-        self.pool1 = torch.nn.MaxPool2d(kernel_size=(2, 2), stride=2)
-        self.conv2 = torch.nn.Conv2d(
-            in_channels=32, out_channels=64, kernel_size=(5, 5), padding="same"
-        )
-        self.pool2 = torch.nn.MaxPool2d(kernel_size=(2, 2), stride=2)
-        self.l1 = torch.nn.Linear(7 * 7 * 64, 2048)
-        self.l2 = torch.nn.Linear(2048, out_channels)
+        self.fc = nn.Linear(256, out_channels)
 
         self.epoch_global_number = {"Train": 0, "Validation": 0, "Test": 0}
 
     def forward(self, x):
         """ """
-        input_layer = x.view(-1, 1, IMAGE_SIZE, IMAGE_SIZE)
-        conv1 = self.relu(self.conv1(input_layer))
-        pool1 = self.pool1(conv1)
-        conv2 = self.relu(self.conv2(pool1))
-        pool2 = self.pool2(conv2)
-        pool2_flat = pool2.reshape(-1, 7 * 7 * 64)
-
-        dense = self.relu(self.l1(pool2_flat))
-        logits = self.l2(dense)
+        x = self.model(x)
+        x = x.view(-1, 256)
+        x = self.fc(x)
         return x
 
     def configure_optimizers(self):
         """ """
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+
+        # scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        #     optimizer,
+        #     max_lr=1e-2,
+        #     epochs=10,
+        #     anneal_strategy="linear",
+        # )
+
+        # return [optimizer], [scheduler]
         return optimizer
 
     def step(self, batch, phase):

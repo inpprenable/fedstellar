@@ -8,16 +8,36 @@ import torch.multiprocessing
 
 torch.multiprocessing.set_sharing_strategy("file_system")
 
-import lightning as pl
-from torchmetrics.classification import MulticlassAccuracy, MulticlassRecall, MulticlassPrecision, MulticlassF1Score, MulticlassConfusionMatrix
+from torch import nn
 from torchmetrics import MetricCollection
 
-IMAGE_SIZE = 28
+import lightning as pl
+import torch
+from torchmetrics.classification import MulticlassAccuracy, MulticlassRecall, MulticlassPrecision, MulticlassF1Score, MulticlassConfusionMatrix
+from torchvision.models import resnet18, resnet34, resnet50
+
+IMAGE_SIZE = 32
+
+BATCH_SIZE = 256 if torch.cuda.is_available() else 64
+
+classifiers = {
+    "resnet18": resnet18(),
+    "resnet34": resnet34(),
+    "resnet50": resnet50(),
+}
 
 
-class MNISTModelCNN(pl.LightningModule):
+def conv_block(in_channels, out_channels, pool=False):
+    layers = [nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+              nn.BatchNorm2d(out_channels),
+              nn.ReLU(inplace=True)]
+    if pool: layers.append(nn.MaxPool2d(2))
+    return nn.Sequential(*layers)
+
+
+class CIFAR10ModelResNet(pl.LightningModule):
     """
-    LightningModule for MNIST.
+    LightningModule for CIFAR10.
     """
 
     def process_metrics(self, phase, y_pred, y, loss=None):
@@ -43,6 +63,7 @@ class MNISTModelCNN(pl.LightningModule):
             raise NotImplementedError
         # print(f"y_pred shape: {y_pred.shape}, y_pred_classes shape: {y_pred_classes.shape}, y shape: {y.shape}")  # Debug print
         output = {f"{phase}/{key.replace('Multiclass', '').split('/')[-1]}": value for key, value in output.items()}
+
         self.log_dict(output, prog_bar=True, logger=True)
 
         if self.cm is not None:
@@ -91,18 +112,18 @@ class MNISTModelCNN(pl.LightningModule):
                 self.logger.experiment.add_figure(f"{phase}Epoch/CM", ax.get_figure(), global_step=self.epoch_global_number[phase])
                 plt.close()
 
-        # Reset metrics
-
         self.epoch_global_number[phase] += 1
 
     def __init__(
             self,
-            in_channels=1,
+            in_channels=3,
             out_channels=10,
             learning_rate=1e-3,
             metrics=None,
             confusion_matrix=None,
-            seed=None
+            seed=None,
+            implementation="scratch",
+            classifier="resnet9",
     ):
         super().__init__()
         if metrics is None:
@@ -126,41 +147,95 @@ class MNISTModelCNN(pl.LightningModule):
             torch.manual_seed(seed)
             torch.cuda.manual_seed_all(seed)
 
-        self.example_input_array = torch.zeros(1, 1, 28, 28)
+        self.implementation = implementation
+        self.classifier = classifier
+
+        self.example_input_array = torch.rand(1, 3, 32, 32)
         self.learning_rate = learning_rate
 
         self.criterion = torch.nn.CrossEntropyLoss()
 
-        self.conv1 = torch.nn.Conv2d(
-            in_channels=in_channels, out_channels=32, kernel_size=(5, 5), padding="same"
-        )
-        self.relu = torch.nn.ReLU()
-        self.pool1 = torch.nn.MaxPool2d(kernel_size=(2, 2), stride=2)
-        self.conv2 = torch.nn.Conv2d(
-            in_channels=32, out_channels=64, kernel_size=(5, 5), padding="same"
-        )
-        self.pool2 = torch.nn.MaxPool2d(kernel_size=(2, 2), stride=2)
-        self.l1 = torch.nn.Linear(7 * 7 * 64, 2048)
-        self.l2 = torch.nn.Linear(2048, out_channels)
+        self.model = self._build_model(in_channels, out_channels)
 
         self.epoch_global_number = {"Train": 0, "Validation": 0, "Test": 0}
 
+    def _build_model(self, in_channels, out_channels):
+        """
+        Build the model
+        Args:
+            in_channels:
+            out_channels:
+
+        Returns:
+
+        """
+
+        if self.implementation == "scratch":
+            if self.classifier == "resnet9":
+                '''
+                ResNet9 implementation
+                '''
+
+                def conv_block(in_channels, out_channels, pool=False):
+                    layers = [nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+                              nn.BatchNorm2d(out_channels),
+                              nn.ReLU(inplace=True)]
+                    if pool: layers.append(nn.MaxPool2d(2))
+                    return nn.Sequential(*layers)
+
+                conv1 = conv_block(in_channels, 64)
+                conv2 = conv_block(64, 128, pool=True)
+                res1 = nn.Sequential(conv_block(128, 128), conv_block(128, 128))
+
+                conv3 = conv_block(128, 256, pool=True)
+                conv4 = conv_block(256, 512, pool=True)
+                res2 = nn.Sequential(conv_block(512, 512), conv_block(512, 512))
+
+                self.classifier = nn.Sequential(nn.MaxPool2d(4),
+                                                nn.Flatten(),
+                                                nn.Linear(512, out_channels))
+
+                return dict(conv1=conv1, conv2=conv2, res1=res1, conv3=conv3, conv4=conv4, res2=res2, classifier=self.classifier)
+
+            elif self.implementation in classifiers.keys():
+                model = classifiers[self.classifier]
+                # ResNet models in torchvision are trained on ImageNet, which has 1000 classes, and that is why they have 1000 output neurons.
+                # To adapt a pre-trained ResNet model to classify images in the CIFAR-10 dataset, you need to replace the last layer (FC layer) with a new layer that has 10 output neurons.
+                model.fc = torch.nn.Linear(model.fc.in_features, 10)
+                return model
+            else:
+                raise NotImplementedError()
+
+        elif self.implementation == "timm":
+            raise NotImplementedError()
+        else:
+            raise NotImplementedError()
+
     def forward(self, x):
         """ """
-        input_layer = x.view(-1, 1, IMAGE_SIZE, IMAGE_SIZE)
-        conv1 = self.relu(self.conv1(input_layer))
-        pool1 = self.pool1(conv1)
-        conv2 = self.relu(self.conv2(pool1))
-        pool2 = self.pool2(conv2)
-        pool2_flat = pool2.reshape(-1, 7 * 7 * 64)
+        if not isinstance(x, torch.Tensor):
+            raise TypeError(f"images must be a torch.Tensor, got {type(x)}")
 
-        dense = self.relu(self.l1(pool2_flat))
-        logits = self.l2(dense)
-        return x
+        if self.implementation == "scratch":
+            if self.classifier is "resnet9":
+                out = self.model["conv1"](x)
+                out = self.model["conv2"](out)
+                out = self.model["res1"](out) + out
+                out = self.model["conv3"](out)
+                out = self.model["conv4"](out)
+                out = self.model["res2"](out) + out
+                out = self.model["classifier"](out)
+                return out
+            else:
+                return self.model(x)
+        elif self.implementation == "timm":
+            raise NotImplementedError()
+        else:
+            raise NotImplementedError()
 
     def configure_optimizers(self):
         """ """
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-2, weight_decay=1e-4)
         return optimizer
 
     def step(self, batch, phase):
