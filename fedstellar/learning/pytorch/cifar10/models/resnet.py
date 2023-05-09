@@ -217,7 +217,7 @@ class CIFAR10ModelResNet(pl.LightningModule):
             raise TypeError(f"images must be a torch.Tensor, got {type(x)}")
 
         if self.implementation == "scratch":
-            if self.classifier is "resnet9":
+            if self.classifier == "resnet9":
                 out = self.model["conv1"](x)
                 out = self.model["conv2"](out)
                 out = self.model["res1"](out) + out
