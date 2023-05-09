@@ -7,6 +7,7 @@ import re
 import signal
 import subprocess
 import sys
+import textwrap
 import time
 from datetime import datetime
 
@@ -346,111 +347,111 @@ class Controller:
 
     def start_nodes_docker(self, idx_start_node):
         logging.info("Starting nodes using Docker Compose...")
-        docker_compose_template = """
-        version: "3.9"
-        services:
-        {}
-        """
-        participant_template = """
-          participant{}:
-            image: fedstellar
-            restart: always
-            volumes:
-              - {}:/fedstellar
-            extra_hosts:
-              - "host.docker.internal:host-gateway"
-            ipc: host
-            privileged: true
-            command:
-              - /bin/bash
-              - -c
-              - |
-                ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
-            depends_on:
-              - participant{}
-            networks:
-              fedstellar-net:
-                ipv4_address: {}"""
+        docker_compose_template = textwrap.dedent("""
+            version: "2.3"
+            services:
+            {}
+        """)
 
-        participant_template_start = """
-          participant{}:
-            image: fedstellar
-            restart: always
-            volumes:
-              - {}:/fedstellar
-            extra_hosts:
-              - "host.docker.internal:host-gateway"
-            ipc: host
-            privileged: true
-            command:
-              - /bin/bash
-              - -c
-              - |
-                /bin/sleep 60 && ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
-            networks:
-              fedstellar-net:
-                ipv4_address: {}"""
+        participant_template = textwrap.dedent("""
+            participant{}:
+                image: fedstellar
+                restart: always
+                volumes:
+                    - {}:/fedstellar
+                extra_hosts:
+                    - "host.docker.internal:host-gateway"
+                ipc: host
+                privileged: true
+                command:
+                    - /bin/bash
+                    - -c
+                    - |
+                        ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
+                depends_on:
+                    - participant{}
+                networks:
+                    fedstellar-net:
+                        ipv4_address: {}
+        """)
+        participant_template = textwrap.indent(participant_template, ' ' * 4)
 
-        participant_gpu_template = """
-          participant{}:
-            image: fedstellar-gpu
-            restart: always
-            volumes:
-              - {}:/fedstellar
-            extra_hosts:
-              - "host.docker.internal:host-gateway"
-            ipc: host
-            privileged: true
-            command:
-              - /bin/bash
-              - -c
-              - |
-                ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
-            depends_on:
-              - participant{}
-            deploy:
-              resources:
-                reservations:
-                  devices:
-                    - capabilities: [ gpu ]
-                      count: all
-            networks:
-              fedstellar-net:
-                ipv4_address: {}"""
+        participant_template_start = textwrap.dedent("""
+            participant{}:
+                image: fedstellar
+                restart: always
+                volumes:
+                    - {}:/fedstellar
+                extra_hosts:
+                    - "host.docker.internal:host-gateway"
+                ipc: host
+                privileged: true
+                command:
+                    - /bin/bash
+                    - -c
+                    - |
+                        /bin/sleep 60 && ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
+                networks:
+                    fedstellar-net:
+                        ipv4_address: {}
+        """)
+        participant_template_start = textwrap.indent(participant_template_start, ' ' * 4)
 
-        participant_gpu_template_start = """
-          participant{}:
-            image: fedstellar-gpu
-            restart: always
-            volumes:
-              - {}:/fedstellar
-            extra_hosts:
-              - "host.docker.internal:host-gateway"
-            ipc: host
-            privileged: true
-            command:
-              - /bin/bash
-              - -c
-              - |
-                /bin/sleep 60 && ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
-            deploy:
-              resources:
-                reservations:
-                  devices:
-                    - capabilities: [ gpu ]
-                      count: all
-            networks:
-              fedstellar-net:
-                ipv4_address: {}"""
+        participant_gpu_template = textwrap.dedent("""
+            participant{}:
+                image: fedstellar-gpu
+                restart: always
+                volumes:
+                    - {}:/fedstellar
+                extra_hosts:
+                    - "host.docker.internal:host-gateway"
+                ipc: host
+                privileged: true
+                command:
+                    - /bin/bash
+                    - -c
+                    - |
+                        ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
+                depends_on:
+                    - participant{}
+                runtime: nvidia
+                networks:
+                    fedstellar-net:
+                        ipv4_address: {}
+        """)
+        participant_gpu_template = textwrap.indent(participant_gpu_template, ' ' * 4)
 
-        network_template = """
-        networks:
-            fedstellar-net:
-                driver: bridge
-                ipam:
-                    config:
-                        - subnet: {}
-                          gateway: {}"""
+        participant_gpu_template_start = textwrap.dedent("""
+            participant{}:
+                image: fedstellar-gpu
+                restart: always
+                volumes:
+                    - {}:/fedstellar
+                extra_hosts:
+                    - "host.docker.internal:host-gateway"
+                ipc: host
+                privileged: true
+                command:
+                    - /bin/bash
+                    - -c
+                    - |
+                        /bin/sleep 60 && ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
+                runtime: nvidia
+                networks:
+                    fedstellar-net:
+                        ipv4_address: {}
+        """)
+        participant_gpu_template_start = textwrap.indent(participant_gpu_template_start, ' ' * 4)
+
+        network_template = textwrap.dedent("""
+            networks:
+                fedstellar-net:
+                    driver: bridge
+                    ipam:
+                        config:
+                            - subnet: {}
+                              gateway: {}
+        """)
 
         # Generate the Docker Compose file dynamically
         services = ""
