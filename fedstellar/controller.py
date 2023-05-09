@@ -433,8 +433,8 @@ class Controller:
                         reservations:
                             devices:
                                 - driver: nvidia
-                                    count: all
-                                    capabilities: [gpu]
+                                  count: all
+                                  capabilities: [gpu]
                 networks:
                     fedstellar-net:
                         ipv4_address: {}
@@ -456,14 +456,13 @@ class Controller:
                     - -c
                     - |
                         /bin/sleep 60 && ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
-                runtime: nvidia
                 deploy:
                     resources:
                         reservations:
                             devices:
                                 - driver: nvidia
-                                    count: all
-                                    capabilities: [gpu]
+                                  count: all
+                                  capabilities: [gpu]
                 networks:
                     fedstellar-net:
                         ipv4_address: {}
