@@ -1,6 +1,6 @@
 #
 # This file is part of the fedstellar framework (see https://github.com/enriquetomasmb/fedstellar).
-# Copyright (c) 2022 Enrique Tomás Martínez Beltrán.
+# Copyright (c) 2023 Enrique Tomás Martínez Beltrán.
 #
 
 # To Avoid Crashes with a lot of nodes
@@ -12,12 +12,10 @@ import lightning as pl
 from torchmetrics.classification import MulticlassAccuracy, MulticlassRecall, MulticlassPrecision, MulticlassF1Score, MulticlassConfusionMatrix
 from torchmetrics import MetricCollection
 
-IMAGE_SIZE = 28
 
-
-class FEMNISTModelCNN(pl.LightningModule):
+class FashionMNISTModelMLP(pl.LightningModule):
     """
-    LightningModule for Syscall dataset.
+    LightningModule for MNIST.
     """
 
     def process_metrics(self, phase, y_pred, y, loss=None):
@@ -98,9 +96,8 @@ class FEMNISTModelCNN(pl.LightningModule):
     def __init__(
             self,
             in_channels=1,
-            out_channels=62,
+            out_channels=10,
             learning_rate=1e-3,
-            momentum=0.9,
             metrics=None,
             confusion_matrix=None,
             seed=None
@@ -129,38 +126,39 @@ class FEMNISTModelCNN(pl.LightningModule):
 
         self.example_input_array = torch.zeros(1, 1, 28, 28)
         self.learning_rate = learning_rate
-        self.momentum = momentum
 
         self.criterion = torch.nn.CrossEntropyLoss()
 
-        self.conv1 = torch.nn.Conv2d(in_channels, 32, 7, padding=3)
-        self.relu = torch.nn.ReLU()
-        self.pool = torch.nn.MaxPool2d(2, 2)
-        self.conv2 = torch.nn.Conv2d(32, 64, 3, padding=1)
-        self.out = torch.nn.Linear(64 * 7 * 7, out_channels)
+        self.l1 = torch.nn.Linear(28 * 28, 256)
+        self.l2 = torch.nn.Linear(256, 128)
+        self.l3 = torch.nn.Linear(128, out_channels)
 
         self.epoch_global_number = {"Train": 0, "Validation": 0, "Test": 0}
 
     def forward(self, x):
         """ """
-        x = x.view(-1, 1, IMAGE_SIZE, IMAGE_SIZE)
-        x = self.pool(self.relu(self.conv1(x)))
-        x = self.pool(self.relu(self.conv2(x)))
-        x = x.flatten(1)
-        # return self.dense2(self.act(self.dense1(x)))
-        return self.out(x)
+        batch_size, channels, width, height = x.size()
+
+        # (b, 1, 28, 28) -> (b, 1*28*28)
+        x = x.view(batch_size, -1)
+        x = self.l1(x)
+        x = torch.relu(x)
+        x = self.l2(x)
+        x = torch.relu(x)
+        x = self.l3(x)
+        x = torch.log_softmax(x, dim=1)
+        return x
 
     def configure_optimizers(self):
         """ """
-        # optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-        optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate, momentum=self.momentum)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
 
     def step(self, batch, phase):
-        x, labels = batch
-        x = x.to(self.device)
+        images, labels = batch
+        images = images.to(self.device)
         labels = labels.to(self.device)
-        y_pred = self.forward(x)
+        y_pred = self.forward(images)
         loss = self.criterion(y_pred, labels)
 
         # Get metrics for each batch and log them

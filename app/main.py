@@ -27,6 +27,8 @@ argparser.add_argument('-c', '--config', dest='config', default=os.path.join(os.
                        help='Config directory path')
 argparser.add_argument('-l', '--logs', dest='logs', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'),
                           help='Logs directory path')
+argparser.add_argument('-m', '--models', dest='models', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models'),
+                          help='Models directory path')
 # Path to the file in same directory as this file
 argparser.add_argument('-e', '--env', dest='env', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'), help='.env file path')
 argparser.add_argument('-v', '--version', action='version',

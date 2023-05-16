@@ -1,6 +1,6 @@
 #
 # This file is part of the fedstellar framework (see https://github.com/enriquetomasmb/fedstellar).
-# Copyright (c) 2022 Enrique Tomás Martínez Beltrán.
+# Copyright (c) 2023 Chao Feng.
 #
 import os
 import zipfile
@@ -13,13 +13,14 @@ import torch.multiprocessing
 from lightning import LightningDataModule
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Subset, random_split, Dataset
-from torchvision.datasets import utils
+from torchvision.datasets import MNIST, utils
 
 torch.multiprocessing.set_sharing_strategy("file_system")
 
 
-class SYSCALL(Dataset):
+class SYSCALL(MNIST):
     def __init__(self, sub_id, number_sub, root_dir, train=True, transform=None, target_transform=None, download=False):
+        super().__init__(root_dir, transform=None, target_transform=None)
         self.transform = transform
         self.target_transform = target_transform
         self.sub_id = sub_id
@@ -113,28 +114,17 @@ class SYSCALL(Dataset):
 
 
 #######################################
-#    SYSCALLDataModule for SYSCALL    #
+#    SYSCALLDataset for SYSCALL    #
 #######################################
 
 
-def sort_dataset(dataset):
-    sorted_indexes = dataset.targets.sort()[1]
-    dataset.targets = (dataset.targets[sorted_indexes])
-    dataset.data = dataset.data[sorted_indexes]
-    return dataset
-
-
-class SYSCALLDataModule(LightningDataModule):
+class SYSCALLDataset(Dataset):
     """
     LightningDataModule of partitioned SYSCALL.
 
     Args:
 
     """
-
-    # Singleton
-    syscall_train = None
-    syscall_val = None
 
     def __init__(
             self,
@@ -144,75 +134,29 @@ class SYSCALLDataModule(LightningDataModule):
             num_workers=4,
             val_percent=0.01,
             root_dir=None,
+            iid=True,
     ):
         super().__init__()
+        self.train_set = None
+        self.test_set = None
         self.sub_id = sub_id
         self.number_sub = number_sub
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.val_percent = val_percent
         self.root_dir = root_dir
+        self.iid = iid
 
-        self.train = SYSCALL(sub_id=self.sub_id, number_sub=self.number_sub, root_dir=root_dir, train=True, download=True)
-        self.test = SYSCALL(sub_id=self.sub_id, number_sub=self.number_sub, root_dir=root_dir, train=False, download=True)
+        self.train_set = SYSCALL(sub_id=self.sub_id, number_sub=self.number_sub, root_dir=root_dir, train=True, download=True)
+        self.test_set = SYSCALL(sub_id=self.sub_id, number_sub=self.number_sub, root_dir=root_dir, train=False, download=True)
 
-        if len(self.test.data) < self.number_sub:
-            raise ValueError("Too many partitions")
+        if not self.iid:
+            # if non-iid, sort the dataset
+            self.train_set = self.sort_dataset(self.train_set)
+            self.test_set = self.sort_dataset(self.test_set)
 
-        # Training / validation set
-        trainset = self.train
-        rows_by_sub = floor(len(trainset.data) / self.number_sub)
-        tr_subset = Subset(
-            trainset, range(self.sub_id * rows_by_sub, (self.sub_id + 1) * rows_by_sub)
-        )
-        syscall_train, syscall_val = random_split(
-            tr_subset,
-            [
-                round(len(tr_subset) * (1 - self.val_percent)),
-                round(len(tr_subset) * self.val_percent),
-            ],
-        )
-
-        # Test set
-        testset = self.test
-        rows_by_sub = floor(len(testset.data) / self.number_sub)
-        te_subset = Subset(
-            testset, range(self.sub_id * rows_by_sub, (self.sub_id + 1) * rows_by_sub)
-        )
-
-        # DataLoaders
-        self.train_loader = DataLoader(
-            syscall_train,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=self.num_workers,
-        )
-        self.val_loader = DataLoader(
-            syscall_val,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-        )
-        self.test_loader = DataLoader(
-            te_subset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-        )
-        print(
-            "Train: {} Val:{} Test:{}".format(
-                len(syscall_train), len(syscall_val), len(te_subset)
-            )
-        )
-
-    def train_dataloader(self):
-        """ """
-        return self.train_loader
-
-    def val_dataloader(self):
-        """ """
-        return self.val_loader
-
-    def test_dataloader(self):
-        """ """
-        return self.test_loader
+    def sort_dataset(self, dataset):
+        sorted_indexes = dataset.targets.sort()[1]
+        dataset.targets = (dataset.targets[sorted_indexes])
+        dataset.data = dataset.data[sorted_indexes]
+        return dataset
