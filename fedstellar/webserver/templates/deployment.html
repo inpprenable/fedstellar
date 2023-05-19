@@ -901,6 +901,14 @@
 </script>
 
 <script>
+    // Detect if input network-subnet is changed, if it is changed, update the graph
+    document.getElementById("network-subnet").addEventListener("change", function () {
+        // Update the graph
+        updateGraph();
+    });
+</script>
+
+<script>
     // Create the graph object
 
     function updateGraph() {
