@@ -14,6 +14,8 @@ def datapoison(dataset, indices, poisoned_persent, poisoned_ratio, targeted=Fals
     train_data = new_dataset.data
     targets = new_dataset.targets
     num_indices = len(indices)
+    if type(noise_type) != type("salt"):
+        noise_type = noise_type[0]
 
     if targeted == False:
         num_poisoned = int(poisoned_persent * num_indices)
@@ -24,7 +26,7 @@ def datapoison(dataset, indices, poisoned_persent, poisoned_ratio, targeted=Fals
         poisoned_indice = random.sample(indices, num_poisoned)
 
         for i in poisoned_indice:
-            t = train_data[i]
+            t = train_data[i]          
             if noise_type == "salt":
                 # Replaces random pixels with 1.
                 poisoned = torch.tensor(random_noise(t, mode=noise_type, amount=poisoned_ratio))

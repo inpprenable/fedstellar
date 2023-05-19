@@ -55,8 +55,8 @@
     "poisoned_sample_percent": 0,
     "poisoned_ratio": 0,
     "target_label": 0,
-    "target_changed_label": 0,
-    "noise_type": "salt"
+    "noise_type": "salt",
+    "target_changed_label": 0    
   },
   "tracking_args": {
     "enable_remote_tracking": false,

@@ -609,7 +609,7 @@ def fedstellar_scenario_deployment():
         return abort(401)
 
 
-def attack_node_assign(nodes, federation, attack, poisoned_node_percent, poisoned_sample_percent):
+def attack_node_assign(nodes, federation, attack, poisoned_node_percent, poisoned_sample_percent, poisoned_noise_percent):
     """Identify which nodes will be attacked"""
     import random
     import math
@@ -641,12 +641,15 @@ def attack_node_assign(nodes, federation, attack, poisoned_node_percent, poisone
     for node in nodes:
         node_att = 'No Attack'
         attack_sample_persent = 0
+        poisoned_ratio = 0
         if node in attacked_nodes:
             node_att = attack
             attack_sample_persent = poisoned_sample_percent / 100
+            poisoned_ratio = poisoned_noise_percent / 100
         nodes[node]['attacks'] = node_att
         nodes[node]['poisoned_sample_percent'] = attack_sample_persent
-        attack_matrix.append([node, node_att, attack_sample_persent])
+        nodes[node]['poisoned_ratio'] = poisoned_ratio
+        attack_matrix.append([node, node_att, attack_sample_persent, poisoned_ratio])
     return nodes, attack_matrix
 
 
@@ -666,10 +669,11 @@ def fedstellar_scenario_deployment_run():
             attack = data["attacks"]
             poisoned_node_percent = int(data["poisoned_node_percent"])
             poisoned_sample_percent = int(data["poisoned_sample_percent"])
+            poisoned_noise_percent = int(data["poisoned_noise_percent"])
             federation = data["federation"]
             # Get attack matrix
             print("Generating attack matrix...")
-            nodes, attack_matrix = attack_node_assign(nodes, federation, attack, poisoned_node_percent, poisoned_sample_percent)
+            nodes, attack_matrix = attack_node_assign(nodes, federation, attack, poisoned_node_percent, poisoned_sample_percent, poisoned_noise_percent)
             print(nodes)
             print(attack_matrix)
 
@@ -727,6 +731,7 @@ def fedstellar_scenario_deployment_run():
                 # Get attack config for each node
                 participant_config["adversarial_args"]["attacks"] = node_config["attacks"]
                 participant_config["adversarial_args"]["poisoned_sample_percent"] = node_config["poisoned_sample_percent"]
+                participant_config["adversarial_args"]["poisoned_ratio"] = node_config["poisoned_ratio"]
 
                 with open(participant_file, 'w') as f:
                     json.dump(participant_config, f, sort_keys=False, indent=2)
