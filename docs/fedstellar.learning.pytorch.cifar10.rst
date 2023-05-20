@@ -1,4 +1,4 @@
-fedstellar.learning.pytorch.femnist package
+fedstellar.learning.pytorch.cifar10 package
 ===========================================
 
 Subpackages
@@ -7,7 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   fedstellar.learning.pytorch.femnist.models
+   fedstellar.learning.pytorch.cifar10.models
 
 Submodules
 ----------
@@ -15,12 +15,12 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   fedstellar.learning.pytorch.femnist.femnist
+   fedstellar.learning.pytorch.cifar10.cifar10
 
 Module contents
 ---------------
 
-.. automodule:: fedstellar.learning.pytorch.femnist
+.. automodule:: fedstellar.learning.pytorch.cifar10
    :members:
    :undoc-members:
    :show-inheritance:

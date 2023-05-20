@@ -1,10 +1,11 @@
 #
 # This file is part of the fedstellar framework (see https://github.com/enriquetomasmb/fedstellar).
-# Copyright (c) 2022 Enrique Tomás Martínez Beltrán.
+# Copyright (c) 2023 Enrique Tomás Martínez Beltrán.
 #
 
 # To Avoid Crashes with a lot of nodes
 import torch.multiprocessing
+import torchmetrics.functional
 
 torch.multiprocessing.set_sharing_strategy("file_system")
 
@@ -129,8 +130,6 @@ class SyscallModelSGDOneClassSVM(pl.LightningModule):
         self.learning_rate = learning_rate
         self.nu = nu
 
-        self.criterion = torch.nn.CrossEntropyLoss()
-
         self.w = torch.nn.Parameter(torch.zeros(in_channels), requires_grad=True)
         self.rho = torch.nn.Parameter(torch.zeros(1), requires_grad=True)
 
@@ -153,19 +152,16 @@ class SyscallModelSGDOneClassSVM(pl.LightningModule):
         x = x.to(self.device)
         labels = labels.to(self.device)
         y_pred = self.forward(x)
-        loss = 0.5 * torch.sum(self.w ** 2) + self.nu * self.hinge_loss(y_pred)
+        if phase == "Train":
+            loss = 0.5 * torch.sum(self.w ** 2) + self.nu * self.hinge_loss(y_pred)
+            self.log(f"{phase}/Loss", loss, prog_bar=True)
+        else:
+            y_pred_classes = (y_pred > 0).type(torch.int64)
+            loss = torch.nn.functional.binary_cross_entropy_with_logits(y_pred, labels.float())
+            self.log(f"{phase}/Loss", loss, prog_bar=True)
+            self.log(f"{phase}/Accuracy", torchmetrics.functional.accuracy(y_pred_classes, labels), prog_bar=True)
 
-        y_pred = (y_pred > 0).type(torch.int64)
-
-        # This will convert the class labels to class probability vectors before passing them to the metrics.
-        # Note that this is a case-specific solution and may not be best practice in general, as performance metrics may be affected if the predictions are not true probabilities.
-        # TODO: Improve this
-        y_pred_prob = torch.nn.functional.one_hot(y_pred, num_classes=9).float()  # Convert predictions to class probabilities
-
-        # Get metrics for each batch and log them
-        self.log(f"{phase}/Loss", loss, prog_bar=True)
-        self.process_metrics(phase, y_pred_prob, labels, loss)
-
+        # self.process_metrics(phase, y_pred_prob, labels, loss)
         return loss
 
     def training_step(self, batch, batch_id):

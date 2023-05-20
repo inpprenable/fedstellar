@@ -1,15 +1,13 @@
 # 
 # This file is part of the fedstellar framework (see https://github.com/enriquetomasmb/fedstellar).
-# Copyright (c) 2022 Enrique Tomás Martínez Beltrán.
+# Copyright (c) 2023 Enrique Tomás Martínez Beltrán.
 #
 import os
 import sys
-from math import floor
 
 # To Avoid Crashes with a lot of nodes
 import torch.multiprocessing
-from lightning import LightningDataModule
-from torch.utils.data import DataLoader, Subset, random_split
+from torch.utils.data import Dataset
 from torchvision import transforms
 from torchvision.datasets import MNIST
 
@@ -21,7 +19,7 @@ torch.multiprocessing.set_sharing_strategy("file_system")
 #######################################
 
 
-class MNISTDataModule(LightningDataModule):
+class MNISTDataset(Dataset):
     """
     LightningDataModule of partitioned MNIST.
 
@@ -47,107 +45,56 @@ class MNISTDataModule(LightningDataModule):
             iid=True,
     ):
         super().__init__()
+        self.train_set = None
+        self.test_set = None
         self.sub_id = sub_id
         self.number_sub = number_sub
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.val_percent = val_percent
+        self.iid = iid
 
         # Singletons of MNIST train and test datasets
         if not os.path.exists(f"{sys.path[0]}/data"):
             os.makedirs(f"{sys.path[0]}/data")
 
-        if MNISTDataModule.mnist_train is None:
-            MNISTDataModule.mnist_train = MNIST(
+        if MNISTDataset.mnist_train is None:
+            MNISTDataset.mnist_train = MNIST(
                 f"{sys.path[0]}/data", train=True, download=True, transform=transforms.ToTensor()
             )
             if not iid:
-                sorted_indexes = MNISTDataModule.mnist_train.targets.sort()[1]
-                MNISTDataModule.mnist_train.targets = (
-                    MNISTDataModule.mnist_train.targets[sorted_indexes]
+                sorted_indexes = MNISTDataset.mnist_train.targets.sort()[1]
+                MNISTDataset.mnist_train.targets = (
+                    MNISTDataset.mnist_train.targets[sorted_indexes]
                 )
-                MNISTDataModule.mnist_train.data = MNISTDataModule.mnist_train.data[
+                MNISTDataset.mnist_train.data = MNISTDataset.mnist_train.data[
                     sorted_indexes
                 ]
-        if MNISTDataModule.mnist_val is None:
-            MNISTDataModule.mnist_val = MNIST(
+        if MNISTDataset.mnist_val is None:
+            MNISTDataset.mnist_val = MNIST(
                 f"{sys.path[0]}/data", train=False, download=True, transform=transforms.ToTensor()
             )
             if not iid:
-                sorted_indexes = MNISTDataModule.mnist_val.targets.sort()[1]
-                MNISTDataModule.mnist_val.targets = MNISTDataModule.mnist_val.targets[
+                sorted_indexes = MNISTDataset.mnist_val.targets.sort()[1]
+                MNISTDataset.mnist_val.targets = MNISTDataset.mnist_val.targets[
                     sorted_indexes
                 ]
-                MNISTDataModule.mnist_val.data = MNISTDataModule.mnist_val.data[
+                MNISTDataset.mnist_val.data = MNISTDataset.mnist_val.data[
                     sorted_indexes
                 ]
         if self.sub_id + 1 > self.number_sub:
             raise ("Not exist the subset {}".format(self.sub_id))
 
-        # Training / validation set
-        trainset = MNISTDataModule.mnist_train
-        rows_by_sub = floor(len(trainset) / self.number_sub)
-        tr_subset = Subset(
-            trainset, range(self.sub_id * rows_by_sub, (self.sub_id + 1) * rows_by_sub)
-        )
-        mnist_train, mnist_val = random_split(
-            tr_subset,
-            [
-                round(len(tr_subset) * (1 - self.val_percent)),
-                round(len(tr_subset) * self.val_percent),
-            ],
-        )
+        self.train_set = MNISTDataset.mnist_train
+        self.test_set = MNISTDataset.mnist_val
 
-        # Test set
-        testset = MNISTDataModule.mnist_val
-        rows_by_sub = floor(len(testset) / self.number_sub)
-        te_subset = Subset(
-            testset, range(self.sub_id * rows_by_sub, (self.sub_id + 1) * rows_by_sub)
-        )
+        if not self.iid:
+            # if non-iid, sort the dataset
+            self.train_set = self.sort_dataset(self.train_set)
+            self.test_set = self.sort_dataset(self.test_set)
 
-        if len(testset) < self.number_sub:
-            raise ("Too much partitions")
-
-        # DataLoaders
-        self.train_loader = DataLoader(
-            mnist_train,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=self.num_workers,
-        )
-        self.val_loader = DataLoader(
-            mnist_val,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-        )
-        self.test_loader = DataLoader(
-            te_subset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-        )
-        print(
-            "Train: {} Val:{} Test:{}".format(
-                len(mnist_train), len(mnist_val), len(te_subset)
-            )
-        )
-
-    def train_dataloader(self):
-        """ """
-        return self.train_loader
-
-    def val_dataloader(self):
-        """ """
-        return self.val_loader
-
-    def test_dataloader(self):
-        """ """
-        return self.test_loader
-
-
-if __name__ == "__main__":
-    dm = MNISTDataModule()
-    print(dm.train_dataloader())
-    print(dm.val_dataloader())
-    print(dm.test_dataloader())
+    def sort_dataset(self, dataset):
+        sorted_indexes = dataset.targets.sort()[1]
+        dataset.targets = (dataset.targets[sorted_indexes])
+        dataset.data = dataset.data[sorted_indexes]
+        return dataset

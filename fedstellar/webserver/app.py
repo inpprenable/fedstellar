@@ -26,6 +26,7 @@ app = Flask(__name__)
 app.config.from_object('config')
 app.config['log_dir'] = os.environ.get('FEDSTELLAR_LOGS_DIR')
 app.config['config_dir'] = os.environ.get('FEDSTELLAR_CONFIG_DIR')
+app.config['model_dir'] = os.environ.get('FEDSTELLAR_MODELS_DIR')
 app.config['python_path'] = os.environ.get('FEDSTELLAR_PYTHON_PATH')
 app.config['statistics_port'] = os.environ.get('FEDSTELLAR_STATISTICS_PORT')
 
@@ -608,6 +609,50 @@ def fedstellar_scenario_deployment():
         return abort(401)
 
 
+def attack_node_assign(nodes, federation, attack, poisoned_node_percent, poisoned_sample_percent, poisoned_noise_percent):
+    """Identify which nodes will be attacked"""
+    import random
+    import math
+
+    attack_matrix = []
+    n_nodes = len(nodes)
+    if n_nodes == 0:
+        return attack_matrix
+
+    nodes_index = []
+    # Get the nodes index
+    if federation == "DFL":
+        nodes_index = list(nodes.keys())
+    else:
+        for node in nodes:
+            if nodes[node]["role"] != "server":
+                nodes_index.append(node)
+
+    n_nodes = len(nodes_index)
+    # Number of attacked nodes, round up
+    num_attacked = int(math.ceil(poisoned_node_percent / 100 * n_nodes))
+    if num_attacked > n_nodes:
+        num_attacked = n_nodes
+
+    # Get the index of attacked nodes
+    attacked_nodes = random.sample(nodes_index, num_attacked)
+
+    # Assign the role of each node
+    for node in nodes:
+        node_att = 'No Attack'
+        attack_sample_persent = 0
+        poisoned_ratio = 0
+        if node in attacked_nodes:
+            node_att = attack
+            attack_sample_persent = poisoned_sample_percent / 100
+            poisoned_ratio = poisoned_noise_percent / 100
+        nodes[node]['attacks'] = node_att
+        nodes[node]['poisoned_sample_percent'] = attack_sample_persent
+        nodes[node]['poisoned_ratio'] = poisoned_ratio
+        attack_matrix.append([node, node_att, attack_sample_persent, poisoned_ratio])
+    return nodes, attack_matrix
+
+
 @app.route("/scenario/deployment/run", methods=["POST"])
 def fedstellar_scenario_deployment_run():
     if "user" in session.keys():
@@ -620,10 +665,23 @@ def fedstellar_scenario_deployment_run():
             nodes = data['nodes']
             scenario_name = f'fedstellar_{data["federation"]}_{datetime.datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}'
 
+            # Get attack info
+            attack = data["attacks"]
+            poisoned_node_percent = int(data["poisoned_node_percent"])
+            poisoned_sample_percent = int(data["poisoned_sample_percent"])
+            poisoned_noise_percent = int(data["poisoned_noise_percent"])
+            federation = data["federation"]
+            # Get attack matrix
+            print("Generating attack matrix...")
+            nodes, attack_matrix = attack_node_assign(nodes, federation, attack, poisoned_node_percent, poisoned_sample_percent, poisoned_noise_percent)
+            print(nodes)
+            print(attack_matrix)
+
             args = {
                 "scenario_name": scenario_name,
                 "config": app.config['config_dir'],
                 "logs": app.config['log_dir'],
+                "models": app.config['model_dir'],
                 "n_nodes": data["n_nodes"],
                 "matrix": data["matrix"],
                 "federation": data["federation"],
@@ -636,6 +694,7 @@ def fedstellar_scenario_deployment_run():
                 "python": app.config['python_path'],
                 "network_subnet": data["network_subnet"],
                 "network_gateway": data["network_gateway"],
+                "attack_matrix": attack_matrix,
             }
             # Save args in a file
             scenario_path = os.path.join(app.config['config_dir'], scenario_name)
@@ -668,6 +727,11 @@ def fedstellar_scenario_deployment_run():
                 participant_config["model_args"]["model"] = data["model"]
                 participant_config["training_args"]["epochs"] = int(data["epochs"])
                 participant_config["device_args"]["accelerator"] = data["accelerator"]  # same for all nodes
+
+                # Get attack config for each node
+                participant_config["adversarial_args"]["attacks"] = node_config["attacks"]
+                participant_config["adversarial_args"]["poisoned_sample_percent"] = node_config["poisoned_sample_percent"]
+                participant_config["adversarial_args"]["poisoned_ratio"] = node_config["poisoned_ratio"]
 
                 with open(participant_file, 'w') as f:
                     json.dump(participant_config, f, sort_keys=False, indent=2)
