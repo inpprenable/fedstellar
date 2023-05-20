@@ -589,6 +589,7 @@ class Controller:
     def remove_files_by_scenario(cls, scenario_name):
         import shutil
         shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_CONFIG_DIR"], scenario_name))
+        shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_MODELS_DIR"], scenario_name))
         try:
             shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_LOGS_DIR"], scenario_name))
         except PermissionError:
