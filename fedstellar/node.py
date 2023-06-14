@@ -1,5 +1,5 @@
 # 
-# This file is part of the fedstellar framework (see https://github.com/enriquetomasmb/fedstellar).
+# This file is part of the Fedstellar platform (see https://github.com/enriquetomasmb/fedstellar).
 # Copyright (c) 2023 Enrique Tomás Martínez Beltrán.
 #
 import json
@@ -117,9 +117,9 @@ class Node(BaseNode):
             logging.info("[NODE] Tracking W&B enabled")
             logging.getLogger("wandb").setLevel(logging.ERROR)
             if self.hostdemo:
-                wandblogger = FedstellarWBLogger(project="framework-enrique", group=self.experiment_name, name=f"participant_{self.idx}")
+                wandblogger = FedstellarWBLogger(project="platform-enrique", group=self.experiment_name, name=f"participant_{self.idx}")
             else:
-                wandblogger = FedstellarWBLogger(project="framework-enrique", group=self.experiment_name, name=f"participant_{self.idx}")
+                wandblogger = FedstellarWBLogger(project="platform-enrique", group=self.experiment_name, name=f"participant_{self.idx}")
             wandblogger.watch(model, log="all")
             self.learner = learner(model, data, config=self.config, logger=wandblogger)
         else:
@@ -371,7 +371,7 @@ class Node(BaseNode):
                         )
                         if models_added is not None:
                             logging.info("[NODE.add_model] self.broadcast with MODELS_AGGREGATED = {}".format(models_added))
-                            # TODO: Fix bug at MacBook. When CPU is high, only new nodes will be sent.
+                            # TODO: Improve this functionality by a more efficient one.
                             self.broadcast(
                                 CommunicationProtocol.build_models_aggregated_msg(
                                     models_added
@@ -419,15 +419,10 @@ class Node(BaseNode):
 
         # Set train set
         if self.round is not None:
-            # self.__train_set = self.__vote_train_set()
             for n in self.get_neighbors():
                 if n.get_name() not in self.__train_set:
                     self.__train_set.append(n.get_name())
             self.__train_set.append(self.get_name()) if self.get_name() not in self.__train_set else None
-            # if self.config.participant["device_args"]["role"] != Role.TRAINER:
-            #     self.__train_set.append(self.get_name()) if self.get_name() not in self.__train_set else None
-            # else:
-            #     self.__train_set.remove(self.get_name()) if self.get_name() in self.__train_set else None
             logging.info("[NODE.__train_step] __train_set = {}".format(self.__train_set))
             self.__validate_train_set()
 
@@ -653,7 +648,7 @@ class Node(BaseNode):
         # Set Next Round
         self.aggregator.clear()
         logging.info("[NODE] Finalizing round: {}".format(self.round))
-        self.learner.finalize_round()  # TODO: Fix to improve functionality
+        self.learner.finalize_round()  # TODO: Improve functionality
         self.round = self.round + 1
         self.learner.logger.log_metrics({"Round": self.round}, step=self.learner.logger.global_step)
         logging.info("[LightningLearner] Starting round: {}".format(self.round))
@@ -690,7 +685,7 @@ class Node(BaseNode):
             self.totalrounds = None
             self.__model_initialized = False
             # logging.info("[NODE] FL experiment finished | __stop_learning()")
-            # self.__stop_learning()  # TODO: 20-12-22 | This is a temporal fix to avoid the node to continue training after the FL experiment is finished
+            # self.__stop_learning()  # TODO: This is a temporal fix to avoid the node to continue training after the FL experiment is finished
 
     def __transfer_aggregator_role(self, schema):
         if schema == "random":
@@ -872,7 +867,6 @@ class Node(BaseNode):
                 logging.error(
                     "[NODE] Aggregation finished with no parameters"
                 )
-                # TODO: Testing 20-12-2022 (remove stop and add broadcast)
                 # self.stop()
                 # self.broadcast(CommunicationProtocol.build_models_ready_msg(self.round))
             try:

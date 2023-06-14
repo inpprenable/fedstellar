@@ -90,7 +90,7 @@ class TrimmedMean(Aggregator):
         for layer in accum:
             accum[layer] = torch.zeros_like(accum[layer])
 
-        # Add weighteds models
+        # Add weighted models
         logging.info("[TrimmedMean.aggregate] Aggregating models: num={}".format(len(models)))
 
         # Calculate the trimmedmean for each parameter

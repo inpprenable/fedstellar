@@ -1,5 +1,5 @@
 # 
-# This file is part of the fedstellar framework (see https://github.com/enriquetomasmb/fedstellar).
+# This file is part of the Fedstellar platform (see https://github.com/enriquetomasmb/fedstellar).
 # Copyright (c) 2023 Enrique Tomás Martínez Beltrán.
 #
 import json
@@ -494,7 +494,7 @@ class BaseNode(threading.Thread, Observer):
             self.rm_neighbor(obj)
 
         elif event == Events.NODE_CONNECTED_EVENT:
-            # Este evento lo notifica NodeConnection. Previamente se ha tenido que conectar con el nodo.
+            # This event is reported by NodeConnection. Previously it has had to connect to the node.
             logging.debug("[BASENODE.update (observer) | Events.NODE_CONNECTED_EVENT] Connecting to: {}".format(obj[0]))
             n, _ = obj
             n.send(CommunicationProtocol.build_beat_msg(self.get_name()))

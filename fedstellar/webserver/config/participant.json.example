@@ -68,7 +68,7 @@
       "your wandb key"
     ],
     "wandb_entity": "enriquetomasmb",
-    "wandb_project": "framework-enrique"
+    "wandb_project": "platform-enrique"
   },
   "mender_args": {
     "id": "",

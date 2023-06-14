@@ -24,7 +24,7 @@ class TopologyManager:
         self.b_symmetric = b_symmetric
         self.undirected_neighbor_num = undirected_neighbor_num
         self.topology = topology
-        # Inicialize nodes with array of tuples (0,0,0) with size n_nodes
+        # Initialize nodes with array of tuples (0,0,0) with size n_nodes
         self.nodes = np.zeros((n_nodes, 3), dtype=np.int32)
 
         self.b_fully_connected = False
@@ -236,7 +236,7 @@ class TopologyManager:
         np.fill_diagonal(topology_ring, 0)
 
         # After, randomly add some links for each node (symmetric)
-        # If undericted_neighbor_num is X, then each node has X links to other nodes
+        # If undirected_neighbor_num is X, then each node has X links to other nodes
         k = int(self.undirected_neighbor_num)
         topology_random_link = np.array(
             nx.to_numpy_matrix(nx.watts_strogatz_graph(self.n_nodes, k, 0)), dtype=np.float32

@@ -1,5 +1,5 @@
 # 
-# This file is part of the fedstellar framework (see https://github.com/enriquetomasmb/fedstellar).
+# This file is part of the Fedstellar platform (see https://github.com/enriquetomasmb/fedstellar).
 # Copyright (c) 2023 Chao Feng.
 #
 import os
@@ -71,7 +71,7 @@ class SENTIMENT140(MNIST):
 
         # from text to tensor
         vec = vocab.FastText()
-        # tokenlizing
+        # tokenizing
         tokenlized_text_data = data_df['text'].apply(str.lower).apply(str.split)
         # remove punctuation
         table = str.maketrans('', '', punctuation)

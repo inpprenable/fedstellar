@@ -235,7 +235,7 @@ def fedstellar_delete_user(user):
 @app.route("/add_user", methods=["POST"])
 def fedstellar_add_user():
     if session.get("role", None) == "admin":  # only Admin should be able to add user.
-        # before we add the user, we need to ensure this is doesn't exsit in database. We also need to ensure the id is valid.
+        # before we add the user, we need to ensure this is doesn't exit in database. We also need to ensure the id is valid.
         if request.form.get('user').upper() in list_users():
             user_list = list_users()
             user_table = zip(range(1, len(user_list) + 1),
@@ -380,8 +380,6 @@ def update_topology(scenario_name, nodes_list, nodes_config):
     tm = TopologyManager(n_nodes=len(nodes_list), topology=matrix, scenario_name=scenario_name)
     tm.update_nodes(nodes_config)
     tm.draw_graph(path=os.path.join(app.config['config_dir'], scenario_name, f'topology.png'))  # TODO: Improve this
-
-    # tm.update_topology_3d_json(participants=nodes_config, path=os.path.join(app.config['config_dir'], f'topology.json'))
 
 
 @app.route("/scenario/<scenario_name>/node/update", methods=['POST'])

@@ -1,5 +1,5 @@
 # 
-# This file is part of the fedstellar framework (see https://github.com/enriquetomasmb/fedstellar).
+# This file is part of the Fedstellar platform (see https://github.com/enriquetomasmb/fedstellar).
 # Copyright (c) 2023 Enrique Tomás Martínez Beltrán.
 # 
 
@@ -60,7 +60,7 @@ def test_mender_upload_artifact():
     # wget https://raw.githubusercontent.com/enriquetomasmb/mender/main/client.py -P /home/${USER}/fedstellar
     # python3 /home/${USER}/fedstellar/client.py
     # echo "DFL" > /tmp/dfl.txt
-    mender.upload_artifact(artifact_path="/app/my-update-2.0.mender", description="Artifact created from Fedstellar framework")
+    mender.upload_artifact(artifact_path="/app/my-update-2.0.mender", description="Artifact created from Fedstellar platform")
 
 def test_mender_deploy_artifact():
     from fedstellar.config.mender import Mender

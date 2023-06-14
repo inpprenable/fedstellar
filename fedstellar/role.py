@@ -1,5 +1,5 @@
 #
-# This file is part of the fedstellar framework (see https://github.com/enriquetomasmb/fedstellar).
+# This file is part of the Fedstellar platform (see https://github.com/enriquetomasmb/fedstellar).
 # Copyright (c) 2023 Enrique Tomás Martínez Beltrán.
 #
 
@@ -11,7 +11,7 @@
 
 class Role:
     """
-    This class defines the participant roles of the framework.
+    This class defines the participant roles of the platform.
     """
 
     """

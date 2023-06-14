@@ -111,7 +111,7 @@ class Controller:
                             |  _/ _ \/ _` / __| __/ _ \ | |/ _` | '__|
                             | ||  __/ (_| \__ \ ||  __/ | | (_| | |   
                             \_| \___|\__,_|___/\__\___|_|_|\__,_|_|   
-                         Framework for Decentralized Federated Learning 
+                         A Platform for Decentralized Federated Learning 
                        Enrique Tomás Martínez Beltrán (enriquetomas@um.es)
                     """
         print("\x1b[0;36m" + banner + "\x1b[0m")
@@ -149,7 +149,7 @@ class Controller:
                 for i in self.config.participants:
                     logging.info("[Mender.module] Device {} | IP: {}".format(i['device_args']['idx'], i['network_args']['ipdemo']))
                     logging.info("[Mender.module] \tCreating artifacts...")
-                    logging.info("[Mender.module] \tSending Fedstellar framework...")
+                    logging.info("[Mender.module] \tSending Fedstellar Core...")
                     # mender.deploy_artifact_device("my-update-2.0.mender", i['device_args']['idx'])
                     logging.info("[Mender.module] \tSending configuration...")
                     time.sleep(5)
