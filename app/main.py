@@ -6,10 +6,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))  # Parent directo
 import fedstellar
 from fedstellar.controller import Controller
 
-argparser = argparse.ArgumentParser(description='Controller of Fedstellar framework', add_help=False)
+argparser = argparse.ArgumentParser(description='Controller of Fedstellar platform', add_help=False)
 
 argparser.add_argument('-cl', '--cloud', dest='cloud', action='store_true', default=False,
-                       help='Run framework in cloud (default: False) (only for Linux)')
+                       help='Run platform in cloud (default: False) (only for Linux)')
 argparser.add_argument('-f', '--federation', dest='federation', default="DFL",
                        help='Federation architecture: CFL, DFL, or SDFL (default: DFL)')
 argparser.add_argument('-t', '--topology', dest='topology', default="fully",
@@ -22,7 +22,7 @@ argparser.add_argument('-sp', '--statsport', dest='statsport', default=5100,
                        help='Statistics port (default: 5100)')
 argparser.add_argument('-s', '--simulation', action='store_false', dest='simulation', help='Run simulation')
 argparser.add_argument('-d', '--docker', dest='docker', action='store_true', default=False,
-                       help='Run framework in docker (default: False)')
+                       help='Run platform in docker (default: False)')
 argparser.add_argument('-c', '--config', dest='config', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config'),
                        help='Config directory path')
 argparser.add_argument('-l', '--logs', dest='logs', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'),

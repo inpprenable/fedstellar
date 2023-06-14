@@ -340,5 +340,5 @@ class FedstellarWBLogger(Logger):
             artifact.add_file(p, name="model.ckpt")
             aliases = ["latest", "best"] if p == checkpoint_callback.best_model_path else ["latest"]
             self.experiment.log_artifact(artifact, aliases=aliases)
-            # remember logged models - timestamp needed in case filename didn't change (lastkckpt or custom name)
+            # remember logged models - timestamp needed in case filename didn't change (lackluster or custom name)
             self._logged_model_time[p] = t

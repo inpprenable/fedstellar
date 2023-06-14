@@ -136,7 +136,6 @@ class FedstellarLogger(Logger):
         __step = self.global_step + self.local_step
 
         metrics = _add_prefix(metrics, self._prefix, self.LOGGER_JOIN_CHAR)
-        # logging.info(f"[Statisticslogger] Logging metrics: {metrics}, step: {__step}")
 
         for k, v in metrics.items():
             if isinstance(v, Tensor):
@@ -184,7 +183,7 @@ class FedstellarLogger(Logger):
         # prepare the file path
         hparams_file = os.path.join(dir_path, self.NAME_HPARAMS_FILE)
 
-        # save the metatags file if it doesn't exist and the log directory exists
+        # save the metadata file if it doesn't exist and the log directory exists
         if self._fs.isdir(dir_path) and not self._fs.isfile(hparams_file):
             save_hparams_to_yaml(hparams_file, self.hparams)
 

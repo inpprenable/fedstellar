@@ -1,5 +1,5 @@
 #
-# This file is part of the fedstellar framework (see https://github.com/enriquetomasmb/fedstellar).
+# This file is part of the Fedstellar platform (see https://github.com/enriquetomasmb/fedstellar).
 # Copyright (c) 2023 Enrique Tomás Martínez Beltrán.
 #
 
@@ -14,7 +14,7 @@ VERSION = "0.1"
 AUTHOR = "Enrique Tomás Martínez Beltrán"
 AUTHOR_EMAIL = "enriquetomas@um.es"
 URL = "https://github.com/enriquetomasmb/fedstellar"
-DESCRIPTION = "Framework for dynamic scenario management using DFL approach"
+DESCRIPTION = "Platform for dynamic scenario management using Decentralized Federated Learning"
 LONG_DESCRIPTION = (HERE / "README.md").read_text(encoding="utf-8")
 LONG_DESC_TYPE = "text/markdown"
 LICENSE = "MIT"

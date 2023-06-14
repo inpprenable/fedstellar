@@ -1,5 +1,5 @@
 #
-# This file is part of the fedstellar framework (see https://github.com/enriquetomasmb/fedstellar).
+# This file is part of the Fedstellar platform (see https://github.com/enriquetomasmb/fedstellar).
 # Copyright (c) 2023 Enrique Tomás Martínez Beltrán.
 #
 
@@ -154,7 +154,7 @@ class SyscallModelAutoencoder(pl.LightningModule):
         """ """
         z = self.encode(x)
         z = self.decode(z)
-        return x
+        return z
 
     def configure_optimizers(self):
         """ """
