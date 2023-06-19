@@ -75,7 +75,7 @@ If you use Fedstellar in a scientific publication, we would appreciate using the
 @article{MartinezBeltran:Fedstellar:2023,
     title     = {Fedstellar: A Platform for Decentralized Federated Learning},
     author    = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and Perales G\'omez, \'Angel Luis and Feng, Chao and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
-    journal   = {X},
+    journal   = {arXiv preprint arXiv:2306.09750},
     year      = {2023},
 }
 ```
