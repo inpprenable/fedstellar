@@ -10,6 +10,7 @@ argparser = argparse.ArgumentParser(description='Controller of Fedstellar platfo
 
 argparser.add_argument('-cl', '--cloud', dest='cloud', action='store_true', default=False,
                        help='Run platform in cloud (default: False) (only for Linux)')
+argparser.add_argument('-dd', '--dev', dest='dev', action='store_true', default=False, help='Run platform in dev mode')
 argparser.add_argument('-f', '--federation', dest='federation', default="DFL",
                        help='Federation architecture: CFL, DFL, or SDFL (default: DFL)')
 argparser.add_argument('-t', '--topology', dest='topology', default="fully",

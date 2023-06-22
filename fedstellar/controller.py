@@ -74,6 +74,7 @@ class Controller:
         self.scenario_name = args.scenario_name if hasattr(args, "scenario_name") else None
         self.start_date_scenario = None
         self.cloud = args.cloud if hasattr(args, 'cloud') else None
+        self.dev = args.dev if hasattr(args, 'dev') else None
         self.federation = args.federation
         self.topology = args.topology
         self.webserver = args.webserver
@@ -174,7 +175,10 @@ class Controller:
             webserver_path = os.path.join(current_dir, "webserver")
             with open(f'{self.log_dir}/server.log', 'w', encoding='utf-8') as log_file:
                 # Remove option --reload for production
-                subprocess.Popen(["gunicorn", "--workers", "4", "--threads", "4", "--bind", f"unix:/tmp/fedstellar.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+                if self.dev:
+                    subprocess.Popen(["gunicorn", "--workers", "2", "--threads", "2", "--bind", f"unix:/tmp/fedstellar-dev.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+                else:
+                    subprocess.Popen(["gunicorn", "--workers", "4", "--threads", "4", "--bind", f"unix:/tmp/fedstellar.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
 
         else:
             logging.info(f"Running Fedstellar Webserver (local): http://127.0.0.1:{self.webserver_port}")
@@ -256,8 +260,6 @@ class Controller:
             command = '''docker network rm $(docker network ls | grep fedstellar | awk '{print $1}') > /dev/null 2>&1'''
             time.sleep(1)
             os.system(command)
-
-
 
         except Exception as e:
             raise Exception("Error while killing docker containers: {}".format(e))
