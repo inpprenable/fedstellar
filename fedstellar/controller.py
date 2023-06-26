@@ -538,12 +538,17 @@ class Controller:
             node['tracking_args']['log_dir'] = "/fedstellar/app/logs"
             node['tracking_args']['config_dir'] = f"/fedstellar/app/config/{self.scenario_name}"
             node['tracking_args']['model_dir'] = f"/fedstellar/app/models/{self.scenario_name}"
-            if sys.platform == "linux":
-                node['scenario_args']['controller'] = "host.docker.internal" + ":" + str(self.webserver_port)
-            elif sys.platform == "darwin":
-                node['scenario_args']['controller'] = "host.docker.internal" + ":" + str(self.webserver_port)
+            # Communication controller-nodes in development mode
+            if self.dev:
+                node['scenario_args']['controller'] = "dev.federatedlearning.inf.um.es"
             else:
-                node['scenario_args']['controller'] = "host.docker.internal" + ":" + str(self.webserver_port)
+                # Communication controller-nodes in production mode
+                if sys.platform == "linux":
+                    node['scenario_args']['controller'] = "host.docker.internal" + ":" + str(self.webserver_port)
+                elif sys.platform == "darwin":
+                    node['scenario_args']['controller'] = "host.docker.internal" + ":" + str(self.webserver_port)
+                else:
+                    node['scenario_args']['controller'] = "host.docker.internal" + ":" + str(self.webserver_port)
 
             # Write the config file in config directory
             with open(f"{self.config_dir}/participant_{node['device_args']['idx']}.json", "w") as f:

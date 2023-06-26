@@ -695,6 +695,7 @@ def fedstellar_scenario_deployment_run():
                 "simulation": data["simulation"],
                 "docker": data["docker"],
                 "env": None,
+                "dev": True if "dev" in request.host else False,
                 "webserver": True,
                 "webport": request.host.split(":")[1] if ":" in request.host else 80,  # Get the port of the webserver, if not specified, use 80
                 "python": app.config['python_path'],
