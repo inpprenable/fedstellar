@@ -734,6 +734,7 @@ def fedstellar_scenario_deployment_run():
                 participant_config["model_args"]["model"] = data["model"]
                 participant_config["training_args"]["epochs"] = int(data["epochs"])
                 participant_config["device_args"]["accelerator"] = data["accelerator"]  # same for all nodes
+                participant_config["device_args"]["logging"] = data["logginglevel"]  # same for all nodes
 
                 # Get attack config for each node
                 participant_config["adversarial_args"]["attacks"] = node_config["attacks"]

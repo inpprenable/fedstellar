@@ -8,8 +8,7 @@
     "controller": "127.0.0.1:5000",
     "random_seed": 0,
     "n_nodes": 0,
-    "config_version": "development",
-    "debug": true
+    "config_version": "development"
   },
   "device_args": {
     "uid": "",
@@ -20,7 +19,8 @@
     "start": false,
     "accelerator": "cpu",
     "devices": 2,
-    "strategy": "ddp"
+    "strategy": "ddp",
+    "logging": false
   },
   "geo_args": {
     "latitude": "46.762520",
