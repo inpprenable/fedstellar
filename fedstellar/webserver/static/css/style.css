@@ -21,6 +21,11 @@
     margin-bottom: 0;
 }
 
+.navbar-brand {
+    font-size: 25px;
+    line-height: 30px;
+}
+
 .container.footer {
     position: absolute;
     bottom: 0;
@@ -171,10 +176,32 @@ td {
 
 .form-group {
     margin-bottom: 1rem !important;
+    vertical-align: baseline !important;
 }
 
 .dropdown-toggle:empty::after {
     margin-left: 0;
+}
+
+.container-shadow {
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    margin: auto auto 3%;
+}
+
+.container-shadow h3 {
+    color: #2c3e50;
+    font-size: 24px;
+}
+
+.container-shadow p {
+    color: #7f8c8d;
+}
+
+.container-shadow li {
+    color: #7f8c8d;
 }
 
 @media (min-width: 992px) {

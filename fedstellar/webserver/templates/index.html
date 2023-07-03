@@ -4,27 +4,98 @@
 {{ super() }}
 
 <br>
-<div id="info-container" class="col-md-6">
+<div class="col-md-12 container-shadow">
+    <div class="col-md-6">
     <h3>Introduction</h3>
-    <p>Fedstellar is a modular, adaptable and extensible platform for creating centralized and decentralized architectures using Federated Learning. Also, the platform enables the creation of a standard approach for developing, deploying, and managing federated learning applications.</p>
-    <p>The platform enables developers to create distributed applications that use federated learning algorithms to improve user experience, security, and privacy. It provides features for managing data, managing models, and managing federated learning processes. It also provides a comprehensive
-        set of
-        tools to help developers monitor and analyze the performance of their applications.</p>
+    <p>Fedstellar is an innovative platform that facilitates the training of Federated Learning models in a decentralized fashion across many physical and virtualized devices. Also, the platform enables the creation of a standard approach for developing, deploying, and managing federated
+        applications.</p>
+    <p>The platform supports the establishment of federations comprising diverse devices, network topologies, and algorithms. It also provides sophisticated federation management tools and performance metrics to facilitate efficient learning process monitoring. This is achieved through extensible
+        modules that offer data storage and asynchronous capabilities alongside efficient mechanisms for model training, communication, and comprehensive analysis for federation monitoring.
+    </p>
+    <p>The platform incorporates a modular architecture comprising three elements:</p>
+    <ul>
+        <li><b>Frontend</b>: A user-friendly frontend for experiment setup and monitoring.</li>
+        <li><b>Controller</b>: A controller for effective orchestration of operations.</li>
+        <li><b>Core</b>: A core component deployed in each device for model training and communication.</li>
+    </ul>
     <p>Fedstellar is developed by <a href="https://enriquetomasmb.com/">Enrique Tomás Martínez Beltrán</a> in collaboration with the <a href="https://um.es/en">University of Murcia</a>, <a href="https://www.armasuisse.ch/">Armasuisse</a> and the <a href="https://www.uzh.ch/">University of Zurich
         (UZH)</a>.</p>
 
     <h3>Documentation</h3>
     <p>The documentation of the platform is available <a href="https://fedstellar.enriquetomasmb.com/">here</a>. The documentation includes an <a href="https://fedstellar.enriquetomasmb.com/7ecafa3f19d05b4e9da98f734fd69aca7baa4965/installation.html">installation guide</a> and an <a
             href="https://fedstellar.enriquetomasmb.com/7ecafa3f19d05b4e9da98f734fd69aca7baa4965/api/index.html">API reference</a>.</p>
-
-</div>
-<div id="video-column" class="col-md-6">
+    </div>
+    <div class="col-md-6">
     <h3>Functionality Demonstration</h3>
     <p>The following video shows the functionality of the platform. It shows how to create a decentralized topology with different nodes using collaborative learning.</p>
     <div class="video-container">
         <iframe class="video" src="https://www.youtube-nocookie.com/embed/J_6OjNiIP3Y" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
     </div>
 </div>
+</div>
+
+<div class="col-md-12 container-shadow">
+    <h3>Publications</h3>
+    <p>Please cite the following publications if you use Fedstellar in your research</p>
+    <div class="publication">
+        <div class="publication-logo">
+            <img src="{{ url_for('static', filename='img/publications/arxiv.png') }}" alt="Fedstellar: A Platform for Decentralized Federated Learning">
+        </div>
+        <div class="publication-info">
+            <h4><a href="https://arxiv.org/abs/2306.09750">Fedstellar: A Platform for Decentralized Federated Learning</a></h4>
+            <p><b>Enrique Tomás Martínez Beltrán</b>, Ángel Luis Perales Gómez, Chao Feng, Pedro Miguel Sánchez Sánchez, Sergio López Bernal, Gérôme Bovet, Manuel Gil Pérez, Gregorio Martínez Pérez, Alberto Huertas Celdrán</p>
+            <button class="bibtex-button" onclick="window.open('https://arxiv.org/abs/2306.09750')">Paper</button>
+            <button class="bibtex-button" onclick="copyToClipboard('bibtex1')">Copy BibTeX</button>
+            <div id="bibtex1" style="display: none;">
+                {% raw %}
+                @article{MartinezBeltran:Fedstellar:2023,
+                title = {{Fedstellar: A Platform for Decentralized Federated Learning}},
+                author = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and Perales G\'omez, \'Angel Luis and Feng, Chao and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas
+                Celdr{\'a}n, Alberto},
+                journal = {arXiv preprint arXiv:2306.09750},
+                year = {2023}
+                }
+                {% endraw %}
+            </div>
+        </div>
+    </div>
+    <div class="publication">
+        <div class="publication-logo">
+            <img src="{{ url_for('static', filename='img/publications/arxiv.png') }}" alt="Decentralized Federated Learning: Fundamentals, State-of-the-art, Frameworks, Trends, and Challenges">
+        </div>
+        <div class="publication-info">
+            <h4><a href="https://arxiv.org/abs/2211.08413">Decentralized Federated Learning: Fundamentals, State-of-the-art, Frameworks, Trends, and Challenges</a></h4>
+            <p><b>Enrique Tomás Martínez Beltrán</b>, Mario Quiles Pérez, Pedro Miguel Sánchez Sánchez, Sergio López Bernal, Gérôme Bovet, Manuel Gil Pérez, Gregorio Martínez Pérez, Alberto Huertas Celdrán</p>
+            <button class="bibtex-button" onclick="window.open('https://arxiv.org/abs/2211.08413')">Paper</button>
+            <button class="bibtex-button" onclick="copyToClipboard('bibtex2')">Copy BibTeX</button>
+            <div id="bibtex2" style="display: none;">
+                {% raw %}
+                @article{MartinezBeltran:DFL:2022,
+                title={{Decentralized Federated Learning: Fundamentals, State-of-the-art, Frameworks, Trends, and Challenges}},
+                author={Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and Quiles P{\'e}rez, Mario and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
+                journal={arXiv preprint arXiv:2211.08413},
+                year={2023}
+                }
+                {% endraw %}
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function copyToClipboard(id) {
+        var bibtex = document.getElementById(id).innerText;
+        navigator.clipboard.writeText(bibtex)
+            .then(() => {
+                alert('BibTeX copied to clipboard');
+            })
+            .catch(err => {
+                alert('Error in copy: ' + err);
+            });
+    }
+</script>
+
 
 <style>
     .video-container {
@@ -44,6 +115,64 @@
         aspect-ratio: 16 / 9;
         width: 100%;
     }
+</style>
+
+<style>
+
+    .publication {
+        display: flex;
+        align-items: center;
+        margin-bottom: 30px;
+        padding: 20px;
+        border-radius: 5px;
+        border: 1px solid #ecf0f1;
+    }
+
+    .publication-logo img {
+        width: 100px;
+        height: auto;
+        margin-right: 20px;
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .publication-logo img:hover {
+        transform: scale(1.1);
+    }
+
+    .publication-info h4 {
+        color: #3498db;
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+
+    .publication-info p {
+        color: #7f8c8d;
+        font-size: 14px;
+    }
+
+    .publication-info a {
+        color: #3498db;
+        text-decoration: none;
+    }
+
+    .publication-info a:hover {
+        text-decoration: underline;
+    }
+
+    .bibtex-button {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .bibtex-button:hover {
+        background-color: #2980b9;
+    }
+
 </style>
 
 
