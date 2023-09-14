@@ -17,6 +17,7 @@ from fedstellar.learning.pytorch.syscall.models.autoencoder import SyscallModelA
 from fedstellar.learning.pytorch.cifar10.models.resnet import CIFAR10ModelResNet
 from fedstellar.learning.pytorch.cifar10.models.fastermobilenet import FasterMobileNet
 from fedstellar.learning.pytorch.cifar10.models.simplemobilenet import SimpleMobileNetV1
+from fedstellar.learning.pytorch.cifar10.models.cnn import CIFAR10ModelCNN
 from fedstellar.learning.pytorch.syscall.models.svm import SyscallModelSGDOneClassSVM
 from fedstellar.node import Node
 from fedstellar.learning.pytorch.datamodule import DataModule
@@ -110,6 +111,8 @@ def main():
             model = FasterMobileNet()
         elif model_name == "simplemobilenet":
             model = SimpleMobileNetV1()
+        elif model_name == "CNN":
+            model = CIFAR10ModelCNN()
         else:
             raise ValueError(f"Model {model} not supported")
     else:
