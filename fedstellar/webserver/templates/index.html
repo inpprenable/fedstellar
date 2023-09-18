@@ -56,12 +56,20 @@
             <button class="bibtex-button" onclick="copyToClipboard('bibtex1')">Copy BibTeX</button>
             <div id="bibtex1" style="display: none;">
                 {% raw %}
-                @article{MartinezBeltran:Fedstellar:2023,
+                @article{MartinezBeltran:fedstellar:2023,
                 title = {{Fedstellar: A Platform for Decentralized Federated Learning}},
-                author = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and Perales G\'omez, \'Angel Luis and Feng, Chao and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas
+                author = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and Perales G{\'o}mez, {\'A}ngel Luis and Feng, Chao and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas
                 Celdr{\'a}n, Alberto},
+                year = 2023,
+                url = {https://arxiv.org/abs/2306.09750},
                 journal = {arXiv preprint arXiv:2306.09750},
-                year = {2023}
+                abstract = {In 2016, Google proposed Federated Learning (FL) as a novel paradigm to train Machine Learning (ML) models across the participants of a federation while preserving data privacy. Since its birth, Centralized FL (CFL) has been the most used approach, where a central entity
+                aggregates participants' models to create a global one. However, CFL presents limitations such as communication bottlenecks, single point of failure, and reliance on a central server. Decentralized Federated Learning (DFL) addresses these issues by enabling decentralized model
+                aggregation and minimizing dependency on a central entity. Despite these advances, current platforms training DFL models struggle with key issues such as managing heterogeneous federation network topologies. To overcome these challenges, this paper presents Fedstellar, a novel
+                platform designed to train FL models in a decentralized, semi-decentralized, and centralized fashion across diverse federations of physical or virtualized devices. The Fedstellar implementation encompasses a web application with an interactive graphical interface, a controller for
+                deploying federations of nodes using physical or virtual devices, and a core deployed on each device which provides the logic needed to train, aggregate, and communicate in the network. The effectiveness of the platform has been demonstrated in two scenarios: a physical deployment
+                involving single-board devices such as Raspberry Pis for detecting cyberattacks, and a virtualized deployment comparing various FL approaches in a controlled environment using MNIST and CIFAR-10 datasets. In both scenarios, Fedstellar demonstrated consistent performance and
+                adaptability, achieving F1 scores of 91\%, 98\%, and 91.2\% using DFL for detecting cyberattacks and classifying MNIST and CIFAR-10, respectively, reducing training time by 32\% compared to centralized approaches.},
                 }
                 {% endraw %}
             </div>
@@ -78,19 +86,21 @@
             <button class="bibtex-button" onclick="copyToClipboard('bibtex2')">Copy BibTeX</button>
             <div id="bibtex2" style="display: none;">
                 {% raw %}
-                @inproceedings{MartinezBeltran:DFL_demo:2023,
+                @inproceedings{MartinezBeltran:fedstellar_demo:2023,
                 title = {{Fedstellar: A Platform for Training Models in a Privacy-preserving and Decentralized Fashion}},
-                author={Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
-                booktitle = {Proceedings of the Thirty-Second International Joint Conference on
-                Artificial Intelligence, {IJCAI-23}},
+                author = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
+                year = 2023,
+                month = aug,
+                booktitle = {Proceedings of the Thirty-Second International Joint Conference on Artificial Intelligence, {IJCAI-23}},
                 publisher = {International Joint Conferences on Artificial Intelligence Organization},
-                editor = {Edith Elkind},
                 pages = {7154--7157},
-                year = {2023},
-                month = {8},
-                note = {Demo Track},
                 doi = {10.24963/ijcai.2023/838},
-                url = {https://doi.org/10.24963/ijcai.2023/838},
+                note = {Demo Track},
+                editor = {Edith Elkind},
+                abstract = {This paper presents Fedstellar, a platform for training decentralized Federated Learning (FL) models in heterogeneous topologies in terms of the number of federation participants and their connections. Fedstellar allows users to build custom topologies, enabling them to
+                control the aggregation of model parameters in a decentralized manner. The platform offers a Web application for creating, managing, and connecting nodes to ensure data privacy and provides tools to measure, monitor, and analyze the performance of the nodes. The paper describes the
+                functionalities of Fedstellar and its potential applications. To demonstrate the applicability of the platform, different use cases are presented in which decentralized, semi-decentralized, and centralized architectures are compared in terms of model performance, convergence time,
+                and network overhead when collaboratively classifying hand-written digits using the MNIST dataset.}
                 }
                 {% endraw %}
             </div>
@@ -99,7 +109,7 @@
     </div>
     <div class="publication">
         <div class="publication-logo">
-            <img src="{{ url_for('static', filename='img/publications/arxiv.png') }}" alt="Decentralized Federated Learning: Fundamentals, State of the Art, Frameworks, Trends, and Challenges">
+            <img src="{{ url_for('static', filename='img/publications/ieee.png') }}" alt="Decentralized Federated Learning: Fundamentals, State of the Art, Frameworks, Trends, and Challenges">
         </div>
         <div class="publication-info">
             <h4><a href="https://arxiv.org/abs/2211.08413">Decentralized Federated Learning: Fundamentals, State of the Art, Frameworks, Trends, and Challenges</a></h4>
@@ -109,10 +119,21 @@
             <div id="bibtex3" style="display: none;">
                 {% raw %}
                 @article{MartinezBeltran:DFL:2023,
-                title={{Decentralized Federated Learning: Fundamentals, State of the Art, Frameworks, Trends, and Challenges}},
-                author={Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and Quiles P{\'e}rez, Mario and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
-                journal={arXiv preprint arXiv:2211.08413},
-                year={2023}
+                title = {{Decentralized Federated Learning: Fundamentals, State of the Art, Frameworks, Trends, and Challenges}},
+                author = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and Quiles P{\'e}rez, Mario and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
+                year = 2023,
+                volume = {In press},
+                number = {1-1},
+                pages = {1-1},
+                journal = {IEEE Communications Surveys & Tutorials},
+                doi = {10.1109/COMST.2023.3315746},
+                preprint = {https://arxiv.org/abs/2211.08413},
+                abstract = {In recent years, Federated Learning (FL) has gained relevance in training collaborative models without sharing sensitive data. Since its birth, Centralized FL (CFL) has been the most common approach in the literature, where a central entity creates a global model.
+                However, a centralized approach leads to increased latency due to bottlenecks, heightened vulnerability to system failures, and trustworthiness concerns affecting the entity responsible for the global model creation. Decentralized Federated Learning (DFL) emerged to address these
+                concerns by promoting decentralized model aggregation and minimizing reliance on centralized architectures. However, despite the work done in DFL, the literature has not (i) studied the main aspects differentiating DFL and CFL; (ii) analyzed DFL frameworks to create and evaluate new
+                solutions; and (iii) reviewed application scenarios using DFL. Thus, this article identifies and analyzes the main fundamentals of DFL in terms of federation architectures, topologies, communication mechanisms, security approaches, and key performance indicators. Additionally, the
+                paper at hand explores existing mechanisms to optimize critical DFL fundamentals. Then, the most relevant features of the current DFL frameworks are reviewed and compared. After that, it analyzes the most used DFL application scenarios, identifying solutions based on the fundamentals
+                and frameworks previously defined. Finally, the evolution of existing DFL solutions is studied to provide a list of trends, lessons learned, and open challenges.}
                 }
                 {% endraw %}
             </div>
@@ -130,15 +151,51 @@
             <button class="bibtex-button" onclick="copyToClipboard('bibtex4')">Copy BibTeX</button>
             <div id="bibtex4" style="display: none;">
                 {% raw %}
-                @article{MartinezBeltran:DFL_mitigation:2023,
-                title={{Mitigating Communications Threats in Decentralized Federated Learning through Moving Target Defense}},
-                author={Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
-                journal={arXiv preprint arXiv:2307.11730},
-                year={2023}
+                @article{MartinezBeltran:DFL_mitigating_threats:2023,
+                title = {{Mitigating Communications Threats in Decentralized Federated Learning through Moving Target Defense}},
+                author = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
+                year = 2023,
+                url = {https://arxiv.org/abs/2307.11730},
+                journal = {arXiv preprint arXiv:2307.11730},
+                abstract = {The rise of Decentralized Federated Learning (DFL) has enabled the training of machine learning models across federated participants, fostering decentralized model aggregation and reducing dependence on a server. However, this approach introduces unique communication
+                security challenges that have yet to be thoroughly addressed in the literature. These challenges primarily originate from the decentralized nature of the aggregation process, the varied roles and responsibilities of the participants, and the absence of a central authority to oversee
+                and mitigate threats. Addressing these challenges, this paper first delineates a comprehensive threat model, highlighting the potential risks of DFL communications. In response to these identified risks, this work introduces a security module designed for DFL platforms to counter
+                communication-based attacks. The module combines security techniques such as symmetric and asymmetric encryption with Moving Target Defense (MTD) techniques, including random neighbor selection and IP/port switching. The security module is implemented in a DFL platform called
+                Fedstellar, allowing the deployment and monitoring of the federation. A DFL scenario has been deployed, involving eight physical devices implementing three security configurations: (i) a baseline with no security, (ii) an encrypted configuration, and (iii) a configuration integrating
+                both encryption and MTD techniques. The effectiveness of the security module is validated through experiments with the MNIST dataset and eclipse attacks. The results indicated an average F1 score of 95\%, with moderate increases in CPU usage (up to 63.2\% +-3.5\%) and network traffic
+                (230 MB +-15 MB) under the most secure configuration, mitigating the risks posed by eavesdropping or eclipse attacks.}
                 }
                 {% endraw %}
             </div>
 
+        </div>
+    </div>
+    <div class="publication">
+        <div class="publication-logo">
+            <img src="{{ url_for('static', filename='img/publications/arxiv.png') }}" alt="TemporalFED: Detecting Cyberattacks in Industrial Time-Series Data Using Decentralized Federated Learning">
+        </div>
+        <div class="publication-info">
+            <h4><a href="https://arxiv.org/abs/2308.03554">TemporalFED: Detecting Cyberattacks in Industrial Time-Series Data Using Decentralized Federated Learning</a></h4>
+            <p>Ángel Luis Perales Gómez, <b>Enrique Tomás Martínez Beltrán</b>, Pedro Miguel Sánchez Sánchez, Alberto Huertas Celdrán</p>
+            <button class="bibtex-button" onclick="window.open('https://arxiv.org/abs/2308.03554')">Paper</button>
+            <button class="bibtex-button" onclick="copyToClipboard('bibtex5')">Copy BibTeX</button>
+            <div id="bibtex5" style="display: none;">
+                {% raw %}
+                @article{PeralesGomez:temporalfed:2023,
+                title = {{TemporalFED: Detecting Cyberattacks in Industrial Time-Series Data Using Decentralized Federated Learning}},
+                author = {Perales G{\'o}mez, {\'A}ngel Luis and Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and S{\'a}nchez S{\'a}nchez, Pedro Miguel and Huertas Celdr{\'a}n, Alberto},
+                year = 2023,
+                url = {https://arxiv.org/abs/2308.03554},
+                journal = {arXiv preprint arXiv:2308.03554},
+                abstract = {Industry 4.0 has brought numerous advantages, such as increasing productivity through automation. However, it also presents major cybersecurity issues such as cyberattacks affecting industrial processes. Federated Learning (FL) combined with time-series analysis is a
+                promising cyberattack detection mechanism proposed in the literature. However, the fact of having a single point of failure and network bottleneck are critical challenges that need to be tackled. Thus, this article explores the benefits of the Decentralized Federated Learning (DFL)
+                in terms of cyberattack detection and resource consumption. The work presents TemporalFED, a software module for detecting anomalies in industrial environments using FL paradigms and time series. TemporalFED incorporates three components: Time Series Conversion, Feature Engineering,
+                and Time Series Stationary Conversion. To evaluate TemporalFED, it was deployed on Fedstellar, a DFL framework. Then, a pool of experiments measured the detection performance and resource consumption in a chemical gas industrial environment with different time-series configurations,
+                FL paradigms, and topologies. The results showcase the superiority of the configuration utilizing DFL and Semi-Decentralized Federated Learning (SDFL) paradigms, along with a fully connected topology, which achieved the best performance in anomaly detection. Regarding resource
+                consumption, the configuration without feature engineering employed less bandwidth, CPU, and RAM than other configurations.}
+                }
+                {% endraw %}
+            </div>
         </div>
     </div>
 </div>
