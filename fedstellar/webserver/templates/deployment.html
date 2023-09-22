@@ -39,6 +39,21 @@
     </div>
 </div>
 
+<!-- Model info -->
+<div class="modal fade" id="info-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Information</h5>
+            </div>
+            <div id="info-modal-body" class="modal-body"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Okay!</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="spinner"></div>
 
 <form id="form-configurations">
@@ -582,12 +597,27 @@
                 xhr.open("POST", "/scenario/deployment/run", true);
                 xhr.setRequestHeader('Content-Type', 'application/json');
                 xhr.send(JSON.stringify(data));
-
+                // Hide the modal
+                $('#confirm-modal').modal('hide');
                 document.querySelector(".overlay").style.display = "block";
                 document.getElementById("spinner").style.display = "block";
-                setTimeout(function () {
-                    window.location.href = "/scenario/";
-                }, 10000);
+                // Get response code
+                xhr.addEventListener("load", function () {
+                    if (xhr.status === 200) {
+                        // Redirect to /scenario/
+                        setTimeout(function () {
+                            window.location.href = "/scenario/";
+                        }, 10000);
+                    } else {
+                        document.querySelector(".overlay").style.display = "none";
+                        document.getElementById("spinner").style.display = "none";
+                        // If the user is a demo, show a modal with a message
+                        $('#confirm-modal').on('hidden.bs.modal', function () {
+                            $('#info-modal-body').html('You are not allowed to run a scenario.');
+                            $('#info-modal').modal('show');
+                        });
+                    }
+                });
 
             });
         }

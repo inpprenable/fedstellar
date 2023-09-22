@@ -95,17 +95,18 @@
                     </a>
                     <ul class="dropdown-menu">
                         <li>
-                            {% if session.get("role", None) == "admin" %}
+                            <a href="#">
+                                <i class="fa fa-id-card" style="margin-right: 5px"></i>Role: {{ session.get("role") }}
+                            </a>
+                        </li>
+                        {% if session.get("role", None) == "admin" %}
+                        <li>
                             <a href="{{ url_for('fedstellar_admin') }}">
-                                <i class="fa fa-id-card" style="margin-right: 5px"></i>My Profile
+                                <i class="fa fa-id-card" style="margin-right: 5px"></i>Admin Dashboard
                             </a>
-                            {% else %}
-                            <a href="{{ url_for('fedstellar_home') }}">
-                                <i class="fa fa-id-card" style="margin-right: 5px"></i>My Profile
-                            </a>
-                            {% endif %}
                         </li>
                         <li role="separator" class="divider"></li>
+                        {% endif %}
                         <li>
                             <a href="{{ url_for('fedstellar_logout') }}">
                                 <i class="fa fa-sign-out" style="margin-right: 5px"></i>Logout
@@ -150,6 +151,12 @@
 </div>
 
 </body>
+
+<script>
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
 
 <script>
     const copyright = document.getElementById("copyright");

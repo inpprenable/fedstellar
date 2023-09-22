@@ -550,6 +550,8 @@ def remove_scenario(scenario_name=None):
 def fedstellar_remove_scenario(scenario_name):
     # Stop the scenario
     if "user" in session.keys():
+        if session['role'] == "demo":
+            return abort(401)
         remove_scenario(scenario_name)
         return redirect(url_for('fedstellar_scenario'))
     else:
@@ -686,6 +688,8 @@ def attack_node_assign(nodes, federation, attack, poisoned_node_percent, poisone
 @app.route("/scenario/deployment/run", methods=["POST"])
 def fedstellar_scenario_deployment_run():
     if "user" in session.keys():
+        if session['role'] == "demo":
+            return abort(401)
         # Receive a JSON data with the scenario configuration
         if request.is_json:
             # Stop the running scenario
@@ -790,6 +794,8 @@ def fedstellar_scenario_deployment_run():
 @app.route("/scenario/<scenario_name>/deployment/reload", methods=["GET"])
 def fedstellar_scenario_deployment_reload(scenario_name):
     if "user" in session.keys():
+        if session['role'] == "demo":
+            return abort(401)
         # Stop the running scenario
         stop_all_scenarios()
         # Load the scenario configuration

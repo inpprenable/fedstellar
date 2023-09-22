@@ -13,7 +13,7 @@ from fedstellar.config.config import Config
 
 
 ###############################
-#    CommunicationProtocol    # --> Invoker of Command Patern
+#    CommunicationProtocol    # --> Invoker of Command Pattern
 ###############################
 
 

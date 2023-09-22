@@ -67,6 +67,15 @@ h1, h2, h3, h4, h5, h6 {
     display: block !important;
 }
 
+.table-centered td, .table-centered th {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.table-centered form {
+    display: inline-block;
+}
+
 @media screen and (max-width: 1200px) {
     .table-responsive {
         width: 100%;
