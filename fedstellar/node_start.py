@@ -3,7 +3,7 @@ import os
 import sys
 import time
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))  # Parent directory where is the fedml_api module
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from fedstellar.learning.pytorch.mnist.mnist import MNISTDataset
 from fedstellar.learning.pytorch.syscall.syscall import SYSCALLDataset
@@ -23,6 +23,7 @@ from fedstellar.node import Node
 from fedstellar.learning.pytorch.datamodule import DataModule
 
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
+# os.environ["GRPC_VERBOSITY"] = "debug"
 
 
 def main():
@@ -148,11 +149,11 @@ def main():
     # Node Connection to the neighbors
     for i in neighbors:
         print(f"Connecting to {i}")
-        node.connect_to(i.split(':')[0], int(i.split(':')[1]), full=False)
+        addr = f"{i.split(':')[0]}:{i.split(':')[1]}"
+        node.connect(addr)
         time.sleep(5)
 
     logging.info(f"Neighbors: {node.get_neighbors()}")
-    logging.info(f"Network nodes: {node.get_network_nodes()}")
 
     start_node = config.participant["device_args"]["start"]
 

@@ -5,12 +5,10 @@
 
 import logging
 import pickle
-import time
 from collections import OrderedDict
 
 import torch
 from lightning import Trainer
-from lightning.pytorch.callbacks import ModelSummary
 from lightning.pytorch.callbacks import RichProgressBar, RichModelSummary
 from lightning.pytorch.callbacks.progress.rich_progress import RichProgressBarTheme
 
@@ -51,29 +49,26 @@ class LightningLearner(NodeLearner):
 
         self.logger.log_metrics({"Round": self.round}, step=self.logger.global_step)
 
-
     def set_model(self, model):
         self.model = model
 
     def set_data(self, data):
         self.data = data
 
-    def encode_parameters(self, params=None, contributors=None, weight=None):
+    ####
+    # Model weights
+    ####
+    def encode_parameters(self, params=None):
         if params is None:
             params = self.model.state_dict()
         array = [val.cpu().numpy() for _, val in params.items()]
-        return pickle.dumps((array, contributors, weight))
+        return pickle.dumps(array)
 
     def decode_parameters(self, data):
         try:
-            params, contributors, weight = pickle.loads(data)
-            params_dict = zip(self.model.state_dict().keys(), params)
-            return (
-                OrderedDict({k: torch.tensor(v) for k, v in params_dict}),
-                contributors,
-                weight,
-            )
-        except DecodingParamsError:
+            params_dict = zip(self.model.state_dict().keys(), pickle.loads(data))
+            return OrderedDict({k: torch.tensor(v) for k, v in params_dict})
+        except:
             raise DecodingParamsError("Error decoding parameters")
 
     def check_parameters(self, params):
@@ -89,7 +84,7 @@ class LightningLearner(NodeLearner):
     def set_parameters(self, params):
         try:
             self.model.load_state_dict(params)
-        except ModelNotMatchingError:
+        except:
             raise ModelNotMatchingError("Not matching models")
 
     def get_parameters(self):
@@ -150,6 +145,8 @@ class LightningLearner(NodeLearner):
     def finalize_round(self):
         self.logger.global_step = self.logger.global_step + self.logger.local_step
         self.logger.local_step = 0
+        self.round += 1
+        self.logger.log_metrics({"Round": self.round}, step=self.logger.global_step)
         pass
 
     def create_trainer(self):

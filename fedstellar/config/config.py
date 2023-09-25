@@ -9,8 +9,6 @@ Module to define constants for the DFL system.
 """
 import json
 import logging
-from fedstellar.encrypter import AESCipher
-
 
 ###################
 #  Global Config  #
@@ -36,12 +34,6 @@ class Config:
 
         if participant_config_file is not None:
             self.set_participant_config(participant_config_file)
-
-            """
-            If ```BLOCK_SIZE`` is not divisible by the block size used for symetric encryption it will be rounded to the next closest value.
-            Try to strike a balance between hyper-segmentation and excessively large block size.
-            """
-            self.__adjust_block_size()
 
     def __getstate__(self):
         # Return the attributes of the class that should be serialized
@@ -82,28 +74,3 @@ class Config:
         self.participants_path = participants_config
         for participant in participants_config:
             self.add_participant_config(participant)
-
-    def __adjust_block_size(self):
-        if self.entity == "participant":
-            rest = self.participant['BLOCK_SIZE'] % AESCipher.get_block_size()
-            if rest != 0:
-                new_value = self.participant['BLOCK_SIZE'] + AESCipher.get_block_size() - rest
-                logging.info(
-                    "[SETTINGS] Changing buffer size to %d. %d is incompatible with the AES block size.",
-                    self.participant['BLOCK_SIZE'],
-                    new_value,
-                )
-                self.participant['BLOCK_SIZE'] = new_value
-        elif self.entity == "controller":
-            for participant in self.participants:
-                rest = participant['BLOCK_SIZE'] % AESCipher.get_block_size()
-                if rest != 0:
-                    new_value = participant['BLOCK_SIZE'] + AESCipher.get_block_size() - rest
-                    logging.info(
-                        "[SETTINGS] Changing buffer size to %d. %d is incompatible with the AES block size.",
-                        participant['BLOCK_SIZE'],
-                        new_value,
-                    )
-                    participant['BLOCK_SIZE'] = new_value
-        else:
-            raise Exception("Entity not supported")

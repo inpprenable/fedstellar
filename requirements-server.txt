@@ -5,7 +5,7 @@ netifaces==0.11.0
 numpy==1.24.2
 torch==2.0.1
 torchvision==0.15.2
-lightning==2.0.1
+lightning==2.0.9
 tensorboard==2.12.2
 tensorboardx==2.6
 flask==2.2.2
@@ -16,7 +16,7 @@ setuptools==67.6.1
 matplotlib==3.6.3
 networkx==3.1
 requests==2.28.2
-torchmetrics==0.11.0
+torchmetrics==1.2.0
 Pillow==9.4.0
 ansi2html==1.8.0
 Werkzeug==2.2.3
@@ -31,7 +31,8 @@ scikit-learn==1.2.2
 scikit-image==0.20.0
 torchtext==0.15.2
 datasets==2.10.1
-pandas==1.5.2
+pandas==2.0.3
 timm==0.6.13
 gunicorn==20.1.0
 nvidia-ml-py==11.525.84
+notebook==7.0.4

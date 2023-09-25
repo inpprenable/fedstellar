@@ -4,7 +4,6 @@ import hashlib
 import io
 import json
 import os
-import shutil
 import signal
 import sys
 import zipfile
@@ -22,7 +21,7 @@ from werkzeug.utils import secure_filename
 from fedstellar.webserver.database import list_users, verify, delete_user_from_db, add_user, scenario_update_record, scenario_set_all_status_to_finished, get_running_scenario, get_user_info, get_scenario_by_name, list_nodes_by_scenario_name, get_all_scenarios, remove_nodes_by_scenario_name, \
     remove_scenario_by_name, scenario_set_status_to_finished
 from fedstellar.webserver.database import read_note_from_db, write_note_into_db, delete_note_from_db, match_user_id_with_note_id
-from fedstellar.webserver.database import image_upload_record, list_images_for_user, match_user_id_with_image_uid, delete_image_from_db, get_image_file_name, update_node_record, list_nodes
+from fedstellar.webserver.database import image_upload_record, list_images_for_user, match_user_id_with_image_uid, delete_image_from_db, get_image_file_name, update_node_record
 
 app = Flask(__name__)
 app.config.from_object('config')
@@ -377,7 +376,8 @@ def update_topology(scenario_name, nodes_list, nodes_config):
     for node in nodes_list:
         for neighbour in node[5].split(" "):
             if neighbour != '':
-                matrix[nodes.index(node[2] + ':' + str(node[3])), nodes.index(neighbour)] = 1
+                if neighbour in nodes:
+                    matrix[nodes.index(node[2] + ':' + str(node[3])), nodes.index(neighbour)] = 1
     from fedstellar.utils.topologymanager import TopologyManager
     tm = TopologyManager(n_nodes=len(nodes_list), topology=matrix, scenario_name=scenario_name)
     tm.update_nodes(nodes_config)
