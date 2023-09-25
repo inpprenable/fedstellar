@@ -72,29 +72,51 @@ Distributed under the MIT License. See `LICENSE` for more information.
 If you use Fedstellar in a scientific publication, we would appreciate using the following citations:
 
 ```
-@article{MartinezBeltran:Fedstellar:2023,
-    title     = {{Fedstellar: A Platform for Decentralized Federated Learning}},
-    author    = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and Perales G\'omez, \'Angel Luis and Feng, Chao and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
-    journal   = {arXiv preprint arXiv:2306.09750},
-    year      = {2023},
+@article{MartinezBeltran:fedstellar:2023,
+	title        = {{Fedstellar: A Platform for Decentralized Federated Learning}},
+	author       = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and Perales G{\'o}mez, {\'A}ngel Luis and Feng, Chao and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
+	year         = 2023,
+	url		     = {https://arxiv.org/abs/2306.09750},
+	journal      = {arXiv preprint arXiv:2306.09750}
 }
 ```
 
 ```
 @article{MartinezBeltran:DFL:2023,
-  title={{Decentralized Federated Learning: Fundamentals, State-of-the-art, Frameworks, Trends, and Challenges}},
-  author={Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and Quiles P{\'e}rez, Mario and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
-  journal={arXiv preprint arXiv:2211.08413},
-  year={2023}
+	title        = {{Decentralized Federated Learning: Fundamentals, State of the Art, Frameworks, Trends, and Challenges}},
+	author       = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and Quiles P{\'e}rez, Mario and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
+	year         = 2023,
+  	volume       = {In press},
+  	number       = {1-1},
+  	pages        = {1-1},
+	journal      = {IEEE Communications Surveys & Tutorials},
+  	doi          = {10.1109/COMST.2023.3315746},
+	preprint	 = {https://arxiv.org/abs/2211.08413}
 }
 ```
 
 ```
-@article{MartinezBeltran:DFL_mitigation:2023,
-  title={{Mitigating Communications Threats in Decentralized Federated Learning through Moving Target Defense}},
-  author={Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
-  journal={arXiv preprint arXiv:2307.11730},
-  year={2023}
+@inproceedings{MartinezBeltran:fedstellar_demo:2023,
+	title        = {{Fedstellar: A Platform for Training Models in a Privacy-preserving and Decentralized Fashion}},
+	author       = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
+	year         = 2023,
+	month        = aug,
+	booktitle    = {Proceedings of the Thirty-Second International Joint Conference on Artificial Intelligence, {IJCAI-23}},
+	publisher    = {International Joint Conferences on Artificial Intelligence Organization},
+	pages        = {7154--7157},
+	doi          = {10.24963/ijcai.2023/838},
+	note         = {Demo Track},
+	editor       = {Edith Elkind}
+}
+```
+
+```
+@article{MartinezBeltran:DFL_mitigating_threats:2023,
+	title        = {{Mitigating Communications Threats in Decentralized Federated Learning through Moving Target Defense}},
+	author       = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
+	year         = 2023,
+	url      = {https://arxiv.org/abs/2307.11730},
+	journal      = {arXiv preprint arXiv:2307.11730}
 }
 ```
 
