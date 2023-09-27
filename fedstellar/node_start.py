@@ -143,8 +143,8 @@ def main():
     )
 
     node.start()
-    print("Node started, grace time for network start-up (30s)")
-    time.sleep(30)  # Wait for the participant to start and register in the network
+    # print("Node started, grace time for network start-up (30s)")
+    # time.sleep(30)  # Wait for the participant to start and register in the network
 
     # Node Connection to the neighbors
     for i in neighbors:
