@@ -244,13 +244,11 @@ class Node(BaseNode):
         # Check if Learning is running
         if self.round is not None:
             # Check source
-            # Avoid aggregation of models from previous rounds
-            # This is not necessary if the federation is asynchronous
-            # if request.round != self.round:
-            #     logging.error(
-            #         f"({self.addr}) Model Reception in a late round ({request.round} != {self.round})."
-            #     )
-            #     return node_pb2.ResponseMessage()
+            if request.round != self.round:
+                logging.error(
+                    f"({self.addr}) Model Reception in a late round ({request.round} != {self.round})."
+                )
+                return node_pb2.ResponseMessage()
 
             # Check moment (not init and invalid round)
             if (

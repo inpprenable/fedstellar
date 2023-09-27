@@ -71,7 +71,7 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
 
         # Server
         self.__running = False
-        self.__server = grpc.server(futures.ThreadPoolExecutor(max_workers=20))
+        self.__server = grpc.server(futures.ThreadPoolExecutor(max_workers=100))
 
         # Logging
         self.log_dir = os.path.join(config.participant['tracking_args']["log_dir"], self.experiment_name)

@@ -411,7 +411,7 @@ class Controller:
                     - /bin/bash
                     - -c
                     - |
-                        /bin/sleep 10 && ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
+                        /bin/sleep 20 && ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
                 networks:
                     fedstellar-net:
                         ipv4_address: {}
