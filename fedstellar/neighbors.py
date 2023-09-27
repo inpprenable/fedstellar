@@ -430,7 +430,8 @@ class Neighbors:
             # Add to pending messages
             self.__pending_msgs_lock.acquire()
             pending_neis = [n for n in self.__neighbors.keys() if n != msg.source]
-            logging.info(f"({self.__self_addr}) Adding pending message {msg}")
+            if msg.cmd != NodeMessages.BEAT:
+                logging.info(f"({self.__self_addr}) Adding pending message\n{msg}")
             self.__pending_msgs.append((msg, pending_neis))
             logging.info("Pending messages to gossip: " + str(self.__pending_msgs))
             self.__pending_msgs_lock.release()
@@ -474,14 +475,16 @@ class Neighbors:
             # Unlock
             self.__pending_msgs_lock.release()
 
+            logging.info(f"({self.__self_addr}) My neighbors during __gossiper: {self.__neighbors}")
             for msg, neis in messages_to_send:
                 for nei in neis:
-                    # send only if direct connected (also add a try to deal with desconnections)
+                    # send only if direct connected (also add a try to deal with disconnections)
                     try:
                         if self.__neighbors[nei][1] is not None:
-                            logging.info(
-                                f"({self.__self_addr}) Sending message {msg} to {nei}"
-                            )
+                            if msg.cmd != NodeMessages.BEAT:
+                                logging.info(
+                                    f"({self.__self_addr}) Sending message\n{msg}\n --> to {nei}"
+                                )
                             self.send_message(nei, msg)
                     except KeyError:
                         pass
