@@ -409,8 +409,11 @@ class Neighbors:
         if len(self.__processed_messages) > self.__config.participant["AMOUNT_LAST_MESSAGES_SAVED"]:
             self.__processed_messages.pop(0)
         # Add message
-        if msg.cmd != NodeMessages.BEAT:  # do not log heartbeats (reduce verbosity)
-            logging.info(f"({self.__self_addr}) Adding processed message\n{msg}")
+        try:
+            if msg.cmd != NodeMessages.BEAT:  # do not log heartbeats (reduce verbosity)
+                logging.info(f"({self.__self_addr}) Adding processed message\n{msg}")
+        except:
+            pass
         self.__processed_messages.append(msg)
         self.__processed_messages_lock.release()
         return True
@@ -422,9 +425,12 @@ class Neighbors:
         Args:
             msg (node_pb2.Message): Message to add.
         """
-        if msg.cmd != NodeMessages.BEAT:  # do not log heartbeats (reduce verbosity)
-            logging.info(f"({self.__self_addr}) Gossiping\n{msg}")
-            logging.info(f"({self.__self_addr}) TTL: {msg.ttl}")
+        try:
+            if msg.cmd != NodeMessages.BEAT:  # do not log heartbeats (reduce verbosity)
+                logging.info(f"({self.__self_addr}) Gossiping\n{msg}")
+                logging.info(f"({self.__self_addr}) TTL: {msg.ttl}")
+        except:
+            pass
         if msg.ttl > 1:
             # Update ttl and broadcast
             msg.ttl -= 1
@@ -432,8 +438,11 @@ class Neighbors:
             # Add to pending messages
             self.__pending_msgs_lock.acquire()
             pending_neis = [n for n in self.__neighbors.keys() if n != msg.source]
-            if msg.cmd != NodeMessages.BEAT:  # do not log heartbeats (reduce verbosity)
-                logging.info(f"({self.__self_addr}) Adding pending message\n{msg}")
+            try:
+                if msg.cmd != NodeMessages.BEAT:  # do not log heartbeats (reduce verbosity)
+                    logging.info(f"({self.__self_addr}) Adding pending message\n{msg}")
+            except:
+                pass
             self.__pending_msgs.append((msg, pending_neis))
             logging.info("Pending messages to gossip: " + str(self.__pending_msgs))
             self.__pending_msgs_lock.release()
@@ -483,10 +492,13 @@ class Neighbors:
                     # send only if direct connected (also add a try to deal with disconnections)
                     try:
                         if self.__neighbors[nei][1] is not None:
-                            if msg.cmd != NodeMessages.BEAT:  # do not log heartbeats (reduce verbosity)
-                                logging.info(
-                                    f"({self.__self_addr}) Sending message\n{msg}\n --> to {nei}"
-                                )
+                            try:
+                                if msg.cmd != NodeMessages.BEAT:  # do not log heartbeats (reduce verbosity)
+                                    logging.info(
+                                        f"({self.__self_addr}) Sending message\n{msg}\n --> to {nei}"
+                                    )
+                            except:
+                                pass
                             self.send_message(nei, msg)
                     except KeyError:
                         pass
