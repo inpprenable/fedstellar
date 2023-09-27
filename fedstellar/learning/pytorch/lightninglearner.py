@@ -58,7 +58,7 @@ class LightningLearner(NodeLearner):
     ####
     # Model weights
     ####
-    def encode_parameters(self, params=None):
+    def encode_parameters(self, params=None, contributors=None, weight=None):
         if params is None:
             params = self.model.state_dict()
         array = [val.cpu().numpy() for _, val in params.items()]

@@ -269,6 +269,8 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
     def send_message(self, request, _):
         """
         GRPC service. It is called when a node sends a message to another.
+        More in detail, it is called when a neighbor use your stub to send a message to you.
+        Then, you process the message and gossip it to your neighbors.
         """
         # If not processed
         if self._neighbors.add_processed_msg(request.hash):

@@ -65,7 +65,7 @@ class Aggregator:
 
     def clear(self):
         """
-        Clear the aggregation (remove trainset and release locks).
+        Clear the aggregation (remove train set and release locks).
         """
         self.__agg_lock.acquire()
         self.__train_set = []
@@ -76,12 +76,12 @@ class Aggregator:
             pass
         self.__agg_lock.release()
 
-    def get_agregated_models(self):
+    def get_aggregated_models(self):
         """
         Get the list of aggregated models.
 
         Returns:
-            Name of nodes that colaborated to get the model.
+            Name of nodes that collaborated to get the model.
         """
         # Get a list of nodes added
         models_added = [n.split() for n in list(self.__models.keys())]
@@ -95,7 +95,7 @@ class Aggregator:
 
         Args:
             model: Model to add.
-            nodes: Nodes that collaborated to get the model.
+            contributors: Nodes that collaborated to get the model.
             weight: Number of samples used to get the model.
         """
 
@@ -123,7 +123,7 @@ class Aggregator:
             self.__agg_lock.acquire()
 
             # Check if aggregation is needed
-            if len(self.__train_set) > len(self.get_agregated_models()):
+            if len(self.__train_set) > len(self.get_aggregated_models()):
                 # Check if all nodes are in the train_set
                 if all([n in self.__train_set for n in nodes]):
                     # Check if the model is a full/partial aggregation
@@ -131,28 +131,28 @@ class Aggregator:
                         self.__models = {}
                         self.__models[" ".join(nodes)] = (model, weight)
                         logging.info(
-                            f"({self.node_name}) Model added ({str(len(self.get_agregated_models()))}/{str(len(self.__train_set))}) from {str(nodes)}"
+                            f"({self.node_name}) Model added ({str(len(self.get_aggregated_models()))}/{str(len(self.__train_set))}) from {str(nodes)}"
                         )
                         # Finish agg
                         self.__finish_aggregation_lock.release()
                         # Unlock and Return
                         self.__agg_lock.release()
-                        return self.get_agregated_models()
+                        return self.get_aggregated_models()
 
-                    elif all([n not in self.get_agregated_models() for n in nodes]):
+                    elif all([n not in self.get_aggregated_models() for n in nodes]):
                         # Aggregate model
                         self.__models[" ".join(nodes)] = (model, weight)
                         logging.info(
-                            f"({self.node_name}) Model added ({str(len(self.get_agregated_models()))}/{str(len(self.__train_set))}) from {str(nodes)}"
+                            f"({self.node_name}) Model added ({str(len(self.get_aggregated_models()))}/{str(len(self.__train_set))}) from {str(nodes)}"
                         )
 
                         # Check if all models were added
-                        if len(self.get_agregated_models()) >= len(self.__train_set):
+                        if len(self.get_aggregated_models()) >= len(self.__train_set):
                             self.__finish_aggregation_lock.release()
 
-                        # Unloock and Return
+                        # Unlock and Return
                         self.__agg_lock.release()
-                        return self.get_agregated_models()
+                        return self.get_aggregated_models()
 
                     else:
                         logging.info(
@@ -172,9 +172,6 @@ class Aggregator:
     def wait_and_get_aggregation(self):
         """
         Wait for aggregation to finish.
-
-        Args:
-            timeout (int): Timeout in seconds.
 
         Returns:
             Aggregated model.
@@ -232,10 +229,10 @@ class Aggregator:
         aggregation_weight = 0
         models = self.__models.copy()
         for n, (m, s) in list(models.items()):
-            splited_nodes = n.split()
-            if all([n not in except_nodes for n in splited_nodes]):
+            spplited_nodes = n.split()
+            if all([n not in except_nodes for n in spplited_nodes]):
                 dict_aux[n] = (m, s)
-                nodes_aggregated += splited_nodes
+                nodes_aggregated += spplited_nodes
                 aggregation_weight += s
 
         # If there are no models to aggregate

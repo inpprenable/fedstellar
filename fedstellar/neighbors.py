@@ -387,7 +387,7 @@ class Neighbors:
             time.sleep(sleep_time)
 
     ####
-    # Gossping
+    # Gossiping
     ####
 
     def add_processed_msg(self, msg):

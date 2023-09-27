@@ -861,7 +861,7 @@ class Node(BaseNode):
     def __gossip_model_aggregation(self):
         # Anonymous functions
         candidate_condition = lambda node: (
-                (node not in self.aggregator.get_agregated_models())
+                (node not in self.aggregator.get_aggregated_models())
                 and (node in self.__train_set)
         )
         status_function = lambda node: (
@@ -888,7 +888,7 @@ class Node(BaseNode):
         # Model fn -> At diffusion, contributors are not relevant
         model_function = lambda _: (
             self.learner.get_parameters(),
-            self.aggregator.get_agregated_models(),
+            self.aggregator.get_aggregated_models(),
             1,
         )
 
