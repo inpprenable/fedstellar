@@ -606,7 +606,7 @@ class Node(BaseNode):
         # Set train set
         if self.round is not None:
             # self.__train_set = self.__vote_train_set() # TODO: Remove vote train set
-            self.__train_set = self.get_neighbors(only_direct=True)
+            self.__train_set = self.get_neighbors(only_direct=False)
             self.__train_set = self.__validate_train_set(self.__train_set)
             if self.addr not in self.__train_set:
                 self.__train_set.append(self.addr)

@@ -131,7 +131,7 @@ class Neighbors:
         else:
             node_list = self.get_all(only_direct=True)
         # Send
-        logging.info(f"({self.__self_addr}) Broadcasting\n{msg}\n --> to {node_list}")
+        logging.info(f"({self.__self_addr}) Broadcasting\n{msg}--> to {node_list}")
         for n in node_list:
             self.send_message(n, msg)
 
@@ -474,14 +474,14 @@ class Neighbors:
             # Unlock
             self.__pending_msgs_lock.release()
 
-            logging.info(f"({self.__self_addr}) My neighbors during __gossiper: {self.__neighbors}")
+            # logging.info(f"({self.__self_addr}) My neighbors during __gossiper: {self.__neighbors}")
             for msg, neis in messages_to_send:
                 for nei in neis:
                     # send only if direct connected (also add a try to deal with disconnections)
                     try:
                         if self.__neighbors[nei][1] is not None:
                             logging.info(
-                                f"({self.__self_addr}) Sending message\n{msg}\n --> to {nei}"
+                                f"({self.__self_addr}) Sending message\n{msg}--> to {nei}"
                             )
                             self.send_message(nei, msg)
                     except KeyError:
