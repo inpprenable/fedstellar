@@ -178,7 +178,7 @@ class Controller:
                 if self.dev:
                     subprocess.Popen(["gunicorn", "--workers", "2", "--threads", "2", "--bind", f"unix:/tmp/fedstellar-dev.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
                 else:
-                    subprocess.Popen(["gunicorn", "--workers", "4", "--threads", "4", "--bind", f"unix:/tmp/fedstellar.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+                    subprocess.Popen(["gunicorn", "--workers", "6", "--threads", "10", "--bind", f"unix:/tmp/fedstellar.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
 
         else:
             logging.info(f"Running Fedstellar Webserver (local): http://127.0.0.1:{self.webserver_port}")
