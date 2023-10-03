@@ -501,7 +501,7 @@ class Node(BaseNode):
                     LearningNodeMessages.START_LEARNING, [rounds, epochs]
                 )
             )
-            # Set model initializated
+            # Set model initialized
             self.__model_initialized_lock.release()
             # Broadcast initialize model
             self._neighbors.broadcast_msg(
@@ -546,7 +546,7 @@ class Node(BaseNode):
             self.__start_thread_lock.release()
             begin = time.time()
 
-            # Wait and gossip model inicialization
+            # Wait and gossip model initialization
             logging.info(f"({self.addr}) Waiting initialization.")
             self.__model_initialized_lock.acquire()
             logging.info(f"({self.addr}) Gossiping model initialization.")
@@ -580,7 +580,7 @@ class Node(BaseNode):
             pass
 
     #######################
-    #    Trainig Steps    #
+    #    Training Steps    #
     #######################
 
     def __wait_aggregated_model(self):
