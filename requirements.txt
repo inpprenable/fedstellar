@@ -9,6 +9,8 @@ lightning==2.0.9
 tensorboard==2.12.2
 tensorboardx==2.6.1
 flask==2.2.2
+flask-socketio==5.3.6
+eventlet==0.33.3
 pytest==7.2.0
 python-dotenv==0.21.0
 PyYAML==6.0

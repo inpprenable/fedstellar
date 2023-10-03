@@ -17,11 +17,21 @@ from ansi2html import Ansi2HTMLConverter
 from fedstellar.controller import Controller
 
 from flask import Flask, session, url_for, redirect, render_template, request, abort, flash, send_file, make_response, jsonify, Response
+from flask_socketio import SocketIO
 from werkzeug.utils import secure_filename
 from fedstellar.webserver.database import list_users, verify, delete_user_from_db, add_user, scenario_update_record, scenario_set_all_status_to_finished, get_running_scenario, get_user_info, get_scenario_by_name, list_nodes_by_scenario_name, get_all_scenarios, remove_nodes_by_scenario_name, \
     remove_scenario_by_name, scenario_set_status_to_finished
 from fedstellar.webserver.database import read_note_from_db, write_note_into_db, delete_note_from_db, match_user_id_with_note_id
 from fedstellar.webserver.database import image_upload_record, list_images_for_user, match_user_id_with_image_uid, delete_image_from_db, get_image_file_name, update_node_record
+
+if os.environ.get("USE_EVENTLET"):
+    import eventlet
+
+    eventlet.monkey_patch()
+
+async_mode = None
+if os.environ.get("USE_EVENTLET"):
+    async_mode = 'eventlet'
 
 app = Flask(__name__)
 app.config.from_object('config')
@@ -30,6 +40,7 @@ app.config['config_dir'] = os.environ.get('FEDSTELLAR_CONFIG_DIR')
 app.config['model_dir'] = os.environ.get('FEDSTELLAR_MODELS_DIR')
 app.config['python_path'] = os.environ.get('FEDSTELLAR_PYTHON_PATH')
 app.config['statistics_port'] = os.environ.get('FEDSTELLAR_STATISTICS_PORT')
+socketio = SocketIO(app, async_mode=async_mode, logger=True, engineio_logger=True, cors_allowed_origins="*")
 
 
 # Detect CTRL+C from parent process
@@ -76,6 +87,7 @@ def fedstellar_home():
 @app.route("/scenario/<scenario_name>/private/")
 def fedstellar_scenario_private(scenario_name):
     if "user" in session.keys():
+        socketio.emit('scenario_private', {'scenario_private': scenario_name})
         notes_list = read_note_from_db(session['user'])
         notes_table = zip([x[0] for x in notes_list],
                           [x[1] for x in notes_list],
@@ -399,6 +411,11 @@ def fedstellar_update_node(scenario_name):
             update_node_record(str(config['device_args']['uid']), str(config['device_args']['idx']), str(config['network_args']['ip']), str(config['network_args']['port']), str(config['device_args']['role']), str(config['network_args']['neighbors']), str(config['geo_args']['latitude']),
                                str(config['geo_args']['longitude']),
                                str(timestamp), str(config['scenario_args']['federation']), str(config['scenario_args']['name']))
+
+            # Send notification to each connected users
+            socketio.emit('node_update', {'uid': config['device_args']['uid'], 'idx': config['device_args']['idx'], 'ip': config['network_args']['ip'], 'port': config['network_args']['port'], 'role': config['device_args']['role'], 'neighbors': config['network_args']['neighbors'],
+                                          'latitude': config['geo_args']['latitude'],
+                                          'longitude': config['geo_args']['longitude'], 'timestamp': str(timestamp), 'federation': config['scenario_args']['federation'], 'name': config['scenario_args']['name']})
 
             return make_response("Node updated successfully", 200)
         else:
@@ -822,4 +839,5 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=5000, help="Port to run the webserver")
     args = parser.parse_args()
     print(f"Starting webserver on port {args.port}")
-    app.run(debug=True, host="0.0.0.0", port=int(args.port))
+    # app.run(debug=True, host="0.0.0.0", port=int(args.port))
+    socketio.run(app, debug=True, host="0.0.0.0", port=int(args.port))

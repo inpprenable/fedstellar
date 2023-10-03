@@ -162,26 +162,36 @@ class Controller:
 
     def run_webserver(self):
         if sys.platform == "linux" and self.cloud:
-            # Check if gunicon is installed
+            # Check if Gunicon is installed
             try:
                 subprocess.check_output(["gunicorn", "--version"])
             except FileNotFoundError:
                 logging.error("Gunicorn is not installed. Please, install it with pip install gunicorn (only for Linux)")
                 sys.exit(1)
+            # Check if eventlet is installed in pip
+            try:
+                subprocess.check_output(["pip", "show", "eventlet"])
+            except FileNotFoundError:
+                logging.error("Eventlet is not installed. Please, install it with pip install eventlet")
+                sys.exit(1)
 
             logging.info(f"Running Fedstellar Webserver (cloud): http://127.0.0.1:{self.webserver_port}")
+            # Add USE_EVENTLET to environment variables
+            os.environ["USE_EVENTLET"] = "1"
             controller_env = os.environ.copy()
             current_dir = os.path.dirname(os.path.abspath(__file__))
             webserver_path = os.path.join(current_dir, "webserver")
             with open(f'{self.log_dir}/server.log', 'w', encoding='utf-8') as log_file:
                 # Remove option --reload for production
                 if self.dev:
-                    subprocess.Popen(["gunicorn", "--workers", "2", "--threads", "2", "--bind", f"unix:/tmp/fedstellar-dev.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+                    subprocess.Popen(["gunicorn", "--worker-class", "eventlet", "--workers", "2", "--bind", f"unix:/tmp/fedstellar-dev.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
                 else:
-                    subprocess.Popen(["gunicorn", "--workers", "6", "--threads", "10", "--bind", f"unix:/tmp/fedstellar.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+                    subprocess.Popen(["gunicorn", "--worker-class", "eventlet", "--workers", "6", "--bind", f"unix:/tmp/fedstellar.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
 
         else:
             logging.info(f"Running Fedstellar Webserver (local): http://127.0.0.1:{self.webserver_port}")
+            # Add USE_EVENTLET to environment variables
+            os.environ["USE_EVENTLET"] = "1"
             controller_env = os.environ.copy()
             current_dir = os.path.dirname(os.path.abspath(__file__))
             webserver_path = os.path.join(current_dir, "webserver")

@@ -461,5 +461,14 @@
     setInterval(async_update_nodes_page, 5000); // Update the nodes every 2 seconds
 </script>
 
+<script type="text/javascript">
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+    socket.on('node_update', function (data) {
+        console.log("Received node_update from WebSocket");
+        console.log(data);
+    });
+</script>
+
 {% endif %}
 {% endblock %}
