@@ -1,4 +1,4 @@
-protobuf==3.20.3
+protobuf==4.23.4
 qtconsole==5.4.2
 aiohttp==3.8.4
 netifaces==0.11.0
@@ -7,8 +7,10 @@ torch==2.0.1
 torchvision==0.15.2
 lightning==2.0.9
 tensorboard==2.12.2
-tensorboardx==2.6
+tensorboardx==2.6.1
 flask==2.2.2
+flask-socketio==5.3.6
+eventlet==0.33.3
 pytest==7.2.0
 python-dotenv==0.21.0
 PyYAML==6.0
@@ -31,8 +33,7 @@ scikit-learn==1.2.2
 scikit-image==0.20.0
 torchtext==0.15.2
 datasets==2.10.1
-pandas==2.0.3
 timm==0.6.13
-gunicorn==20.1.0
+gunicorn==21.2.0
 nvidia-ml-py==11.525.84
 notebook==7.0.4
