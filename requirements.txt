@@ -6,8 +6,8 @@ numpy==1.24.2
 torch==2.0.1
 torchvision==0.15.2
 lightning==2.0.9
-tensorboard==2.12.2
-tensorboardx==2.6.1
+tensorboard==2.14.0
+tensorboardx==2.6.2.2
 flask==2.2.2
 flask-socketio==5.3.6
 eventlet==0.33.3

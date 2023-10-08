@@ -9,7 +9,7 @@ import os
 from datetime import datetime
 
 from fedstellar.learning.pytorch.remotelogger import FedstellarWBLogger
-from fedstellar.learning.pytorch.statisticslogger import FedstellarLogger
+from fedstellar.learning.pytorch.statisticsloggerv2 import FedstellarLogger
 from fedstellar.messages import LearningNodeMessages
 from fedstellar.proto import node_pb2
 from fedstellar.role import Role
@@ -148,7 +148,7 @@ class Node(BaseNode):
                 self.learner = learner(model, data, config=self.config, logger=csvlogger)
             elif self.config.participant['tracking_args']['local_tracking'] == 'web':
                 logging.info("[NODE] Tracking Web enabled")
-                tensorboardlogger = FedstellarLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}", log_graph=True)
+                tensorboardlogger = FedstellarLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}")
                 self.learner = learner(model, data, config=self.config, logger=tensorboardlogger)
 
         logging.info("[NODE] Role: " + str(self.config.participant["device_args"]["role"]))

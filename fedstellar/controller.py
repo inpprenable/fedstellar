@@ -199,31 +199,30 @@ class Controller:
                 subprocess.Popen([self.python_path, "app.py", "--port", str(self.webserver_port)], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
 
     def run_statistics(self):
-        import tensorboard
-        import zipfile
+        # import tensorboard
+        # import zipfile
         import warnings
         # Ignore warning from zipfile
         warnings.filterwarnings("ignore", category=UserWarning)
+
         # Get the tensorboard path
-        tensorboard_path = os.path.dirname(tensorboard.__file__)
+        # tensorboard_path = os.path.dirname(tensorboard.__file__)
         # Include "index.html" in a zip file "webfiles.zip" which is in the tensorboard root folder. If the file "index.html" exists in the zip, it will be overwritten.
-        with zipfile.ZipFile(os.path.join(tensorboard_path, "webfiles.zip"), "a") as zip:
-            zip.write(os.path.join(os.path.dirname(os.path.abspath(__file__)), "webserver", "config", "statistics", "index.html"), "index.html")
-            zip.write(os.path.join(os.path.dirname(os.path.abspath(__file__)), "webserver", "config", "statistics", "index.js"), "index.js")
+        # with zipfile.ZipFile(os.path.join(tensorboard_path, "webfiles.zip"), "a") as zip:
+        #      zip.write(os.path.join(os.path.dirname(os.path.abspath(__file__)), "webserver", "config", "statistics", "index.html"), "index.html")
+        #      zip.write(os.path.join(os.path.dirname(os.path.abspath(__file__)), "webserver", "config", "statistics", "index.js"), "index.js")
 
         logging.info(f"Running Fedstellar Statistics")
         controller_env = os.environ.copy()
         current_dir = os.path.dirname(os.path.abspath(__file__))
         webserver_path = os.path.join(current_dir, "webserver")
         with open(f'{self.log_dir}/statistics_server.log', 'w', encoding='utf-8') as log_file:
-            subprocess.Popen(["tensorboard", "--host", "0.0.0.0", "--port", str(self.statistics_port), "--logdir", self.log_dir, "--reload_interval", "1", "--window_title", "Fedstellar Statistics"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+            subprocess.Popen(["tensorboard", "--host", "0.0.0.0", "--port", str(self.statistics_port), "--logdir", self.log_dir, "--window_title", "Fedstellar Statistics", "--reload_interval", "30", "--max_reload_threads", "10", "--reload_multifile", "true"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
 
     @staticmethod
     def killports(term="python"):
         # kill all the ports related to python processes
         time.sleep(1)
-        # Remove process related to tensorboard
-
         if sys.platform == "darwin":
             command = '''kill -9 $(lsof -i @localhost:1024-65545 | grep ''' + term + ''' | awk '{print $2}') > /dev/null 2>&1'''
         elif sys.platform == "linux":
