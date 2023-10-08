@@ -148,7 +148,7 @@ class Node(BaseNode):
                 self.learner = learner(model, data, config=self.config, logger=csvlogger)
             elif self.config.participant['tracking_args']['local_tracking'] == 'web':
                 logging.info("[NODE] Tracking Web enabled")
-                tensorboardlogger = FedstellarLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}")
+                tensorboardlogger = FedstellarLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}", log_graph=True)
                 self.learner = learner(model, data, config=self.config, logger=tensorboardlogger)
 
         logging.info("[NODE] Role: " + str(self.config.participant["device_args"]["role"]))

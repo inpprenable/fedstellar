@@ -15,5 +15,5 @@ class FedstellarLogger(TensorBoardLogger):
         # FL round information
         self.local_step = step
         step = self.global_step + self.local_step
-        logging.info(f'(statisticslogger.py) log_metrics with step: {step}')
+        # logging.info(f'(statisticslogger.py) log_metrics: step={step}, metrics={metrics}')
         super().log_metrics(metrics, step)  # Call the original log_metrics
