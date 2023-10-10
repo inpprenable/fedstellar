@@ -16,6 +16,7 @@
     "username": "pi",
     "password": "pi",
     "role": "aggregator",
+    "malicious": false,
     "start": false,
     "accelerator": "cpu",
     "devices": 2,

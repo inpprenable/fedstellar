@@ -155,8 +155,9 @@ class Node(BaseNode):
                 self.learner = learner(model, data, config=self.config, logger=tensorboardlogger)
 
         logging.info("[NODE] Role: " + str(self.config.participant["device_args"]["role"]))
+        logging.info("[NODE] Malicious node" if self.config.participant["device_args"]["malicious"] else "[NODE] Honest node")
 
-        # Aggregator
+        # Aggregators
         if self.config.participant["aggregator_args"]["algorithm"] == "FedAvg":
             self.aggregator = FedAvg(node_name=self.get_name(), config=self.config)
         elif self.config.participant["aggregator_args"]["algorithm"] == "Krum":

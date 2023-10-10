@@ -170,8 +170,8 @@
                     <span class="legend-text">Server</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-color" style="background-color: #9e1b1b;"></span>
-                    <span class="legend-text">Selected node</span>
+                    <span class="legend-color" style="background-color: #000000;"></span>
+                    <span class="legend-text">Malicious</span>
                 </div>
             </div>
         </div>
@@ -521,6 +521,7 @@
                         "ipdemo": Graph.graphData().nodes[i].ip,
                         "port": Graph.graphData().nodes[i].port,
                         "role": Graph.graphData().nodes[i].role,
+                        "malicious": Graph.graphData().nodes[i].malicious,
                         "start": Graph.graphData().nodes[i].start,
                     }
                 }
@@ -609,6 +610,7 @@
                 ip: "127.0.0.1",
                 port: (45000 + i).toString(),
                 role: i === 0 ? "aggregator" : "trainer",
+                malicious: false,
                 start: (i === 0),
                 neighbors: [],
             })),
@@ -963,6 +965,7 @@
             ip: "127.0.0.1",
             port: (45000 + i).toString(),
             role: "aggregator",
+            malicious: false,
             start: (i === 0),
             neighbors: [],
             links: [],
@@ -1016,6 +1019,12 @@
                     break;
             }
 
+            if (node.malicious) {
+                // Change the color of the node to red
+                geometry = new THREE.SphereGeometry(5);
+                main_color = "#000000";
+            }
+
             const isSelected = selectedNodes.has(node);
             const color = isSelected ? '#9e1b1b' : main_color;
             console.log("Three object of node " + node.id + " is " + color);
@@ -1033,7 +1042,7 @@
         .width(width)
         .height(700)
         .backgroundColor('#ffffff')
-        .nodeLabel(node => `<p style="color: black">ID: ${node.id} | Role: ${node.role}</p>`)
+        .nodeLabel(node => `<p style="color: black">ID: ${node.id} | Role: ${node.role} | ` + (node.malicious ? 'Malicious' : 'Honest') + `</p>`)
         .onNodeRightClick((node, event) => {
             // Display a dropdown menu with the options next to the node
             // The options should be: "Add aggregator", "Add trainer", "Remove node"
@@ -1139,11 +1148,27 @@
                 updateGraph();
             });
 
+            const changeMalicious = document.createElement("a");
+            changeMalicious.innerHTML = "<i class=\"fa fa-exclamation-triangle\" aria-hidden=\"true\"></i> Change malicious";
+            changeMalicious.style.display = "block";
+            changeMalicious.style.cursor = "pointer";
+            changeMalicious.style.padding = "5px";
+            changeMalicious.style.borderRadius = "5px";
+            changeMalicious.style.marginBottom = "5px";
+            changeMalicious.classList.add("dropdown-item");
+            changeMalicious.addEventListener("click", function () {
+                console.log("Change malicious");
+                // If the node is selected, change its malicious
+                node.malicious = !node.malicious;
+                updateGraph();
+            });
+
             // Add the options to the dropdown
             dropdown.appendChild(title);
             dropdown.appendChild(addNode);
             dropdown.appendChild(removeNode);
             dropdown.appendChild(changeRole);
+            dropdown.appendChild(changeMalicious);
 
         })
         .onNodeClick((node, event) => {
