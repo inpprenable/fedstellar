@@ -239,4 +239,8 @@ class Aggregator:
         if len(dict_aux) == 0:
             return None, None, None
 
+        logging.info(
+            f"({self.node_name}) Aggregating models: dict_aux={dict_aux.keys()}"
+        )
+
         return (self.aggregate(dict_aux), nodes_aggregated, aggregation_weight)

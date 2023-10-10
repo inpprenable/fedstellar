@@ -99,6 +99,9 @@ class Node(BaseNode):
             LearningNodeMessages.START_LEARNING, self.__start_learning_callback
         )
         self.add_message_handler(
+            LearningNodeMessages.REPUTATION, self.__reputation_callback
+        )
+        self.add_message_handler(
             LearningNodeMessages.STOP_LEARNING, self.__stop_learning_callback
         )
         self.add_message_handler(
@@ -179,6 +182,14 @@ class Node(BaseNode):
 
     def __start_learning_callback(self, msg):
         self.__start_learning_thread(int(msg.args[0]), int(msg.args[1]))
+
+    def __reputation_callback(self, msg):
+        # Disrupt the connection with the malicious nodes
+        malicious_nodes = msg.args[0]  # List of malicious nodes
+        logging.info(f"({self.addr}) Received reputation from {msg.source} with malicious nodes {malicious_nodes}")
+        logging.info("Disrupting connection with malicious nodes")
+        self._neighbors.remove(list(set(malicious_nodes) & set(self._neighbors.get_neighbors())))
+
 
     def __stop_learning_callback(self, _):
         self.__stop_learning()
@@ -846,6 +857,26 @@ class Node(BaseNode):
     #    Model Gossiping    #
     #########################
 
+    def reputation_calculation(self, dict_aux):
+
+        # Compare the model parameters to identify malicious nodes, and then broadcast to the rest of the topology
+        # Functionality not implemented yet (ROADMAP 1.0)
+        # ...
+        threshold = 0.5
+        # ...
+
+        malicious_nodes = []
+
+        return malicious_nodes
+
+    def send_reputation(self, malicious_nodes):
+        logging.info(f"({self.addr}) Broadcasting reputation message...")
+        self._neighbors.broadcast_msg(
+            self._neighbors.build_msg(
+                LearningNodeMessages.REPUTATION, [malicious_nodes]
+            )
+        )
+
     def get_aggregated_models(self, node):
         """
         Get the models that have been aggregated by a given node in the actual round.
@@ -854,7 +885,11 @@ class Node(BaseNode):
             node (str): Node to get the aggregated models from.
         """
         try:
-            return self.__models_aggregated[node]
+            malicious_nodes = self.reputation_calculation(self.__models_aggregated[node])
+            if malicious_nodes:
+                self.send_reputation(malicious_nodes)
+            else:
+                return self.__models_aggregated[node]
         except KeyError:
             return []
 
