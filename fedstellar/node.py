@@ -888,8 +888,10 @@ class Node(BaseNode):
             malicious_nodes = self.reputation_calculation(self.__models_aggregated[node])
             if malicious_nodes:
                 self.send_reputation(malicious_nodes)
-            else:
-                return self.__models_aggregated[node]
+            # Exclude malicious nodes from the aggregation
+            aggregated_models = [x for x in self.__models_aggregated[node] if x not in malicious_nodes]
+            if aggregated_models:
+                return aggregated_models
         except KeyError:
             return []
 
