@@ -13,6 +13,7 @@ from fedstellar.learning.pytorch.statisticsloggerv2 import FedstellarLogger
 from fedstellar.messages import LearningNodeMessages
 from fedstellar.proto import node_pb2
 from fedstellar.role import Role
+from fedstellar.learning.aggregators.helper import cosine_similarity
 
 os.environ['WANDB_SILENT'] = 'true'
 
@@ -858,7 +859,7 @@ class Node(BaseNode):
     #    Model Gossiping    #
     #########################
 
-    def reputation_calculation(self, dict_aux):
+    def reputation_calculation(self, aggregated_models_weights):
 
         # Compare the model parameters to identify malicious nodes, and then broadcast to the rest of the topology
         # Functionality not implemented yet (ROADMAP 1.0)
@@ -867,8 +868,18 @@ class Node(BaseNode):
         # ...
 
         malicious_nodes = []
+        reputation_score = []
+        local_model = self.learner.get_parameters()
+        untrusted_nodes = list(aggregated_models_weights.keys())
+        for untrusted_node in untrusted_nodes:
+            untrusted_model = aggregated_models_weights[untrusted_node][0]
+            cossim = cosine_similarity(local_model, untrusted_model)
+            logging.info(f'reputation_calculation {untrusted_node}: {cossim}')
+            if cossim < threshold:
+                malicious_nodes.append(untrusted_node)
+                reputation_score.append(cossim)
 
-        return malicious_nodes
+        return malicious_nodes, reputation_score
 
     def send_reputation(self, malicious_nodes):
         logging.info(f"({self.addr}) Broadcasting reputation message...")
@@ -886,8 +897,8 @@ class Node(BaseNode):
             node (str): Node to get the aggregated models from.
         """
         try:
-            logging.info(f"({self.addr}) Stored models: {self.aggregator.get_aggregated_models()}")
-            malicious_nodes = self.reputation_calculation(self.__models_aggregated[node])
+            # logging.info(f"({self.addr}) Stored models: {self.aggregator.get_aggregated_models_weights()}")
+            malicious_nodes,_ = self.reputation_calculation(self.aggregator.get_aggregated_models_weights())
             logging.info(f"({self.addr}) Malicious nodes: {malicious_nodes}, excluding them from the aggregation...")
             if malicious_nodes:
                 self.send_reputation(malicious_nodes)
