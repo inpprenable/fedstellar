@@ -89,6 +89,9 @@ class Aggregator:
         models_added = [element for sublist in models_added for element in sublist]
         return models_added
 
+    def get_aggregated_models_weights(self):
+        # TBD
+
     def add_model(self, model, contributors, weight):
         """
         Add a model. The first model to be added starts the `run` method (timeout).

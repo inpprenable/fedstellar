@@ -886,13 +886,16 @@ class Node(BaseNode):
             node (str): Node to get the aggregated models from.
         """
         try:
+            logging.info(f"({self.addr}) Stored models: {self.aggregator.get_aggregated_models()}")
             malicious_nodes = self.reputation_calculation(self.__models_aggregated[node])
+            logging.info(f"({self.addr}) Malicious nodes: {malicious_nodes}, excluding them from the aggregation...")
             if malicious_nodes:
                 self.send_reputation(malicious_nodes)
             # Exclude malicious nodes from the aggregation
-            aggregated_models = [x for x in self.__models_aggregated[node] if x not in malicious_nodes]
-            if aggregated_models:
-                return aggregated_models
+            # Introduce the malicious nodes in the list of aggregated models. Then remove the duplicates
+            models_aggregated = self.__models_aggregated[node]
+            models_aggregated = list(set(models_aggregated + malicious_nodes))
+            return models_aggregated
         except KeyError:
             return []
 
