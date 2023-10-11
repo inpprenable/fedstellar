@@ -192,9 +192,9 @@ class Node(BaseNode):
         if self.get_name in malicious_nodes:
             malicious_nodes.remove(self.get_name)
         logging.info(f"({self.addr}) Received reputation from {msg.source} with malicious nodes {malicious_nodes}")
-        logging.info("Disrupting connection with malicious nodes")
-        self._neighbors.remove(list(set(malicious_nodes) & set(self.get_neighbors())))
-
+        logging.info("[Not implemented yet] Disrupting connection with malicious nodes")
+        logging.info(f"({self.addr}) [Not implemented yet] Removing {malicious_nodes} from {self.get_neighbors()}")
+        # self._neighbors.remove(list(set(malicious_nodes) & set(self.get_neighbors())))
 
     def __stop_learning_callback(self, _):
         self.__stop_learning()
@@ -264,7 +264,7 @@ class Node(BaseNode):
                 logging.error(
                     f"({self.addr}) Model Reception in a late round ({request.round} != {self.round})."
                 )
-                return node_pb2.ResponseMessage()
+                # return node_pb2.ResponseMessage()  # add model anyway
 
             # Check moment (not init and invalid round)
             if (
