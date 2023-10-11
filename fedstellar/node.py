@@ -191,18 +191,11 @@ class Node(BaseNode):
         malicious_nodes = msg.args[0]  # List of malicious nodes
         logging.info(f"({self.addr}) Received reputation from {msg.source} with malicious nodes {malicious_nodes}")
         logging.info("Disrupting connection with malicious nodes")
-        self._neighbors.remove(list(set(malicious_nodes) & set(self._neighbors.get_neighbors())))
+        self._neighbors.remove(list(set(malicious_nodes) & set(self.get_neighbors())))
 
 
     def __stop_learning_callback(self, _):
         self.__stop_learning()
-
-    def __reputation_callback(self, msg):
-        # Disrupt the connection with the malicious nodes
-        malicious_nodes = msg.args[0]  # List of malicious nodes
-        logging.info(f"({self.addr}) Received reputation from {msg.source} with malicious nodes {malicious_nodes}")
-        logging.info("Disrupting connection with malicious nodes")
-        self._neighbors.remove(list(set(malicious_nodes) & set(self._neighbors.get_neighbors())))
 
     def __model_initialized_callback(self, msg):
         self.__nei_status[msg.source] = -1
