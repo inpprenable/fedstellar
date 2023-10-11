@@ -11,10 +11,11 @@ import torch
 from lightning import Trainer
 from lightning.pytorch.callbacks import RichProgressBar, RichModelSummary
 from lightning.pytorch.callbacks.progress.rich_progress import RichProgressBarTheme
+import copy
 
 from fedstellar.learning.exceptions import DecodingParamsError, ModelNotMatchingError
 from fedstellar.learning.learner import NodeLearner
-
+from torch.nn import functional as F
 
 ###########################
 #    LightningLearner     #
@@ -177,3 +178,33 @@ class LightningLearner(NodeLearner):
             enable_model_summary=False,
             enable_progress_bar=True
         )
+    def validate_neighbour_model(self, neighbour_model_param):
+
+        avg_loss = 0
+        running_loss = 0
+        bootstrap_dataloader = self.data.bootstrap_dataloader()
+        num_samples = 0
+        neighbour_model = copy.deepcopy(self.model)
+        neighbour_model.load_state_dict(neighbour_model_param)
+
+        # enable evaluation mode, prevent memory leaks.
+        # no need to switch back to training since model is not further used.
+        if torch.cuda.is_available():
+            neighbour_model = neighbour_model.to('cuda')
+        neighbour_model.eval()
+
+        # bootstrap_dataloader = bootstrap_dataloader.to('cuda')
+
+        with torch.no_grad():
+            for inputs, labels in bootstrap_dataloader:
+                if torch.cuda.is_available():
+                    inputs = inputs.to('cuda')
+                    labels = labels.to('cuda')
+                outputs = neighbour_model(inputs)
+                loss = F.cross_entropy(outputs, labels)
+                running_loss += loss.item()
+                num_samples += inputs.size(0)
+
+        avg_loss = running_loss / len(bootstrap_dataloader)
+        logging.debug("[Learner.validate_neighbour]: Computed neighbor loss over {} data samples".format(num_samples))
+        return avg_loss

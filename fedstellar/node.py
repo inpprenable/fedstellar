@@ -864,7 +864,8 @@ class Node(BaseNode):
         # Compare the model parameters to identify malicious nodes, and then broadcast to the rest of the topology
         # Functionality not implemented yet (ROADMAP 1.0)
         # ...
-        threshold = 0.5
+        cossim_threshold = 0.5
+        loss_threshold = 0.5
         # ...
 
         malicious_nodes = []
@@ -875,10 +876,17 @@ class Node(BaseNode):
             untrusted_model = aggregated_models_weights[untrusted_node][0]
             cossim = cosine_similarity(local_model, untrusted_model)
             logging.info(f'reputation_calculation {untrusted_node}: {cossim}')
-            if cossim < threshold:
-                malicious_nodes.append(untrusted_node)
-                reputation_score.append(cossim)
 
+            avg_loss = self.learner.validate_neighbour_model(untrusted_model)
+            logging.info(f'reputation_calculation avg_loss {untrusted_node}: {avg_loss}')
+
+            if cossim < cossim_threshold:
+                malicious_nodes.append(untrusted_node)
+                reputation_score.append((cossim, avg_loss))
+
+            if avg_loss > loss_threshold:
+                malicious_nodes.append(untrusted_node)
+                reputation_score.append((cossim, avg_loss))
         return malicious_nodes, reputation_score
 
     def send_reputation(self, malicious_nodes):
@@ -905,7 +913,7 @@ class Node(BaseNode):
             # Exclude malicious nodes from the aggregation
             # Introduce the malicious nodes in the list of aggregated models. Then remove the duplicates
             models_aggregated = self.__models_aggregated[node]
-            models_aggregated = list(set(models_aggregated + malicious_nodes))
+            models_aggregated = list(set(list(models_aggregated) + malicious_nodes))
             return models_aggregated
         except KeyError:
             return []
