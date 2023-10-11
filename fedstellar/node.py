@@ -14,6 +14,7 @@ from fedstellar.learning.pytorch.statisticsloggerv2 import FedstellarLogger
 from fedstellar.messages import LearningNodeMessages
 from fedstellar.proto import node_pb2
 from fedstellar.role import Role
+from fedstellar.learning.aggregators.helper import cosine_similarity
 
 os.environ['WANDB_SILENT'] = 'true'
 
@@ -184,6 +185,14 @@ class Node(BaseNode):
 
     def __start_learning_callback(self, msg):
         self.__start_learning_thread(int(msg.args[0]), int(msg.args[1]))
+
+    def __reputation_callback(self, msg):
+        # Disrupt the connection with the malicious nodes
+        malicious_nodes = msg.args[0]  # List of malicious nodes
+        logging.info(f"({self.addr}) Received reputation from {msg.source} with malicious nodes {malicious_nodes}")
+        logging.info("Disrupting connection with malicious nodes")
+        self._neighbors.remove(list(set(malicious_nodes) & set(self._neighbors.get_neighbors())))
+
 
     def __stop_learning_callback(self, _):
         self.__stop_learning()
@@ -862,36 +871,6 @@ class Node(BaseNode):
     #    Model Gossiping    #
     #########################
 
-    def reputation_calculation(self, aggregated_models_weights):
-
-        # Compare the model parameters to identify malicious nodes, and then broadcast to the rest of the topology
-        # Functionality not implemented yet (ROADMAP 1.0)
-        # ...
-        threshold = 0.5
-        # ...
-
-        malicious_nodes = []
-        reputation_score = []
-        local_model = self.learner.get_parameters()
-        untrusted_nodes = list(aggregated_models_weights.keys())
-        for untrusted_node in untrusted_nodes:
-            untrusted_model = aggregated_models_weights[untrusted_node][0]
-            cossim = cosine_similarity(local_model, untrusted_model)
-            logging.info(f'reputation_calculation {untrusted_node}: {cossim}')
-            if cossim < threshold:
-                malicious_nodes.append(untrusted_node)
-                reputation_score.append(cossim)
-
-        return malicious_nodes, reputation_score
-
-    def send_reputation(self, malicious_nodes):
-        logging.info(f"({self.addr}) Broadcasting reputation message...")
-        self._neighbors.broadcast_msg(
-            self._neighbors.build_msg(
-                LearningNodeMessages.REPUTATION, [malicious_nodes]
-            )
-        )
-
     def get_aggregated_models(self, node):
         """
         Get the models that have been aggregated by a given node in the actual round.
@@ -900,16 +879,7 @@ class Node(BaseNode):
             node (str): Node to get the aggregated models from.
         """
         try:
-            # logging.info(f"({self.addr}) Stored models: {self.aggregator.get_aggregated_models_weights()}")
-            malicious_nodes, _ = self.reputation_calculation(self.aggregator.get_aggregated_models_weights())
-            logging.info(f"({self.addr}) Malicious nodes: {malicious_nodes}, excluding them from the aggregation...")
-            if malicious_nodes:
-                self.send_reputation(malicious_nodes)
-            # Exclude malicious nodes from the aggregation
-            # Introduce the malicious nodes in the list of aggregated models. Then remove the duplicates
-            models_aggregated = self.__models_aggregated[node]
-            models_aggregated = list(set(models_aggregated + malicious_nodes))
-            return models_aggregated
+            return self.__models_aggregated[node]
         except KeyError:
             return []
 
