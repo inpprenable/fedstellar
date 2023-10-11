@@ -89,6 +89,11 @@ class Aggregator:
         models_added = [element for sublist in models_added for element in sublist]
         return models_added
 
+    def get_aggregated_models_weights(self):
+        # TBD
+        # Get a list of weights added
+        return self.__models
+
     def add_model(self, model, contributors, weight):
         """
         Add a model. The first model to be added starts the `run` method (timeout).
@@ -112,7 +117,7 @@ class Aggregator:
         # Diffusion / Aggregation
         if self.__waiting_aggregated_model and self.__models == {}:
             if set(contributors) == set(self.__train_set):
-                logging.info(f"({self.node_name}) Received an aggregated model.")
+                logging.info(f"({self.node_name}) Received an aggregated model because all contributors are in the train set (me too). Overwriting my model with the aggregated model.")
                 self.__models = {}
                 self.__models = {" ".join(nodes): (model, 1)}
                 self.__waiting_aggregated_model = False
@@ -126,8 +131,10 @@ class Aggregator:
             if len(self.__train_set) > len(self.get_aggregated_models()):
                 # Check if all nodes are in the train_set
                 if all([n in self.__train_set for n in nodes]):
+                    logging.info(f'({self.node_name}) All contributors are in the train set. Adding model.')
                     # Check if the model is a full/partial aggregation
                     if len(nodes) == len(self.__train_set):
+                        logging.info(f'({self.node_name}) The number of contributors is equal to the number of nodes in the train set. --> Full aggregation.')
                         self.__models = {}
                         self.__models[" ".join(nodes)] = (model, weight)
                         logging.info(
@@ -140,6 +147,7 @@ class Aggregator:
                         return self.get_aggregated_models()
 
                     elif all([n not in self.get_aggregated_models() for n in nodes]):
+                        logging.info(f'({self.node_name}) All contributors are not in the aggregated models. --> Partial aggregation.')
                         # Aggregate model
                         self.__models[" ".join(nodes)] = (model, weight)
                         logging.info(
@@ -148,6 +156,9 @@ class Aggregator:
 
                         # Check if all models were added
                         if len(self.get_aggregated_models()) >= len(self.__train_set):
+                            logging.info(
+                                f"({self.node_name}) All models were added. Finishing aggregation."
+                            )
                             self.__finish_aggregation_lock.release()
 
                         # Unlock and Return
@@ -199,6 +210,7 @@ class Aggregator:
                 f"Waiting for an an aggregated but several models were received: {self.__models.keys()}"
             )
         # Start aggregation
+        logging.info(f'({self.node_name}) Starting aggregation.')
         n_model_aggregated = sum(
             [len(nodes.split()) for nodes in list(self.__models.keys())]
         )

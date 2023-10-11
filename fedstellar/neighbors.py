@@ -148,7 +148,7 @@ class Neighbors:
         """
         try:
             logging.info(
-                f"({self.__self_addr}) Sending model to {nei} with round {round}"
+                f"({self.__self_addr}) Sending model to {nei} with round {round}: contributors={contributors}, weight={weight}"
             )
             stub = self.__neighbors[nei][1]
             # if not connected, create a temporal stub to send the message
@@ -483,15 +483,13 @@ class Neighbors:
 
             # Unlock
             self.__pending_msgs_lock.release()
-
-            # logging.info(f"({self.__self_addr}) My neighbors during __gossiper: {self.__neighbors}")
             for msg, neis in messages_to_send:
                 for nei in neis:
                     # send only if direct connected (also add a try to deal with disconnections)
                     try:
                         if self.__neighbors[nei][1] is not None:
                             logging.info(
-                                f"({self.__self_addr}) Sending message\n{msg}--> to {nei}"
+                                f"({self.__self_addr}) Sending message (gossip)\n{msg}--> to {nei}"
                             )
                             self.send_message(nei, msg)
                     except KeyError:

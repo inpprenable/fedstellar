@@ -71,11 +71,11 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
 
         # Server
         self.__running = False
-        opts = [("grpc.keepalive_time_ms", 10000),
-                ("grpc.keepalive_timeout_ms", 5000),
-                ("grpc.keepalive_permit_without_calls", True),
-                ("grpc.http2.max_ping_strikes", 0)]
-        self.__server = grpc.server(futures.ThreadPoolExecutor(max_workers=100), options=opts)
+        # opts = [("grpc.keepalive_time_ms", 10000),
+        #         ("grpc.keepalive_timeout_ms", 5000),
+        #         ("grpc.keepalive_permit_without_calls", True),
+        #         ("grpc.http2.max_ping_strikes", 0)]
+        self.__server = grpc.server(futures.ThreadPoolExecutor(max_workers=20))
 
         # Logging
         self.log_dir = os.path.join(config.participant['tracking_args']["log_dir"], self.experiment_name)

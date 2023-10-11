@@ -773,6 +773,7 @@ def fedstellar_scenario_deployment_run():
                 participant_config['device_args']['idx'] = node_config["id"]
                 participant_config["device_args"]["start"] = node_config["start"]
                 participant_config["device_args"]["role"] = node_config["role"]
+                participant_config["device_args"]["malicious"] = node_config["malicious"]
                 # The following parameters have to be same for all nodes (for now)
                 participant_config["scenario_args"]["rounds"] = int(data["rounds"])
                 participant_config["data_args"]["dataset"] = data["dataset"]

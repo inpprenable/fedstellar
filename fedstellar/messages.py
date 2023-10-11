@@ -17,3 +17,4 @@ class LearningNodeMessages(NodeMessages):
     MODELS_READY = "models_ready"
     VOTE_TRAIN_SET = "vote_train_set"
     METRICS = "metrics"
+    REPUTATION = "reputation"
