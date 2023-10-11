@@ -915,7 +915,7 @@ class Node(BaseNode):
         try:
             malicious_nodes = []
             # logging.info(f"({self.addr}) Stored models: {self.aggregator.get_aggregated_models_weights()}")
-            if self.round >= 3:
+            if self.learner.get_round() >= 3:
                 malicious_nodes,_ = self.reputation_calculation(self.aggregator.get_aggregated_models_weights())
                 logging.info(f"({self.addr}) Malicious nodes: {malicious_nodes}, excluding them from the aggregation...")
                 if malicious_nodes:

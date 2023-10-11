@@ -50,6 +50,9 @@ class LightningLearner(NodeLearner):
 
         self.logger.log_metrics({"Round": self.round}, step=self.logger.global_step)
 
+    def get_round(self):
+        return self.round
+
     def set_model(self, model):
         self.model = model
 
