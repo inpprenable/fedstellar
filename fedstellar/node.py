@@ -188,7 +188,7 @@ class Node(BaseNode):
 
     def __reputation_callback(self, msg):
         # Disrupt the connection with the malicious nodes
-        malicious_nodes = msg.args[0]  # List of malicious nodes
+        malicious_nodes = msg.args  # List of malicious nodes
         if self.get_name in malicious_nodes:
             malicious_nodes.remove(self.get_name)
         logging.info(f"({self.addr}) Received reputation from {msg.source} with malicious nodes {malicious_nodes}")
@@ -901,7 +901,7 @@ class Node(BaseNode):
         logging.info(f"({self.addr}) Broadcasting reputation message...")
         self._neighbors.broadcast_msg(
             self._neighbors.build_msg(
-                LearningNodeMessages.REPUTATION, [malicious_nodes]
+                LearningNodeMessages.REPUTATION, malicious_nodes
             )
         )
 
