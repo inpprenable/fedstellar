@@ -35,3 +35,4 @@ torchtext==0.15.2
 datasets==2.10.1
 timm==0.6.13
 notebook==7.0.4
+chardet==5.2.0
