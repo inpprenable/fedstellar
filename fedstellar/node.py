@@ -189,6 +189,8 @@ class Node(BaseNode):
     def __reputation_callback(self, msg):
         # Disrupt the connection with the malicious nodes
         malicious_nodes = msg.args[0]  # List of malicious nodes
+        if self.get_name in malicious_nodes:
+            malicious_nodes.remove(self.get_name)
         logging.info(f"({self.addr}) Received reputation from {msg.source} with malicious nodes {malicious_nodes}")
         logging.info("Disrupting connection with malicious nodes")
         self._neighbors.remove(list(set(malicious_nodes) & set(self.get_neighbors())))
@@ -876,21 +878,23 @@ class Node(BaseNode):
         reputation_score = []
         local_model = self.learner.get_parameters()
         untrusted_nodes = list(aggregated_models_weights.keys())
+        selfName = self.get_name()
         for untrusted_node in untrusted_nodes:
-            untrusted_model = aggregated_models_weights[untrusted_node][0]
-            cossim = cosine_similarity(local_model, untrusted_model)
-            logging.info(f'reputation_calculation {untrusted_node}: {cossim}')
+            if untrusted_node != selfName:
+                untrusted_model = aggregated_models_weights[untrusted_node][0]
+                cossim = cosine_similarity(local_model, untrusted_model)
+                logging.info(f'reputation_calculation cossim {untrusted_node}: {cossim}')
 
-            avg_loss = self.learner.validate_neighbour_model(untrusted_model)
-            logging.info(f'reputation_calculation avg_loss {untrusted_node}: {avg_loss}')
+                avg_loss = self.learner.validate_neighbour_model(untrusted_model)
+                logging.info(f'reputation_calculation avg_loss {untrusted_node}: {avg_loss}')
 
-            if cossim < cossim_threshold:
-                malicious_nodes.append(untrusted_node)
-                reputation_score.append((cossim, avg_loss))
+                if cossim < cossim_threshold:
+                    malicious_nodes.append(untrusted_node)
+                    reputation_score.append((cossim, avg_loss))
 
-            if avg_loss > loss_threshold:
-                malicious_nodes.append(untrusted_node)
-                reputation_score.append((cossim, avg_loss))
+                if avg_loss > loss_threshold:
+                    malicious_nodes.append(untrusted_node)
+                    reputation_score.append((cossim, avg_loss))
         return malicious_nodes, reputation_score
 
     def send_reputation(self, malicious_nodes):
@@ -909,11 +913,13 @@ class Node(BaseNode):
             node (str): Node to get the aggregated models from.
         """
         try:
+            malicious_nodes = []
             # logging.info(f"({self.addr}) Stored models: {self.aggregator.get_aggregated_models_weights()}")
-            malicious_nodes,_ = self.reputation_calculation(self.aggregator.get_aggregated_models_weights())
-            logging.info(f"({self.addr}) Malicious nodes: {malicious_nodes}, excluding them from the aggregation...")
-            if malicious_nodes:
-                self.send_reputation(malicious_nodes)
+            if self.round >= 3:
+                malicious_nodes,_ = self.reputation_calculation(self.aggregator.get_aggregated_models_weights())
+                logging.info(f"({self.addr}) Malicious nodes: {malicious_nodes}, excluding them from the aggregation...")
+                if malicious_nodes:
+                    self.send_reputation(malicious_nodes)
             # Exclude malicious nodes from the aggregation
             # Introduce the malicious nodes in the list of aggregated models. Then remove the duplicates
             models_aggregated = self.__models_aggregated[node]
