@@ -178,8 +178,8 @@ class LightningLearner(NodeLearner):
             enable_model_summary=False,
             enable_progress_bar=True
         )
-    def validate_neighbour_model(self, neighbour_model_param):
 
+    def validate_neighbour_model(self, neighbour_model_param):
         avg_loss = 0
         running_loss = 0
         bootstrap_dataloader = self.data.bootstrap_dataloader()
