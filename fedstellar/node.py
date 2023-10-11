@@ -8,6 +8,7 @@ import math
 import os
 from datetime import datetime
 
+from fedstellar.learning.aggregators.helper import cosine_similarity
 from fedstellar.learning.pytorch.remotelogger import FedstellarWBLogger
 from fedstellar.learning.pytorch.statisticsloggerv2 import FedstellarLogger
 from fedstellar.messages import LearningNodeMessages
@@ -196,6 +197,13 @@ class Node(BaseNode):
     def __stop_learning_callback(self, _):
         self.__stop_learning()
 
+    def __reputation_callback(self, msg):
+        # Disrupt the connection with the malicious nodes
+        malicious_nodes = msg.args[0]  # List of malicious nodes
+        logging.info(f"({self.addr}) Received reputation from {msg.source} with malicious nodes {malicious_nodes}")
+        logging.info("Disrupting connection with malicious nodes")
+        self._neighbors.remove(list(set(malicious_nodes) & set(self._neighbors.get_neighbors())))
+
     def __model_initialized_callback(self, msg):
         self.__nei_status[msg.source] = -1
 
@@ -276,10 +284,14 @@ class Node(BaseNode):
             try:
                 if not self.__model_initialized_lock.locked():
                     # Add model to aggregator
+                    logging.info(f"({self.addr}) add_model Remote Service using gRPC, contributors: {request.contributors}")
                     decoded_model = self.learner.decode_parameters(request.weights)
                     if self.learner.check_parameters(decoded_model):
                         models_added = self.aggregator.add_model(
                             decoded_model, request.contributors, request.weight
+                        )
+                        logging.info(
+                            f'({self.addr}) Models added (and send using MODELS_AGGREGATED): {models_added}'
                         )
                         if models_added is not None:
                             # Communicate Aggregation
@@ -859,44 +871,6 @@ class Node(BaseNode):
     #    Model Gossiping    #
     #########################
 
-    def reputation_calculation(self, aggregated_models_weights):
-
-        # Compare the model parameters to identify malicious nodes, and then broadcast to the rest of the topology
-        # Functionality not implemented yet (ROADMAP 1.0)
-        # ...
-        cossim_threshold = 0.5
-        loss_threshold = 0.5
-        # ...
-
-        malicious_nodes = []
-        reputation_score = []
-        local_model = self.learner.get_parameters()
-        untrusted_nodes = list(aggregated_models_weights.keys())
-        for untrusted_node in untrusted_nodes:
-            untrusted_model = aggregated_models_weights[untrusted_node][0]
-            cossim = cosine_similarity(local_model, untrusted_model)
-            logging.info(f'reputation_calculation {untrusted_node}: {cossim}')
-
-            avg_loss = self.learner.validate_neighbour_model(untrusted_model)
-            logging.info(f'reputation_calculation avg_loss {untrusted_node}: {avg_loss}')
-
-            if cossim < cossim_threshold:
-                malicious_nodes.append(untrusted_node)
-                reputation_score.append((cossim, avg_loss))
-
-            if avg_loss > loss_threshold:
-                malicious_nodes.append(untrusted_node)
-                reputation_score.append((cossim, avg_loss))
-        return malicious_nodes, reputation_score
-
-    def send_reputation(self, malicious_nodes):
-        logging.info(f"({self.addr}) Broadcasting reputation message...")
-        self._neighbors.broadcast_msg(
-            self._neighbors.build_msg(
-                LearningNodeMessages.REPUTATION, [malicious_nodes]
-            )
-        )
-
     def get_aggregated_models(self, node):
         """
         Get the models that have been aggregated by a given node in the actual round.
@@ -905,16 +879,7 @@ class Node(BaseNode):
             node (str): Node to get the aggregated models from.
         """
         try:
-            # logging.info(f"({self.addr}) Stored models: {self.aggregator.get_aggregated_models_weights()}")
-            malicious_nodes,_ = self.reputation_calculation(self.aggregator.get_aggregated_models_weights())
-            logging.info(f"({self.addr}) Malicious nodes: {malicious_nodes}, excluding them from the aggregation...")
-            if malicious_nodes:
-                self.send_reputation(malicious_nodes)
-            # Exclude malicious nodes from the aggregation
-            # Introduce the malicious nodes in the list of aggregated models. Then remove the duplicates
-            models_aggregated = self.__models_aggregated[node]
-            models_aggregated = list(set(list(models_aggregated) + malicious_nodes))
-            return models_aggregated
+            return self.__models_aggregated[node]
         except KeyError:
             return []
 
@@ -940,7 +905,7 @@ class Node(BaseNode):
         if initialization:
             candidate_condition = lambda node: node not in self.__nei_status.keys()
         else:
-            logging.info(f"({self.addr}) Gossiping aggregated model.")
+            logging.info(f"({self.addr}) Gossip | Gossiping aggregated model.")
             candidate_condition = lambda node: self.__nei_status[node] < self.round
 
         # Status fn
@@ -970,18 +935,18 @@ class Node(BaseNode):
             # Get time to calculate frequency
             t = time.time()
 
-            # If the trainning has been interrupted, stop waiting
+            # If the training has been interrupted, stop waiting
             if self.round is None:
-                logging.info(f"({self.addr}) Stopping model gossip process.")
+                logging.info(f"({self.addr}) Gossip | Stopping model gossip process.")
                 return
 
-            # Get nodes wich need models
+            # Get nodes which need models
             neis = [n for n in self.get_neighbors() if candidate_condition(n)]
-            logging.info(f"({self.addr} Gossip remaining nodes: {neis}")
+            logging.info(f"({self.addr} Gossip | {neis} need models --> (node not in self.aggregator.get_aggregated_models()) and (node in self.__train_set)")
 
             # Determine end of gossip
-            if neis == []:
-                logging.info(f"({self.addr}) Gossip finished.")
+            if not neis:
+                logging.info(f"({self.addr}) Gossip| Gossip finished.")
                 return
 
             # Save state of neighbors. If nodes are not responding gossip will stop
@@ -996,7 +961,7 @@ class Node(BaseNode):
                     if last_x_status[i] != last_x_status[i + 1]:
                         break
                     logging.info(
-                        f"({self.addr}) Gossiping exited for {self.config.participant['GOSSIP_EXIT_ON_X_EQUAL_ROUNDS']} equal reounds."
+                        f"({self.addr}) Gossip | Gossiping exited for {self.config.participant['GOSSIP_EXIT_ON_X_EQUAL_ROUNDS']} equal rounds."
                     )
                     return
 
@@ -1010,7 +975,7 @@ class Node(BaseNode):
 
                 # Send Partial Aggregation
                 if model is not None:
-                    logging.info(f"({self.addr}) Gossiping model to {nei}.")
+                    logging.info(f"({self.addr}) Gossip | Gossiping model to {nei} with {contributors} contributors and weight {weight}")
                     encoded_model = self.learner.encode_parameters(params=model)
                     self._neighbors.send_model(
                         nei, self.round, encoded_model, contributors, weight
