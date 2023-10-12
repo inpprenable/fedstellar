@@ -5,9 +5,10 @@
 import logging
 import os
 import socket
+import sys
 from concurrent import futures
 from logging import Formatter, FileHandler
-import sys
+
 import grpc
 
 print(sys.path)
@@ -54,13 +55,13 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
         self.add_message_handler(NodeMessages.BEAT, self.__heartbeat_callback)
 
         # Setting Up Node Socket (listening)
-        #self.__node_socket = socket.socket(
+        # self.__node_socket = socket.socket(
         #    socket.AF_INET, socket.SOCK_STREAM
-        #)  # TCP Socket
-        #if port is None:
+        # )  # TCP Socket
+        # if port is None:
         #    self.__node_socket.bind((host, 0))  # gets a random free port
         #    self.port = self.__node_socket.getsockname()[1]
-        #else:
+        # else:
         #    print("[BASENODE] Trying to bind to {}:{}".format(host, port))
         #    self.__node_socket.bind((host, port))
 

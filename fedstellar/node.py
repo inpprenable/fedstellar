@@ -14,7 +14,6 @@ from fedstellar.learning.pytorch.statisticsloggerv2 import FedstellarLogger
 from fedstellar.messages import LearningNodeMessages
 from fedstellar.proto import node_pb2
 from fedstellar.role import Role
-from fedstellar.learning.aggregators.helper import cosine_similarity
 
 os.environ['WANDB_SILENT'] = 'true'
 
@@ -134,6 +133,10 @@ class Node(BaseNode):
         self.poisoned_ratio = poisoned_ratio
         self.noise_type = noise_type
 
+        # with reputation mechansim
+        # Todo: change to initial function
+        self.with_reputation = True
+
         # Learner and learner logger
         # log_model="all" to log model
         # mode="disabled" to disable wandb
@@ -186,15 +189,40 @@ class Node(BaseNode):
     def __start_learning_callback(self, msg):
         self.__start_learning_thread(int(msg.args[0]), int(msg.args[1]))
 
-    def __reputation_callback(self, msg):
+    def __disrupt_connection_using_reputation(self, malicious_nodes):
         # Disrupt the connection with the malicious nodes
+        malicious_nodes = list(set(malicious_nodes) & set(self.get_neighbors()))
+        # logging.info(f"({self.addr}) Received reputation from {msg.source} with malicious nodes {malicious_nodes}")
+        logging.info("Disrupting connection with malicious nodes")
+        logging.info(f"({self.addr}) Removing {malicious_nodes} from {self.get_neighbors()}")
+        logging.info(f"get neighbors before aggregation: {self.get_neighbors()}")
+        for malicious_node in malicious_nodes:
+            if self.get_name() != malicious_node:
+                self._neighbors.remove(malicious_node)
+        logging.info(f"get neighbors after aggregation: {self.get_neighbors()}")
+
+        self.__connect_with_benign(malicious_nodes)
+
+    def __connect_with_benign(self, malicious_nodes):
+        # Define the thresholds for estabilish new connections, if len(neighbors) <= lower_threshold, trigger to build new connections
+        # until len(neighbors) reached the higher_threshold or connected with all benign nodes
+        lower_threshold = 0
+        higher_threshold = len(self.__train_set) - 1
+
+        benign_nodes = [i for i in self.__train_set if i not in malicious_nodes]
+        logging.info(f"({self.addr})__reputation_callback benign_nodes: {benign_nodes}")
+        if len(self.get_neighbors()) <= lower_threshold:
+            for node in benign_nodes:
+                if len(self.get_neighbors()) <= higher_threshold and self.get_name() != node:
+                    connected = self.connect(node)
+                    if connected:
+                        logging.info(f"({self.addr}) Connect new connection with: {connected}")
+
+    def __reputation_callback(self, msg):
+        # receive malicious nodes information from neighbors
         malicious_nodes = msg.args  # List of malicious nodes
-        if self.get_name() in malicious_nodes:
-            malicious_nodes.remove(self.get_name())
-        logging.info(f"({self.addr}) Received reputation from {msg.source} with malicious nodes {malicious_nodes}")
-        logging.info("[Not implemented yet] Disrupting connection with malicious nodes")
-        logging.info(f"({self.addr}) [Not implemented yet] Removing {malicious_nodes} from {self.get_neighbors()}")
-        # self._neighbors.remove(list(set(malicious_nodes) & set(self.get_neighbors())))
+        if len(malicious_nodes) > 0:
+            self.__disrupt_connection_using_reputation(malicious_nodes)
 
     def __stop_learning_callback(self, _):
         self.__stop_learning()
@@ -261,10 +289,10 @@ class Node(BaseNode):
         if self.round is not None:
             # Check source
             if request.round != self.round:
-                    logging.error(
+                logging.error(
                     f"({self.addr}) Model Reception in a late round ({request.round} != {self.round})."
                 )
-                # return node_pb2.ResponseMessage()  # add model anyway
+            # return node_pb2.ResponseMessage()  # add model anyway
 
             # Check moment (not init and invalid round)
             if (
@@ -872,16 +900,24 @@ class Node(BaseNode):
         # ...
         cossim_threshold = 0.5
         loss_threshold = 0.5
-        # ...
 
+        current_models = {}
+        for subnodes in aggregated_models_weights.keys():
+            sublist = subnodes.split()
+            submodel = aggregated_models_weights[subnodes][0]
+            for node in sublist:
+                current_models[node] = submodel
+        # logging.info(f'reputation_calculation current_models {current_models}')
         malicious_nodes = []
         reputation_score = []
         local_model = self.learner.get_parameters()
-        untrusted_nodes = list(aggregated_models_weights.keys())
+        untrusted_nodes = list(current_models.keys())
+        # logging.info(f'reputation_calculation untrusted_nodes {untrusted_nodes}')
         selfName = self.get_name()
+        # selfName = ''
         for untrusted_node in untrusted_nodes:
             if untrusted_node != selfName:
-                untrusted_model = aggregated_models_weights[untrusted_node][0]
+                untrusted_model = current_models[untrusted_node]
                 cossim = cosine_similarity(local_model, untrusted_model)
                 logging.info(f'reputation_calculation cossim {untrusted_node}: {cossim}')
 
@@ -895,6 +931,7 @@ class Node(BaseNode):
                 if avg_loss > loss_threshold:
                     malicious_nodes.append(untrusted_node)
                     reputation_score.append((cossim, avg_loss))
+
         return malicious_nodes, reputation_score
 
     def send_reputation(self, malicious_nodes):
@@ -913,21 +950,26 @@ class Node(BaseNode):
             node (str): Node to get the aggregated models from.
         """
         try:
-            malicious_nodes = []
-            # logging.info(f"({self.addr}) Stored models: {self.aggregator.get_aggregated_models_weights()}")
-            if self.learner.get_round() >= 3:
-                malicious_nodes,_ = self.reputation_calculation(self.aggregator.get_aggregated_models_weights())
-                logging.info(f"({self.addr}) Malicious nodes: {malicious_nodes}, excluding them from the aggregation...")
-                if malicious_nodes:
-                    self.send_reputation(malicious_nodes)
-            # Exclude malicious nodes from the aggregation
-            # Introduce the malicious nodes in the list of aggregated models. Then remove the duplicates
-            models_aggregated = self.__models_aggregated[node]
-            models_aggregated = list(set(list(models_aggregated) + malicious_nodes))
-            return models_aggregated
+            if self.with_reputation:
+                malicious_nodes = []
+                # logging.info(f"({self.addr}) Stored models: {self.aggregator.get_aggregated_models_weights()}")
+                if self.learner.get_round() > 0:
+                    malicious_nodes, _ = self.reputation_calculation(self.aggregator.get_aggregated_models_weights())
+                    logging.info(f"({self.addr}) Malicious nodes: {malicious_nodes}, excluding them from the aggregation...")
+                    if len(malicious_nodes) > 0:
+                        self.send_reputation(malicious_nodes)
+                        # disrupt the connection with malicious nodes
+                        self.__disrupt_connection_using_reputation(malicious_nodes)
+
+                # Exclude malicious nodes from the aggregation
+                # Introduce the malicious nodes in the list of aggregated models. Then remove the duplicates
+                models_aggregated = self.__models_aggregated[node]
+                models_aggregated = list(set(list(models_aggregated) + malicious_nodes))
+                return models_aggregated
+            else:
+                return self.__models_aggregated[node]
         except KeyError:
             return []
-
 
     def __gossip_model_aggregation(self):
         # Anonymous functions

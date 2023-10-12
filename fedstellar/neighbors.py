@@ -103,7 +103,7 @@ class Neighbors:
             )
             if res.error:
                 logging.error(
-                    f"[{self.addr}] Error while sending a message: {msg.cmd} {msg.args}: {res.error}"
+                    f"[{self.__self_addr}] Error while sending a message: {msg.cmd} {msg.args}: {res.error}"
                 )
                 self.remove(nei, disconnect_msg=True)
             else:
@@ -169,7 +169,7 @@ class Neighbors:
             )
             # Handling errors -> however errors in aggregation stops the other nodes and are not raised (decoding/non-matching/unexpected)
             if res.error:
-                logging.error(f"[{self.addr}] Error while sending a model: {res.error}")
+                logging.error(f"[{self.__self_addr}] Error while sending a model: {res.error}")
                 self.remove(nei, disconnect_msg=True)
             if not (channel is None):
                 channel.close()
