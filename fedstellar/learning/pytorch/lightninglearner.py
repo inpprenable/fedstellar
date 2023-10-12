@@ -6,6 +6,7 @@
 import logging
 import pickle
 from collections import OrderedDict
+import traceback
 
 import torch
 from lightning import Trainer
@@ -105,6 +106,8 @@ class LightningLearner(NodeLearner):
                 self.__trainer = None
         except Exception as e:
             logging.error("Something went wrong with pytorch lightning. {}".format(e))
+            # Log full traceback
+            logging.error(traceback.format_exc())
 
     def interrupt_fit(self):
         if self.__trainer is not None:
@@ -127,6 +130,8 @@ class LightningLearner(NodeLearner):
                 return None
         except Exception as e:
             logging.error("Something went wrong with pytorch lightning. {}".format(e))
+            # Log full traceback
+            logging.error(traceback.format_exc())
             return None
 
     def log_validation_metrics(self, loss, metric, round=None, name=None):

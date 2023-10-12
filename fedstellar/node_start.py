@@ -143,8 +143,6 @@ def main():
     )
 
     node.start()
-    # print("Node started, grace time for network start-up (30s)")
-    # time.sleep(30)  # Wait for the participant to start and register in the network
 
     # Node Connection to the neighbors
     for i in neighbors:
@@ -156,6 +154,9 @@ def main():
     logging.info(f"Neighbors: {node.get_neighbors()}")
 
     start_node = config.participant["device_args"]["start"]
+
+    print("Node started, grace time for network start-up (20s)")
+    time.sleep(20)
 
     if start_node:
         node.set_start_learning(rounds=rounds, epochs=epochs)  # rounds=10, epochs=5

@@ -189,8 +189,8 @@ class Node(BaseNode):
     def __reputation_callback(self, msg):
         # Disrupt the connection with the malicious nodes
         malicious_nodes = msg.args  # List of malicious nodes
-        if self.get_name in malicious_nodes:
-            malicious_nodes.remove(self.get_name)
+        if self.get_name() in malicious_nodes:
+            malicious_nodes.remove(self.get_name())
         logging.info(f"({self.addr}) Received reputation from {msg.source} with malicious nodes {malicious_nodes}")
         logging.info("[Not implemented yet] Disrupting connection with malicious nodes")
         logging.info(f"({self.addr}) [Not implemented yet] Removing {malicious_nodes} from {self.get_neighbors()}")
@@ -261,7 +261,7 @@ class Node(BaseNode):
         if self.round is not None:
             # Check source
             if request.round != self.round:
-                logging.error(
+                    logging.error(
                     f"({self.addr}) Model Reception in a late round ({request.round} != {self.round})."
                 )
                 # return node_pb2.ResponseMessage()  # add model anyway
