@@ -488,6 +488,8 @@ class Node(BaseNode):
         # logging.info(f'Resources: Uptime {uptime}')
         self.learner.logger.log_metrics({"Resources/Uptime": uptime}, step=step)
 
+        self.learner.logger.log_metrics({"Network/Connected": len(self.get_neighbors(only_direct=True))}, step=step)
+
         # Check if pynvml is available
         try:
             import pynvml
@@ -920,9 +922,11 @@ class Node(BaseNode):
                 untrusted_model = current_models[untrusted_node]
                 cossim = cosine_similarity(local_model, untrusted_model)
                 logging.info(f'reputation_calculation cossim {untrusted_node}: {cossim}')
+                self.learner.logger.log_metrics({f"Reputation/cossim_{untrusted_node}": cossim}, step=self.learner.get_round())
 
                 avg_loss = self.learner.validate_neighbour_model(untrusted_model)
                 logging.info(f'reputation_calculation avg_loss {untrusted_node}: {avg_loss}')
+                self.learner.logger.log_metrics({f"Reputation/avg_loss_{untrusted_node}": avg_loss}, step=self.learner.get_round())
 
                 if cossim < cossim_threshold:
                     malicious_nodes.append(untrusted_node)

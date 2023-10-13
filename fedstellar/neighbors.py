@@ -209,7 +209,11 @@ class Neighbors:
         # Avoid adding if duplicated and not non_direct neighbor (otherwise, connect creating a channel)
         if duplicated and not non_direct:
             logging.info(f"{self.__self_addr} Cannot add duplicates")
-            return False
+            # Detect if the connection is direct now, if so, create the channel
+            if self.__neighbors[addr][1] is None:
+                pass
+            else:
+                return False
 
         # Add non-direct connected neighbors
         if non_direct:
