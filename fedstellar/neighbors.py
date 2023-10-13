@@ -286,6 +286,17 @@ class Neighbors:
                 pass
             # Remove neighbor
             del self.__neighbors[nei]
+            # Remove neighbor from config
+            current_neighbors = self.__config.participant["network_args"]["neighbors"]  # String with "IP IP IP"
+            logging.info(f"({self.__self_addr}) Current neighbors: {current_neighbors}")
+            final_neighbors = ""
+            for n in current_neighbors.split(" "):
+                if n != nei:
+                    final_neighbors += n + " "
+            # Check if there is a space at the end
+            if final_neighbors[-1] == " ":
+                final_neighbors = final_neighbors[:-1]
+            self.__config.participant["network_args"]["neighbors"] = final_neighbors
         except:
             pass
         self.__nei_lock.release()

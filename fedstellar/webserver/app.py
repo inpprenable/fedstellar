@@ -413,7 +413,7 @@ def fedstellar_update_node(scenario_name):
                                str(timestamp), str(config['scenario_args']['federation']), str(config['scenario_args']['name']))
 
             # Send notification to each connected users
-            socketio.emit('node_update', {'uid': config['device_args']['uid'], 'idx': config['device_args']['idx'], 'ip': config['network_args']['ip'], 'port': config['network_args']['port'], 'role': config['device_args']['role'], 'neighbors': config['network_args']['neighbors'],
+            socketio.emit('node_update', {'uid': config['device_args']['uid'], 'idx': config['device_args']['idx'], 'ip': config['network_args']['ip'], 'port': str(config['network_args']['port']), 'role': config['device_args']['role'], 'neighbors': config['network_args']['neighbors'],
                                           'latitude': config['geo_args']['latitude'],
                                           'longitude': config['geo_args']['longitude'], 'timestamp': str(timestamp), 'federation': config['scenario_args']['federation'], 'name': config['scenario_args']['name']})
 

@@ -55,6 +55,23 @@
         gtag('js', new Date());
         gtag('config', 'G-CJMRTGSHND');
     </script>
+    <script>
+        function showAlert(category, message) {
+            // Create the alert element
+            const alert = document.createElement('div');
+            alert.classList.add('alert', `alert-${category}`, 'alert-dismissible', 'fade', 'in', 'show');
+            alert.setAttribute('role', 'alert');
+            alert.innerHTML = `${message}<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>`;
+
+            // Append the alert in the top of the page
+            const container = document.querySelector('.container');
+            container.insertBefore(alert, container.firstChild);
+            // Hide the alert after 3 seconds
+            setTimeout(() => {
+                alert.remove();
+            }, 3000);
+        }
+</script>
 </head>
 <body>
 <nav class="navbar navbar-inverse">
@@ -165,24 +182,6 @@
     var date = new Date();
     var year = date.getFullYear();
     copyright.innerHTML = `<p>© ${year} Fedstellar. All rights reserved.<br><a href="https://fedstellar.enriquetomasmb.com/" target="_blank"><i class="fa fa-book"></i> Documentation</a> | <a href="https://github.com/enriquetomasmb/fedstellar" target="_blank"><i class="fa fa-code"></i>  Source code</a></p>`;
-</script>
-
-<script>
-    function showAlert(category, message) {
-        // Create the alert element
-        const alert = document.createElement('div');
-        alert.classList.add('alert', `alert-${category}`, 'alert-dismissible', 'fade', 'in', 'show');
-        alert.setAttribute('role', 'alert');
-        alert.innerHTML = `${message}<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>`;
-
-        // Append the alert in the top of the page
-        const container = document.querySelector('.container');
-        container.insertBefore(alert, container.firstChild);
-        // Hide the alert after 3 seconds
-        setTimeout(() => {
-            alert.remove();
-        }, 3000);
-    }
 </script>
 
 <script>
