@@ -482,6 +482,7 @@
         }
         if (!nodeExists) {
             console.log("Adding new node to the graph")
+            showAlert("success", "New node added to the graph");
             gData.nodes.push({
                 id: data.idx,
                 ip: data.ip,
@@ -538,10 +539,10 @@
             for (var j = 0; j < gData.links.length; j++) {
                 if (gData.links[j].source.ipport === linksToRemove[i].source.ipport && gData.links[j].target.ipport === linksToRemove[i].target.ipport) {
                     gData.links.splice(j, 1);
-                    break;
+                    showAlert("warning", "Link removed from the graph")
                 } else if (gData.links[j].source.ipport === linksToRemove[i].target.ipport && gData.links[j].target.ipport === linksToRemove[i].source.ipport) {
                     gData.links.splice(j, 1);
-                    break;
+                    showAlert("warning", "Link removed from the graph")
                 }
             }
         }
