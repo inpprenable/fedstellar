@@ -318,7 +318,7 @@ def fedstellar_scenario_monitoring(scenario_name):
                 for i, node in enumerate(nodes_list):
                     with open(os.path.join(app.config['config_dir'], scenario_name, f'participant_{node[1]}.json')) as f:
                         nodes_config.append(json.load(f))
-                    if datetime.datetime.now() - datetime.datetime.strptime(node[8], "%Y-%m-%d %H:%M:%S.%f") > datetime.timedelta(seconds=20):
+                    if datetime.datetime.now() - datetime.datetime.strptime(node[8], "%Y-%m-%d %H:%M:%S.%f") > datetime.timedelta(seconds=25):
                         nodes_status.append(False)
                         nodes_offline.append(node[2] + ':' + str(node[3]))
                     else:
@@ -747,6 +747,10 @@ def fedstellar_scenario_deployment_run():
                 "network_subnet": data["network_subnet"],
                 "network_gateway": data["network_gateway"],
                 "attack_matrix": attack_matrix,
+                "with_reputation":  data["with_reputation"],
+                "is_dynamic_topology":  data["is_dynamic_topology"],
+                "is_dynamic_aggregation":  data["is_dynamic_aggregation"],
+                "target_aggregation":  data["target_aggregation"],
             }
             # Save args in a file
             scenario_path = os.path.join(app.config['config_dir'], scenario_name)
@@ -786,6 +790,11 @@ def fedstellar_scenario_deployment_run():
                 participant_config["adversarial_args"]["attacks"] = node_config["attacks"]
                 participant_config["adversarial_args"]["poisoned_sample_percent"] = node_config["poisoned_sample_percent"]
                 participant_config["adversarial_args"]["poisoned_ratio"] = node_config["poisoned_ratio"]
+
+                participant_config["defense_args"]["with_reputation"] = data["with_reputation"]
+                participant_config["defense_args"]["is_dynamic_topology"] = data["is_dynamic_topology"]
+                participant_config["defense_args"]["is_dynamic_aggregation"] = data["is_dynamic_aggregation"]
+                participant_config["defense_args"]["target_aggregation"] = data["target_aggregation"]
 
                 with open(participant_file, 'w') as f:
                     json.dump(participant_config, f, sort_keys=False, indent=2)

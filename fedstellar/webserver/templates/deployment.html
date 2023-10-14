@@ -256,6 +256,44 @@
                 <small class="form-text text-muted">%</small>
             </div>
         </div>
+        <div class="form-group row">
+            <h4 class="step-number">Defense <i class="fa fa-wrench"></i></h4>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="reputationSystem" id="without-reputation-btn" checked>
+                    <label class="form-check-label" for="without-reputation-btn">Without Reputation</label>
+                    <!-- <small id="withoutReputationHelp" class="form-text text-muted">
+                        <i id="withoutReputationIcon" class="fa fa-info-circle"></i> -->
+                    <!-- </small> -->
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="reputationSystem" id="with-reputation-btn">
+                    <label class="form-check-label" for="with-reputation-btn">With Reputation</label>
+                    <!-- <small id="withReputationHelp" class="form-text text-muted">
+                        <i id="withReputationIcon" class="fa fa-info-circle"></i> -->
+                    <!-- </small> -->
+                </div>
+                <div id="mtd-strategy" style="display: none; margin-left: 10px">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" name="dynamicTopology" id="dynamic-topology-btn">
+                        <label class="form-check-label" for="dynamic-topology-btn">Dynamic Topology</label>
+
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" name="dynamicAggregation" id="dynamic-aggregation-btn">
+                        <label class="form-check-label" for="dynamic-aggregation-btn">Dynamic Aggregation</label>
+                    </div>
+                    <div id="target-aggregation" style="display: none; margin-left: 20px">
+                        <h5>Target Aggregation Algorithm</h5>
+                        <select class="form-control" id="targetAggregationSelect" name="targetAggregation" style="display: inline; width: 20%">
+                            <option selected>Krum</option>
+                            <option >FedAvg</option>
+                            <option>TrimmedMean</option>
+                            <option>Median</option>
+                        </select>
+                    </div>
+                </div>
+        </div>
+
     </div>
 </form>
 
@@ -551,6 +589,10 @@
                     "poisoned_node_percent": document.getElementById("poisoned-node-percent").value,
                     "poisoned_sample_percent": document.getElementById("poisoned-sample-percent").value,
                     "poisoned_noise_percent": document.getElementById("poisoned-noise-percent").value,
+                    "with_reputation": document.getElementById("with-reputation-btn").checked ? true : false,
+                    "is_dynamic_topology": document.getElementById("dynamic-topology-btn").checked ? true : false,
+                    "is_dynamic_aggregation": document.getElementById("dynamic-aggregation-btn").checked ? true : false,
+                    "target_aggregation": document.getElementById("dynamic-aggregation-btn").checked ? document.getElementById("targetAggregationSelect").value : false,
                 };
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", "/scenario/deployment/run", true);
@@ -581,6 +623,43 @@
             });
         }
     });
+
+</script>
+
+<script>
+    // Generate defense with reputation system configs
+    // When click on "with-reputation-btn" check input, dife "mtd-strategy"
+
+    mtdStrategyDiv = document.getElementById("mtd-strategy")
+    withoutReputationBtn = document.getElementById("without-reputation-btn");
+    withoutReputationBtn.addEventListener("click", function () {
+        mtdStrategyDiv.style.display = "none";
+    });
+    // When click on "with-reputation-btn" check input, display "predefined-topology"
+
+    withReputationBtn = document.getElementById("with-reputation-btn");
+    withReputationBtn.addEventListener("click", function () {
+        mtdStrategyDiv.style.display = "block";
+    });
+
+    // When click on "with-reputation-btn" check input, display "predefined-topology"
+    targetAggregation = document.getElementById("target-aggregation")
+    targetAggregationSelect = document.getElementById("dynamic-aggregation-btn");
+    targetAggregationSelect.addEventListener("change", function () {
+        if (this.checked) {
+            targetAggregation.style.display = "block";
+        } else {
+            targetAggregation.style.display = "none";
+        }
+    });
+
+
+    // targetAggregationSelect.addEventListener("change", function () {
+    //     targetAggregation.style.display = "none";
+    // });
+
+
+
 
 </script>
 
@@ -973,12 +1052,11 @@
             neighbors: [],
             links: [],
         })),
-        links: [...Array(N).keys()]
-            .filter(id => id)
-            .map(id => ({
-                source: id,
-                target: Math.round(Math.random() * (id - 1)),
-            }))
+        // Default links between nodes (fully connected)
+        links: [...Array(N).keys()].map(i => ({
+            source: i,
+            target: (i + 1) % N
+        }))
     };
 
     gDataUpdate();
