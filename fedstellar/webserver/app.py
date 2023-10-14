@@ -318,7 +318,7 @@ def fedstellar_scenario_monitoring(scenario_name):
                 for i, node in enumerate(nodes_list):
                     with open(os.path.join(app.config['config_dir'], scenario_name, f'participant_{node[1]}.json')) as f:
                         nodes_config.append(json.load(f))
-                    if datetime.datetime.now() - datetime.datetime.strptime(node[8], "%Y-%m-%d %H:%M:%S.%f") > datetime.timedelta(seconds=20):
+                    if datetime.datetime.now() - datetime.datetime.strptime(node[8], "%Y-%m-%d %H:%M:%S.%f") > datetime.timedelta(seconds=25):
                         nodes_status.append(False)
                         nodes_offline.append(node[2] + ':' + str(node[3]))
                     else:
@@ -691,7 +691,7 @@ def attack_node_assign(nodes, federation, attack, poisoned_node_percent, poisone
         node_att = 'No Attack'
         attack_sample_persent = 0
         poisoned_ratio = 0
-        if node in attacked_nodes:
+        if (node in attacked_nodes) or (nodes[node]["malicious"]):
             node_att = attack
             attack_sample_persent = poisoned_sample_percent / 100
             poisoned_ratio = poisoned_noise_percent / 100

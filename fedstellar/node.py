@@ -7,6 +7,8 @@ import logging
 import math
 import os
 from datetime import datetime
+from fedstellar.attacks.aggregation import create_attack
+from fedstellar.learning.aggregators.aggregator import create_malicious_aggregator
 
 from fedstellar.learning.aggregators.helper import cosine_similarity
 from fedstellar.learning.pytorch.remotelogger import FedstellarWBLogger
@@ -733,6 +735,7 @@ class Node(BaseNode):
 
             # Evaluate and send metrics
             if self.round is not None:
+                logging.info(f"BEFORE_EVALUATE: {self.learner.model.state_dict()['l3.weight']}")
                 self.__evaluate()
 
             # Train
@@ -911,6 +914,7 @@ class Node(BaseNode):
     def __evaluate(self):
         logging.info(f"({self.addr}) Evaluating...")
         results = self.learner.evaluate()
+        # Removed because it is not necessary to send metrics between nodes
         if results is not None:
             logging.info(
                 f"({self.addr}) Evaluated. Losss: {results[0]}, Metric: {results[1]}."
@@ -1138,6 +1142,7 @@ class Node(BaseNode):
 
                 # Send Partial Aggregation
                 if model is not None:
+                    logging.info(f"ATAQUE_DEBUG: {model['l3.weight']}")
                     logging.info(f"({self.addr}) Gossip | Gossiping model to {nei} with {contributors} contributors and weight {weight}")
                     encoded_model = self.learner.encode_parameters(params=model)
                     self._neighbors.send_model(
@@ -1147,3 +1152,41 @@ class Node(BaseNode):
             # Sleep to allow periodicity
             sleep_time = max(0, period - (t - time.time()))
             time.sleep(sleep_time)
+
+
+class MaliciousNode(Node):
+
+    def __init__(self,
+            idx,
+            experiment_name,
+            model,
+            data,
+            hostdemo=None,
+            host="127.0.0.1",
+            port=None,
+            config=Config,
+            learner=LightningLearner,
+            encrypt=False,
+            model_poisoning=False,
+            poisoned_ratio=0,
+            noise_type='gaussian',):
+        """Node that instead of training, performs an attack on the weights during the aggregation.
+        """
+        super().__init__(idx, experiment_name, model, data, hostdemo, host, port, config, learner, encrypt)
+        
+        # Create attack object
+        self.attack = create_attack(config.participant["adversarial_args"]["attacks"])
+        self.fit_time = 0.0
+        # Time it would wait additionally to the normal training time
+        self.extra_time = 0.0
+        self.aggregator = create_malicious_aggregator(self.aggregator, self.attack)
+
+    def _Node__train(self):  # Required to override Node.__train method
+        if self.learner.get_round() == 0:
+            t0 = time.time()
+            logging.info(f"({self.addr}) Training...")
+            self.learner.fit()
+            self.fit_time = time.time() - t0 + self.extra_time
+        else:
+            logging.info(f"({self.addr}) Waiting {self.fit_time} seconds maliciously...")
+            time.sleep(max(self.fit_time, 0.0))
