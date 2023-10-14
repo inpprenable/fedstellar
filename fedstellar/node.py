@@ -133,6 +133,9 @@ class Node(BaseNode):
         self.poisoned_ratio = poisoned_ratio
         self.noise_type = noise_type
 
+        self.__trusted_nei = []
+        self.__is_malicious = False
+
         # with reputation mechansim
         # Todo: change to initial function
         self.with_reputation = self.config.participant['defense_args']["with_reputation"]
@@ -167,7 +170,9 @@ class Node(BaseNode):
                 self.learner = learner(model, data, config=self.config, logger=tensorboardlogger)
 
         logging.info("[NODE] Role: " + str(self.config.participant["device_args"]["role"]))
-        logging.info("[NODE] Benign node" if self.config.participant["adversarial_args"]["attacks"] == "No Attack" else "[NODE] Malicious node")
+        if self.config.participant["adversarial_args"]["attacks"] != "No Attack":
+            self.__is_malicious = True
+        logging.info("[NODE] Benign node" if not self.__is_malicious else "[NODE] Malicious node")
 
         # Aggregators
         if self.config.participant["aggregator_args"]["algorithm"] == "FedAvg":
@@ -183,13 +188,13 @@ class Node(BaseNode):
         # whether to use the dynamic aggregator
         if self.is_dynamic_aggregation:
             # Target Aggregators
-            if self.config.participant["aggregator_args"]["algorithm"] == "FedAvg":
+            if self.config.participant["defense_args"]["target_aggregation"] == "FedAvg":
                 self.target_aggregation = FedAvg(node_name=self.get_name(), config=self.config)
-            elif self.config.participant["aggregator_args"]["algorithm"] == "Krum":
+            elif self.config.participant["defense_args"]["target_aggregation"] == "Krum":
                 self.target_aggregation = Krum(node_name=self.get_name(), config=self.config)
-            elif self.config.participant["aggregator_args"]["algorithm"] == "Median":
+            elif self.config.participant["defense_args"]["target_aggregation"] == "Median":
                 self.target_aggregation = Median(node_name=self.get_name(), config=self.config)
-            elif self.config.participant["aggregator_args"]["algorithm"] == "TrimmedMean":
+            elif self.config.participant["defense_args"]["target_aggregation"] == "TrimmedMean":
                 self.target_aggregation = TrimmedMean(node_name=self.get_name(), config=self.config)
 
         # Train Set Votes
@@ -217,7 +222,7 @@ class Node(BaseNode):
         logging.info(f"({self.addr}) Removing {malicious_nodes} from {self.get_neighbors()}")
         logging.info(f"get neighbors before aggregation at round {self.learner.get_round()}: {self.get_neighbors()}")
         for malicious_node in malicious_nodes:
-            if self.get_name() != malicious_node:
+            if (self.get_name() != malicious_node) and (malicious_node not in self.__trusted_nei):
                 self._neighbors.remove(malicious_node)
         logging.info(f"get neighbors after aggregation at round {self.learner.get_round()}: {self.get_neighbors()}")
 
@@ -246,7 +251,7 @@ class Node(BaseNode):
         # receive malicious nodes information from neighbors
         malicious_nodes = msg.args  # List of malicious nodes
         if self.with_reputation:
-            if len(malicious_nodes) > 0:
+            if len(malicious_nodes) > 0 and not self.__is_malicious:
                 if self.is_dynamic_topology:
                     self.__disrupt_connection_using_reputation(malicious_nodes)
 
@@ -966,7 +971,7 @@ class Node(BaseNode):
                 current_models[node] = submodel
         # logging.info(f'reputation_calculation current_models {current_models}')
         malicious_nodes = []
-        reputation_score = []
+        reputation_score = {}
         local_model = self.learner.get_parameters()
         untrusted_nodes = list(current_models.keys())
         # logging.info(f'reputation_calculation untrusted_nodes {untrusted_nodes}')
@@ -985,14 +990,12 @@ class Node(BaseNode):
                 avg_loss = self.learner.validate_neighbour_model(untrusted_model)
                 logging.info(f'reputation_calculation avg_loss at round {self.learner.get_round()} {untrusted_node}: {avg_loss}')
                 self.learner.logger.log_metrics({f"Reputation/avg_loss_{untrusted_node}": avg_loss}, step=self.learner.get_round())
+                reputation_score[untrusted_node] = (cossim, avg_loss)
 
-                if cossim < cossim_threshold:
+                if cossim < cossim_threshold or avg_loss > loss_threshold:
                     malicious_nodes.append(untrusted_node)
-                    reputation_score.append((cossim, avg_loss))
-
-                if avg_loss > loss_threshold:
-                    malicious_nodes.append(untrusted_node)
-                    reputation_score.append((cossim, avg_loss))
+                else :
+                    self.__trusted_nei.append(untrusted_node)
 
         return malicious_nodes, reputation_score
 
