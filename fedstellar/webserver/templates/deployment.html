@@ -970,12 +970,11 @@
             neighbors: [],
             links: [],
         })),
-        links: [...Array(N).keys()]
-            .filter(id => id)
-            .map(id => ({
-                source: id,
-                target: Math.round(Math.random() * (id - 1)),
-            }))
+        // Default links between nodes (fully connected)
+        links: [...Array(N).keys()].map(i => ({
+            source: i,
+            target: (i + 1) % N
+        }))
     };
 
     gDataUpdate();
