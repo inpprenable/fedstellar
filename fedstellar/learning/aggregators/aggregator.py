@@ -105,6 +105,7 @@ class Aggregator:
         """
 
         nodes = list(contributors)
+        logging.info(f"({self.node_name}) add_model | __models={self.__models.keys()} | contributors={nodes} | train_set={self.__train_set} | get_aggregated_models={self.get_aggregated_models()}")
 
         # Verify that contributors are not empty
         if contributors == []:

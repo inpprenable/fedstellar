@@ -138,7 +138,7 @@ class Node(BaseNode):
         self.with_reputation = True
 
         self.is_dynamic_topology = True
-        self.is_dynamic_aggregator = True
+        self.is_dynamic_aggregator = False
 
         # whether to use the dynamic aggregator
         if self.is_dynamic_aggregator:
@@ -344,14 +344,14 @@ class Node(BaseNode):
             try:
                 if not self.__model_initialized_lock.locked():
                     # Add model to aggregator
-                    logging.info(f"({self.addr}) add_model Remote Service using gRPC, contributors: {request.contributors}")
+                    logging.info(f"({self.addr}) add_model Remote Service using gRPC")
                     decoded_model = self.learner.decode_parameters(request.weights)
                     if self.learner.check_parameters(decoded_model):
                         models_added = self.aggregator.add_model(
                             decoded_model, request.contributors, request.weight
                         )
                         logging.info(
-                            f'({self.addr}) Models added (and send using MODELS_AGGREGATED): {models_added}'
+                            f'({self.addr}) Models added, sending models_added using MODELS_AGGREGATED): {models_added}'
                         )
                         if models_added is not None:
                             # Communicate Aggregation
@@ -364,6 +364,7 @@ class Node(BaseNode):
                         raise ModelNotMatchingError("Not matching models")
                 else:
                     # Initialize model (try to handle concurrent initializations)
+                    logging.info(f"({self.addr}) Initializing model")
                     try:
                         self.__model_initialized_lock.release()
                         model = self.learner.decode_parameters(request.weights)
@@ -698,7 +699,11 @@ class Node(BaseNode):
             if self.addr not in self.__train_set:
                 self.__train_set.append(self.addr)
             logging.info(
-                f"{self.addr} Train set of {len(self.__train_set)} nodes: {self.__train_set}"
+                f"{self.addr} Train set: {self.__train_set}"
+            )
+            # Logging neighbors (indicate the direct neighbors and undirected neighbors)
+            logging.info(
+                f"{self.addr} Direct neighbors: {self.get_neighbors(only_direct=True)} | Undirected neighbors: {self.get_neighbors(only_direct=False)}"
             )
 
         # Determine if node is in the train set
@@ -1020,6 +1025,7 @@ class Node(BaseNode):
 
     def __gossip_model_aggregation(self):
         # Anonymous functions
+        logging.info(f"({self.addr}) __gossip_model_aggregation")
         candidate_condition = lambda node: (
                 (node not in self.aggregator.get_aggregated_models())
                 and (node in self.__train_set)
@@ -1037,10 +1043,12 @@ class Node(BaseNode):
 
     def __gossip_model_difusion(self, initialization=False):
         # Wait a model (init or aggregated)
+        logging.info(f"({self.addr}) __gossip_model_difusion")
         if initialization:
+            logging.info(f"({self.addr}) __gossip_model_difusion | Waiting model initialization.")
             candidate_condition = lambda node: node not in self.__nei_status.keys()
         else:
-            logging.info(f"({self.addr}) Gossip | Gossiping aggregated model.")
+            logging.info(f"({self.addr}) __gossip_model_difusion | Waiting model aggregation.")
             candidate_condition = lambda node: self.__nei_status[node] < self.round
 
         # Status fn
@@ -1081,7 +1089,7 @@ class Node(BaseNode):
 
             # Determine end of gossip
             if not neis:
-                logging.info(f"({self.addr}) Gossip| Gossip finished.")
+                logging.info(f"({self.addr}) Gossip| Gossip finished. No more nodes need models.")
                 return
 
             # Save state of neighbors. If nodes are not responding gossip will stop
@@ -1103,6 +1111,7 @@ class Node(BaseNode):
             # Select a random subset of neighbors
             samples = min(self.config.participant["GOSSIP_MODELS_PER_ROUND"], len(neis))
             neis = random.sample(neis, samples)
+            logging.info(f"({self.addr}) Gossip | Gossiping models to {neis}")
 
             # Generate and Send Model Partial Aggregations (model, node_contributors)
             for nei in neis:

@@ -208,12 +208,20 @@ class Neighbors:
         self.__nei_lock.release()
         # Avoid adding if duplicated and not non_direct neighbor (otherwise, connect creating a channel)
         if duplicated and not non_direct:
-            logging.info(f"{self.__self_addr} Cannot add duplicates")
-            # Detect if the connection is direct now, if so, create the channel
+            # Duplicated but the node wants to add it as a direct connected neighbor
+            # Check if it is already connected as a non-direct connected neighbor. If so, upgrade to direct connected neighbor
             if self.__neighbors[addr][1] is None:
+                logging.info(
+                    f"{self.__self_addr} Upgrading non direct connected neighbor {addr}"
+                )
                 pass
-            else:
-                return False
+            logging.info(f"{self.__self_addr} Cannot add a duplicate {addr}")
+            return False
+
+        elif duplicated and non_direct:
+            # Duplicated but the node wants to add it as a non-direct connected neighbor
+            logging.info(f"{self.__self_addr} Cannot add a duplicate {addr}")
+            return False
 
         # Add non-direct connected neighbors
         if non_direct:
@@ -301,6 +309,7 @@ class Neighbors:
             if final_neighbors[-1] == " ":
                 final_neighbors = final_neighbors[:-1]
             self.__config.participant["network_args"]["neighbors"] = final_neighbors
+            logging.info(f"({self.__self_addr}) Final neighbors: {final_neighbors}")
         except:
             pass
         self.__nei_lock.release()

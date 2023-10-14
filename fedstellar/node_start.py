@@ -143,20 +143,19 @@ def main():
     )
 
     node.start()
+    time.sleep(10)
 
     # Node Connection to the neighbors
     for i in neighbors:
         print(f"Connecting to {i}")
         addr = f"{i.split(':')[0]}:{i.split(':')[1]}"
         node.connect(addr)
-        time.sleep(5)
-
-    logging.info(f"Neighbors: {node.get_neighbors()}")
+        time.sleep(2)
 
     start_node = config.participant["device_args"]["start"]
 
     print("Node started, grace time for network start-up (20s)")
-    time.sleep(20)
+    time.sleep(5)
 
     if start_node:
         node.set_start_learning(rounds=rounds, epochs=epochs)  # rounds=10, epochs=5
