@@ -691,7 +691,7 @@ def attack_node_assign(nodes, federation, attack, poisoned_node_percent, poisone
         node_att = 'No Attack'
         attack_sample_persent = 0
         poisoned_ratio = 0
-        if node in attacked_nodes:
+        if (node in attacked_nodes) or (nodes[node]["malicious"]):
             node_att = attack
             attack_sample_persent = poisoned_sample_percent / 100
             poisoned_ratio = poisoned_noise_percent / 100
