@@ -3,7 +3,7 @@
 # Copyright (c) 2023 Enrique Tomás Martínez Beltrán.
 # 
 
-
+from functools import partial
 import logging
 import threading
 
@@ -257,3 +257,17 @@ class Aggregator:
         )
 
         return (self.aggregate(dict_aux), nodes_aggregated, aggregation_weight)
+
+
+def create_malicious_aggregator(aggregator, attack):
+
+    aggregate = partial(aggregator.aggregate)  # None is the self (not used)
+
+    def malicious_aggregate(self, models):
+        accum = aggregate(models)
+        if models is not None:
+            accum = attack(accum)
+        return accum
+
+    aggregator.aggregate = partial(malicious_aggregate, aggregator)
+    return aggregator
