@@ -135,14 +135,14 @@ class Node(BaseNode):
 
         # with reputation mechansim
         # Todo: change to initial function
-        self.with_reputation = True
+        self.with_reputation = self.config.participant['defense_args']["with_reputation"]
 
-        self.is_dynamic_topology = True
-        self.is_dynamic_aggregator = False
+        self.is_dynamic_topology = self.config.participant['defense_args']["is_dynamic_topology"]
+        self.is_dynamic_aggregation = self.config.participant['defense_args']["is_dynamic_aggregation"]
 
-        # whether to use the dynamic aggregator
-        if self.is_dynamic_aggregator:
-            self.target_aggregator = Krum(node_name=self.get_name(), config=self.config)
+        logging.info(f"[NODE] with_reputation {self.with_reputation}")
+        logging.info(f"[NODE] is_dynamic_topology {self.is_dynamic_topology}")
+        logging.info(f"[NODE] is_dynamic_aggregation {self.is_dynamic_aggregation}")
 
         # Learner and learner logger
         # log_model="all" to log model
@@ -178,6 +178,19 @@ class Node(BaseNode):
             self.aggregator = Median(node_name=self.get_name(), config=self.config)
         elif self.config.participant["aggregator_args"]["algorithm"] == "TrimmedMean":
             self.aggregator = TrimmedMean(node_name=self.get_name(), config=self.config)
+
+
+        # whether to use the dynamic aggregator
+        if self.is_dynamic_aggregation:
+            # Target Aggregators
+            if self.config.participant["aggregator_args"]["algorithm"] == "FedAvg":
+                self.target_aggregation = FedAvg(node_name=self.get_name(), config=self.config)
+            elif self.config.participant["aggregator_args"]["algorithm"] == "Krum":
+                self.target_aggregation = Krum(node_name=self.get_name(), config=self.config)
+            elif self.config.participant["aggregator_args"]["algorithm"] == "Median":
+                self.target_aggregation = Median(node_name=self.get_name(), config=self.config)
+            elif self.config.participant["aggregator_args"]["algorithm"] == "TrimmedMean":
+                self.target_aggregation = TrimmedMean(node_name=self.get_name(), config=self.config)
 
         # Train Set Votes
         self.__train_set_votes = {}
@@ -237,16 +250,16 @@ class Node(BaseNode):
                 if self.is_dynamic_topology:
                     self.__disrupt_connection_using_reputation(malicious_nodes)
 
-                if self.is_dynamic_aggregator and self.aggregator != self.target_aggregator:
+                if self.is_dynamic_aggregation and self.aggregator != self.target_aggregation:
                     self.__dynamic_aggergator(self.aggregator.get_aggregated_models_weights(), malicious_nodes)
 
 
     def __dynamic_aggergator(self, aggregated_models_weights, malicious_nodes):
         logging.info(f"malicious detected at round {self.learner.get_round()}, change aggergation protocol!")
-        if self.aggregator != self.target_aggregator:
+        if self.aggregator != self.target_aggregation:
             logging.info(f"get_aggregated_models current aggregator is: {self.aggregator}")
             # do some threading
-            self.aggregator = self.target_aggregator
+            self.aggregator = self.target_aggregation
             self.aggregator.set_nodes_to_aggregate(self.__train_set)
 
             # current_models = {}
@@ -959,7 +972,10 @@ class Node(BaseNode):
         # logging.info(f'reputation_calculation untrusted_nodes {untrusted_nodes}')
         selfName = self.get_name()
         # selfName = ''
+        logging.info(f'reputation_calculation untrusted_nodes at round {self.learner.get_round()}: {untrusted_nodes}')
         for untrusted_node in untrusted_nodes:
+            logging.info(f'reputation_calculation untrusted_node at round {self.learner.get_round()}: {untrusted_node}')
+            logging.info(f'reputation_calculation selfName at round {self.learner.get_round()}: {selfName}')
             if untrusted_node != selfName:
                 untrusted_model = current_models[untrusted_node]
                 cossim = cosine_similarity(local_model, untrusted_model)
@@ -1009,7 +1025,7 @@ class Node(BaseNode):
                             self.__disrupt_connection_using_reputation(malicious_nodes)
 
 
-                        if self.is_dynamic_aggregator and self.aggregator != self.target_aggregator:
+                        if self.is_dynamic_aggregation and self.aggregator != self.target_aggregation:
                             self.__dynamic_aggergator(self.aggregator.get_aggregated_models_weights(), malicious_nodes)
 
 
