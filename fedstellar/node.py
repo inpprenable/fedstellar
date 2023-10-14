@@ -906,6 +906,7 @@ class Node(BaseNode):
     def __evaluate(self):
         logging.info(f"({self.addr}) Evaluating...")
         results = self.learner.evaluate()
+        # Removed because it is not necessary to send metrics between nodes
         if results is not None:
             logging.info(
                 f"({self.addr}) Evaluated. Losss: {results[0]}, Metric: {results[1]}."
