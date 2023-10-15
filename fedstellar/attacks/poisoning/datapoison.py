@@ -55,7 +55,7 @@ def datapoison(dataset, indices, poisoned_persent, poisoned_ratio, targeted=Fals
 
 def add_x_to_image(img):
     """
-    Add a 10*10 pixels X at the top-left of a image
+    Add a 10*10 pixels X at the top-left of an image
     """
     for i in range(0, 10):
         for j in range(0, 10):

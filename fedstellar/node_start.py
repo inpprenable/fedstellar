@@ -1,4 +1,3 @@
-import logging
 import os
 import sys
 import time
@@ -23,6 +22,8 @@ from fedstellar.node import Node, MaliciousNode
 from fedstellar.learning.pytorch.datamodule import DataModule
 
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
+
+
 # os.environ["GRPC_VERBOSITY"] = "debug"
 
 
@@ -127,11 +128,11 @@ def main():
     else:
         raise ValueError(f"Aggregation algorithm {aggregation_algorithm} not supported")
 
-
     if not config.participant["device_args"]["malicious"]:
         node_cls = Node
     else:
         node_cls = MaliciousNode
+
     node = node_cls(
         idx=idx,
         experiment_name=experiment_name,

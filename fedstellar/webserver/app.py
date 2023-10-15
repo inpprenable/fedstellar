@@ -155,7 +155,7 @@ def fedstellar_upload_image():
             flash('No file part', category='danger')
             return (redirect(url_for("fedstellar_scenario_private")))
         file = request.files['file']
-        # if user does not select file, browser also submit a empty part without filename
+        # if user does not select file, browser also submit an empty part without filename
         if file.filename == '':
             flash('No selected file', category='danger')
             return (redirect(url_for("fedstellar_scenario_private")))
@@ -248,7 +248,7 @@ def fedstellar_delete_user(user):
 @app.route("/add_user", methods=["POST"])
 def fedstellar_add_user():
     if session.get("role", None) == "admin":  # only Admin should be able to add user.
-        # before we add the user, we need to ensure this is doesn't exit in database. We also need to ensure the id is valid.
+        # before we add the user, we need to ensure this doesn't exit in database. We also need to ensure the id is valid.
         if request.form.get('user').upper() in list_users():
             user_list = list_users()
             user_table = zip(range(1, len(user_list) + 1),

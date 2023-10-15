@@ -7,9 +7,9 @@ import logging
 import math
 import os
 from datetime import datetime
+
 from fedstellar.attacks.aggregation import create_attack
 from fedstellar.learning.aggregators.aggregator import create_malicious_aggregator
-
 from fedstellar.learning.aggregators.helper import cosine_similarity
 from fedstellar.learning.pytorch.remotelogger import FedstellarWBLogger
 from fedstellar.learning.pytorch.statisticsloggerv2 import FedstellarLogger
@@ -186,7 +186,6 @@ class Node(BaseNode):
         elif self.config.participant["aggregator_args"]["algorithm"] == "TrimmedMean":
             self.aggregator = TrimmedMean(node_name=self.get_name(), config=self.config)
 
-
         # whether to use the dynamic aggregator
         if self.is_dynamic_aggregation:
             # Target Aggregators
@@ -260,7 +259,6 @@ class Node(BaseNode):
                 if self.is_dynamic_aggregation and self.aggregator != self.target_aggregation:
                     self.__dynamic_aggergator(self.aggregator.get_aggregated_models_weights(), malicious_nodes)
 
-
     def __dynamic_aggergator(self, aggregated_models_weights, malicious_nodes):
         logging.info(f"malicious detected at round {self.learner.get_round()}, change aggergation protocol!")
         if self.aggregator != self.target_aggregation:
@@ -279,7 +277,6 @@ class Node(BaseNode):
                             submodel, [node], weights
                         )
             logging.info(f"get_aggregated_models current aggregator is: {self.aggregator}")
-
 
     def __stop_learning_callback(self, _):
         self.__stop_learning()
@@ -788,14 +785,22 @@ class Node(BaseNode):
                     )
                 )
                 self.__gossip_model_aggregation()
-                self.__wait_aggregated_model()
+                # self.__wait_aggregated_model()
+                self.aggregator.set_waiting_aggregated_model(self.__train_set)
                 time.sleep(5)
 
         elif self.config.participant["device_args"]["role"] == Role.IDLE:
-            self.__wait_aggregated_model()
+            # self.__wait_aggregated_model()
+            self.aggregator.set_waiting_aggregated_model(self.__train_set)
 
         else:
             logging.warning("[NODE.__train_step] Role not implemented yet")
+
+        # Gossip aggregated model
+        if self.round is not None:
+            logging.info(f"({self.addr}) Waiting aggregation and gossiping model (difusion).")
+            self.__wait_aggregated_model()
+            self.__gossip_model_difusion()
 
         # Finish round
         if self.round is not None:
@@ -998,7 +1003,7 @@ class Node(BaseNode):
 
                 if cossim < cossim_threshold or avg_loss > loss_threshold:
                     malicious_nodes.append(untrusted_node)
-                else :
+                else:
                     self.__trusted_nei.append(untrusted_node)
 
         return malicious_nodes, reputation_score
@@ -1031,10 +1036,8 @@ class Node(BaseNode):
                         if self.is_dynamic_topology:
                             self.__disrupt_connection_using_reputation(malicious_nodes)
 
-
                         if self.is_dynamic_aggregation and self.aggregator != self.target_aggregation:
                             self.__dynamic_aggergator(self.aggregator.get_aggregated_models_weights(), malicious_nodes)
-
 
                 # Exclude malicious nodes from the aggregation
                 # Introduce the malicious nodes in the list of aggregated models. Then remove the duplicates
@@ -1157,23 +1160,23 @@ class Node(BaseNode):
 class MaliciousNode(Node):
 
     def __init__(self,
-            idx,
-            experiment_name,
-            model,
-            data,
-            hostdemo=None,
-            host="127.0.0.1",
-            port=None,
-            config=Config,
-            learner=LightningLearner,
-            encrypt=False,
-            model_poisoning=False,
-            poisoned_ratio=0,
-            noise_type='gaussian',):
+                 idx,
+                 experiment_name,
+                 model,
+                 data,
+                 hostdemo=None,
+                 host="127.0.0.1",
+                 port=None,
+                 config=Config,
+                 learner=LightningLearner,
+                 encrypt=False,
+                 model_poisoning=False,
+                 poisoned_ratio=0,
+                 noise_type='gaussian'):
         """Node that instead of training, performs an attack on the weights during the aggregation.
         """
         super().__init__(idx, experiment_name, model, data, hostdemo, host, port, config, learner, encrypt)
-        
+
         # Create attack object
         self.attack = create_attack(config.participant["adversarial_args"]["attacks"])
         self.fit_time = 0.0

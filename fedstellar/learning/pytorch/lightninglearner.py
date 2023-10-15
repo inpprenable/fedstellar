@@ -42,7 +42,7 @@ class LightningLearner(NodeLearner):
         self.logger = logger
         self.__trainer = None
         self.epochs = 1
-        logging.getLogger("lightning.pytorch").setLevel(logging.WARNING)
+        logging.getLogger("lightning.pytorch").setLevel(logging.INFO)
 
         # FL information
         self.round = 0
@@ -143,13 +143,6 @@ class LightningLearner(NodeLearner):
             len(self.data.train_dataloader().dataset),
             len(self.data.test_dataloader().dataset),
         )
-
-    def init(self):
-        self.close()
-
-    def close(self):
-        if self.logger is not None:
-            pass
 
     def finalize_round(self):
         self.logger.global_step = self.logger.global_step + self.logger.local_step

@@ -256,16 +256,6 @@ class Neighbors:
             self.__nei_lock.release()
             return True
 
-        except grpc.RpcError as e:
-            if e.code() == grpc.StatusCode.UNAVAILABLE:
-                logging.info(f"{self.__self_addr} The neighbor is not deployed yet, is down or is not available")
-            # Try to remove neighbor
-            try:
-                self.remove(addr)
-            except:
-                pass
-            return False
-
         except Exception as e:
             logging.info(f"{self.__self_addr} Crash while adding a neighbor: {e}")
             # Try to remove neighbor

@@ -23,7 +23,6 @@ class Aggregator:
         self.role = self.config.participant["device_args"]["role"]
         self.__train_set = []
         self.__waiting_aggregated_model = False
-        self.__aggregated_waited_model = False
         self.__models = {}
 
         # Locks
@@ -58,7 +57,7 @@ class Aggregator:
     def set_waiting_aggregated_model(self, nodes):
         """
         Indicates that the node is waiting for an aggregation. It won't participate in aggregation process.
-        The model only will receive a model and then it will be used as an aggregated model.
+        The model only will receive a model, and then it will be used as an aggregated model.
         """
         self.set_nodes_to_aggregate(nodes)
         self.__waiting_aggregated_model = True
@@ -136,8 +135,7 @@ class Aggregator:
                     # Check if the model is a full/partial aggregation
                     if len(nodes) == len(self.__train_set):
                         logging.info(f'({self.node_name}) The number of contributors is equal to the number of nodes in the train set. --> Full aggregation.')
-                        self.__models = {}
-                        self.__models[" ".join(nodes)] = (model, weight)
+                        self.__models = {" ".join(nodes): (model, weight)}
                         logging.info(
                             f"({self.node_name}) Model added ({str(len(self.get_aggregated_models()))}/{str(len(self.__train_set))}) from {str(nodes)}"
                         )
