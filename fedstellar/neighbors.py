@@ -103,17 +103,17 @@ class Neighbors:
             )
             if res.error:
                 logging.error(
-                    f"[{self.__self_addr}] Error while sending a message: {msg.cmd} {msg.args}: {res.error}"
+                    f"[{self.__self_addr}] send_message (gRPC) | Error while sending a message: {msg.cmd} {msg.args}: {res.error}"
                 )
                 self.remove(nei, disconnect_msg=True)
             else:
-                logging.info(
-                    f"({self.__self_addr}) Message {msg.cmd} sent to {nei} with hash {msg.hash}"
+                logging.debug(
+                    f"({self.__self_addr}) send_message (gRPC) | Message {msg.cmd} sent to {nei} with hash {msg.hash}"
                 )
         except Exception as e:
             # Remove neighbor
-            logging.info(
-                f"({self.__self_addr}) Cannot send message {msg.cmd} to {nei}. Error: {str(e)}"
+            logging.error(
+                f"({self.__self_addr}) send_message (gRPC) | Cannot send message {msg.cmd} to {nei}. Error: {str(e)}"
             )
             self.remove(nei)
 
@@ -185,52 +185,34 @@ class Neighbors:
     # Neighbors management
     ####
 
-    def add(self, addr, handshake_msg=True, non_direct=False):
+    def non_direct_add_node(self, addr):
         """
-        Add a neighbor if it is not itself or already added. It also sends a handshake message to check if the neighbor is available and create a bidirectional connection.
+        Add a non-direct connected neighbor.
 
         Args:
             addr (str): Address of the neighbor.
-            handshake_msg (bool): If True, send a handshake message to the neighbor.
-            non_direct (bool): If True, add a non-direct connected neighbor (without creating a direct GRPC connection).
 
         Returns:
-            bool: True if the neighbor was added, False otherwise.
+
         """
-        # Cannot add itself
-        if addr == self.__self_addr:
-            logging.info(f"{self.__self_addr} Cannot add itself")
-            return False
 
-        # Cannot add duplicates
+        logging.info(f"{self.__self_addr} Adding non direct connected neighbor {addr}")
         self.__nei_lock.acquire()
-        duplicated = addr in self.__neighbors.keys()
+        self.__neighbors[addr] = [None, None, time.time()]
         self.__nei_lock.release()
-        # Avoid adding if duplicated and not non_direct neighbor (otherwise, connect creating a channel)
-        if duplicated and not non_direct:
-            # Duplicated but the node wants to add it as a direct connected neighbor
-            # Check if it is already connected as a non-direct connected neighbor. If so, upgrade to direct connected neighbor
-            if self.__neighbors[addr][1] is None:
-                logging.info(
-                    f"{self.__self_addr} Upgrading non direct connected neighbor {addr}"
-                )
-                pass
-            logging.info(f"{self.__self_addr} Cannot add a duplicate {addr}")
-            return False
+        return True
 
-        elif duplicated and non_direct:
-            # Duplicated but the node wants to add it as a non-direct connected neighbor
-            logging.info(f"{self.__self_addr} Cannot add a duplicate {addr}")
-            return False
+    def direct_add_node(self, handshake_msg, addr):
+        """
+        Add a direct connected neighbor.
 
-        # Add non-direct connected neighbors
-        if non_direct:
-            logging.info(f"{self.__self_addr} Adding non direct connected neighbor {addr}")
-            self.__nei_lock.acquire()
-            self.__neighbors[addr] = [None, None, time.time()]
-            self.__nei_lock.release()
-            return True
+        Args:
+            handshake_msg (bool): If True, send a handshake message to the neighbor.
+            addr (str): Address of the neighbor.
 
+        Returns:
+
+        """
         logging.info(f"{self.__self_addr} Adding direct connected neighbor {addr}")
         try:
             # Create channel and stub
@@ -264,6 +246,55 @@ class Neighbors:
             except:
                 pass
             return False
+
+    def add(self, addr, handshake_msg=True, non_direct=False):
+        """
+        Add a neighbor if it is not itself or already added. It also sends a handshake message to check if the neighbor is available and create a bidirectional connection.
+
+        Args:
+            addr (str): Address of the neighbor.
+            handshake_msg (bool): If True, send a handshake message to the neighbor.
+            non_direct (bool): If True, add a non-direct connected neighbor (without creating a direct GRPC connection).
+
+        Returns:
+            bool: True if the neighbor was added, False otherwise.
+        """
+        # Cannot add itself
+        if addr == self.__self_addr:
+            logging.info(f"{self.__self_addr} Cannot add itself")
+            return False
+
+        # Cannot add duplicates
+        self.__nei_lock.acquire()
+        duplicated = addr in self.__neighbors.keys()
+        logging.info(f"{self.__self_addr} Detected {addr} duplicated") if duplicated else logging.info(
+            f"{self.__self_addr} Detected {addr} not duplicated")
+        self.__nei_lock.release()
+        # Avoid adding if duplicated and not non_direct neighbor (otherwise, connect creating a channel)
+        if duplicated:
+            if not non_direct:  # Upcoming direct connection
+                # Duplicated but the node wants to add it as a direct connected neighbor
+                # Check if it is already connected as a non-direct connected neighbor.
+                # If so, upgrade to direct connected neighbor
+                if self.__neighbors[addr][1] is None:
+                    logging.info(
+                        f"{self.__self_addr} Upgrading non direct connected neighbor {addr}"
+                    )
+                    return self.direct_add_node(handshake_msg, addr)
+                else:  # Upcoming undirected connection
+                    logging.info(f"{self.__self_addr} Already direct connected neighbor {addr}")
+                    return False
+
+            elif non_direct:
+                # Duplicated but the node wants to add it as a non-direct connected neighbor
+                logging.info(f"{self.__self_addr} Cannot add a duplicate {addr} (undirected connection), already connected")
+                return False
+        else:
+            # Add non-direct connected neighbors
+            if non_direct:
+                return self.non_direct_add_node(addr)
+            else:
+                return self.direct_add_node(handshake_msg, addr)
 
     def remove(self, nei, disconnect_msg=True):
         """
@@ -433,7 +464,7 @@ class Neighbors:
         if len(self.__processed_messages) > self.__config.participant["AMOUNT_LAST_MESSAGES_SAVED"]:
             self.__processed_messages.pop(0)
         # Add message
-        logging.info(f"({self.__self_addr}) Adding processed message\n{msg}")
+        logging.debug(f"({self.__self_addr}) Adding processed message\n{msg}")
         self.__processed_messages.append(msg)
         self.__processed_messages_lock.release()
         return True
@@ -445,8 +476,8 @@ class Neighbors:
         Args:
             msg (node_pb2.Message): Message to add.
         """
-        logging.info(f"({self.__self_addr}) Gossiping\n{msg}")
-        logging.info(f"({self.__self_addr}) TTL: {msg.ttl}")
+        logging.debug(f"({self.__self_addr}) Gossiping\n{msg}")
+        logging.debug(f"({self.__self_addr}) TTL: {msg.ttl}")
         if msg.ttl > 1:
             # Update ttl and broadcast
             msg.ttl -= 1
@@ -454,9 +485,9 @@ class Neighbors:
             # Add to pending messages
             self.__pending_msgs_lock.acquire()
             pending_neis = [n for n in self.__neighbors.keys() if n != msg.source]
-            logging.info(f"({self.__self_addr}) Adding pending message\n{msg}")
+            logging.debug(f"({self.__self_addr}) Adding pending message\n{msg}")
             self.__pending_msgs.append((msg, pending_neis))
-            logging.info("Pending messages to gossip: " + str(self.__pending_msgs))
+            logging.debug(f"Pending messages to gossip:\n{str(self.__pending_msgs)}")
             self.__pending_msgs_lock.release()
 
     def __start_gossiper(self):
@@ -502,7 +533,7 @@ class Neighbors:
                     # send only if direct connected (also add a try to deal with disconnections)
                     try:
                         if self.__neighbors[nei][1] is not None:
-                            logging.info(
+                            logging.debug(
                                 f"({self.__self_addr}) Sending message (gossip)\n{msg}--> to {nei}"
                             )
                             self.send_message(nei, msg)

@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from fedstellar.learning.pytorch.mnist.mnist import MNISTDataset

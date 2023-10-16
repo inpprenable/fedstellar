@@ -25,6 +25,7 @@ import requests
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("fsspec").setLevel(logging.WARNING)
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 import random
 import threading
@@ -156,9 +157,11 @@ class Node(BaseNode):
             logging.info("[NODE] Tracking W&B enabled")
             logging.getLogger("wandb").setLevel(logging.ERROR)
             if self.hostdemo:
-                wandblogger = FedstellarWBLogger(project="platform-enrique", group=self.experiment_name, name=f"participant_{self.idx}")
+                wandblogger = FedstellarWBLogger(project="platform-enrique", group=self.experiment_name,
+                                                 name=f"participant_{self.idx}")
             else:
-                wandblogger = FedstellarWBLogger(project="platform-enrique", group=self.experiment_name, name=f"participant_{self.idx}")
+                wandblogger = FedstellarWBLogger(project="platform-enrique", group=self.experiment_name,
+                                                 name=f"participant_{self.idx}")
             wandblogger.watch(model, log="all")
             self.learner = learner(model, data, config=self.config, logger=wandblogger)
         else:
@@ -168,7 +171,8 @@ class Node(BaseNode):
                 self.learner = learner(model, data, config=self.config, logger=csvlogger)
             elif self.config.participant['tracking_args']['local_tracking'] == 'web':
                 logging.info("[NODE] Tracking Web enabled")
-                tensorboardlogger = FedstellarLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}", log_graph=True)
+                tensorboardlogger = FedstellarLogger(f"{self.log_dir}", name="metrics",
+                                                     version=f"participant_{self.idx}", log_graph=True)
                 self.learner = learner(model, data, config=self.config, logger=tensorboardlogger)
 
         logging.info("[NODE] Role: " + str(self.config.participant["device_args"]["role"]))
@@ -240,13 +244,15 @@ class Node(BaseNode):
             higher_threshold = lower_threshold
 
         benign_nodes = [i for i in self.__train_set if i not in malicious_nodes]
-        logging.info(f"({self.addr})__reputation_callback benign_nodes at round {self.learner.get_round()}: {benign_nodes}")
+        logging.info(
+            f"({self.addr})__reputation_callback benign_nodes at round {self.learner.get_round()}: {benign_nodes}")
         if len(self.get_neighbors()) <= lower_threshold:
             for node in benign_nodes:
                 if len(self.get_neighbors()) <= higher_threshold and self.get_name() != node:
                     connected = self.connect(node)
                     if connected:
-                        logging.info(f"({self.addr}) Connect new connection with at round {self.learner.get_round()}: {connected}")
+                        logging.info(
+                            f"({self.addr}) Connect new connection with at round {self.learner.get_round()}: {connected}")
 
     def __reputation_callback(self, msg):
         # receive malicious nodes information from neighbors
@@ -315,7 +321,7 @@ class Node(BaseNode):
 
     def __models_ready_callback(self, msg):
         ########################################################
-        ### try to improve clarity in message moment check
+        # try to improve clarity in message moment check
         ########################################################
         if msg.round in [self.round - 1, self.round]:
             self.__nei_status[msg.source] = int(msg.args[0])
@@ -344,9 +350,9 @@ class Node(BaseNode):
             # Check source
             if request.round != self.round:
                 logging.error(
-                    f"({self.addr}) Model Reception in a late round ({request.round} != {self.round})."
+                    f"({self.addr}) add_model (gRPC) | Model Reception in a late round ({request.round} != {self.round})."
                 )
-            # return node_pb2.ResponseMessage()  # add model anyway
+                return node_pb2.ResponseMessage()  # add model anyway
 
             # Check moment (not init and invalid round)
             if (
@@ -354,23 +360,23 @@ class Node(BaseNode):
                     and len(self.__train_set) == 0
             ):
                 logging.error(
-                    f"({self.addr}) Model Reception when there is no trainset"
+                    f"({self.addr}) add_model (gRPC) | Model Reception when there is no trainset"
                 )
                 return node_pb2.ResponseMessage()
 
             try:
                 if not self.__model_initialized_lock.locked():
                     # Add model to aggregator
-                    logging.info(f"({self.addr}) add_model Remote Service using gRPC")
+                    logging.info(f"({self.addr}) add_model (gRPC) | Remote Service using gRPC (executed by {request.source})")
                     decoded_model = self.learner.decode_parameters(request.weights)
                     if self.learner.check_parameters(decoded_model):
                         models_added = self.aggregator.add_model(
                             decoded_model, request.contributors, request.weight
                         )
-                        logging.info(
-                            f'({self.addr}) Models added, sending models_added using MODELS_AGGREGATED): {models_added}'
-                        )
                         if models_added is not None:
+                            logging.info(
+                                f'({self.addr}) add_model (gRPC) | Models added using local aggregator, now sending models_added using MODELS_AGGREGATED): {models_added}'
+                            )
                             # Communicate Aggregation
                             self._neighbors.broadcast_msg(
                                 self._neighbors.build_msg(
@@ -381,12 +387,12 @@ class Node(BaseNode):
                         raise ModelNotMatchingError("Not matching models")
                 else:
                     # Initialize model (try to handle concurrent initializations)
-                    logging.info(f"({self.addr}) Initializing model")
+                    logging.info(f"({self.addr}) add_model (gRPC) | Initializing model (executed by {request.source})")
                     try:
                         self.__model_initialized_lock.release()
                         model = self.learner.decode_parameters(request.weights)
                         self.learner.set_parameters(model)
-                        logging.info(f"({self.addr}) Model Weights Initialized")
+                        logging.info(f"({self.addr}) add_model (gRPC) | Model Weights Initialized")
                         # Communicate Initialization
                         self._neighbors.broadcast_msg(
                             self._neighbors.build_msg(
@@ -399,20 +405,20 @@ class Node(BaseNode):
 
             # Warning: these stops can cause a denegation of service attack
             except DecodingParamsError as e:
-                logging.error(f"({self.addr}) Error decoding parameters.")
+                logging.error(f"({self.addr}) add_model (gRPC) | Error decoding parameters.")
                 self.stop()
 
             except ModelNotMatchingError as e:
-                logging.error(f"({self.addr}) Models not matching.")
+                logging.error(f"({self.addr}) add_model (gRPC) | Models not matching.")
                 self.stop()
 
             except Exception as e:
-                logging.error(f"({self.addr}) Unknown error adding model: {e}")
+                logging.error(f"({self.addr}) add_model (gRPC) | Unknown error adding model: {e}")
                 self.stop()
 
         else:
             logging.debug(
-                f"({self.addr}) Tried to add a model while learning is not running"
+                f"({self.addr}) add_model (gRPC) | Tried to add a model while learning is not running"
             )
 
         # Response
@@ -490,7 +496,8 @@ class Node(BaseNode):
 
         # Send the POST request if the controller is available
         try:
-            response = requests.post(url, data=json.dumps(self.config.participant), headers={'Content-Type': 'application/json'})
+            response = requests.post(url, data=json.dumps(self.config.participant),
+                                     headers={'Content-Type': 'application/json'})
         except requests.exceptions.ConnectionError:
             logging.error(f'Error connecting to the controller at {url}')
             return
@@ -507,7 +514,8 @@ class Node(BaseNode):
         Returns:
 
         """
-        step = int((datetime.now() - datetime.strptime(self.config.participant["scenario_args"]["start_time"], "%d/%m/%Y %H:%M:%S")).total_seconds())
+        step = int((datetime.now() - datetime.strptime(self.config.participant["scenario_args"]["start_time"],
+                                                       "%d/%m/%Y %H:%M:%S")).total_seconds())
         import sys
         import psutil
         # Gather CPU usage information
@@ -537,9 +545,13 @@ class Node(BaseNode):
 
         # Logging and reporting
         # logging.info(f'Resources: CPU {cpu_percent}%, CPU temp {cpu_temp}C, RAM {ram_percent}%, Disk {disk_percent}%')
-        self.learner.logger.log_metrics({"Resources/CPU_percent": cpu_percent, "Resources/CPU_temp": cpu_temp, "Resources/RAM_percent": ram_percent, "Resources/Disk_percent": disk_percent}, step=step)
+        self.learner.logger.log_metrics(
+            {"Resources/CPU_percent": cpu_percent, "Resources/CPU_temp": cpu_temp, "Resources/RAM_percent": ram_percent,
+             "Resources/Disk_percent": disk_percent}, step=step)
         # logging.info(f'Resources: Bytes sent {bytes_sent}, Bytes recv {bytes_recv}, Packets sent {packets_sent}, Packets recv {packets_recv}')
-        self.learner.logger.log_metrics({"Resources/Bytes_sent": bytes_sent, "Resources/Bytes_recv": bytes_recv, "Resources/Packets_sent": packets_sent, "Resources/Packets_recv": packets_recv}, step=step)
+        self.learner.logger.log_metrics({"Resources/Bytes_sent": bytes_sent, "Resources/Bytes_recv": bytes_recv,
+                                         "Resources/Packets_sent": packets_sent,
+                                         "Resources/Packets_recv": packets_recv}, step=step)
         # logging.info(f'Resources: Uptime {uptime}')
         self.learner.logger.log_metrics({"Resources/Uptime": uptime}, step=step)
 
@@ -557,7 +569,9 @@ class Node(BaseNode):
                 gpu_mem = pynvml.nvmlDeviceGetMemoryInfo(handle)
                 gpu_mem_percent = gpu_mem.used / gpu_mem.total * 100
                 # logging.info(f'Resources: GPU-{i} {gpu_percent}%, GPU temp {gpu_temp}C, GPU mem {gpu_mem_percent}%')
-                self.learner.logger.log_metrics({f"Resources/GPU{i}_percent": gpu_percent, f"Resources/GPU{i}_temp": gpu_temp, f"Resources/GPU{i}_mem_percent": gpu_mem_percent}, step=step)
+                self.learner.logger.log_metrics(
+                    {f"Resources/GPU{i}_percent": gpu_percent, f"Resources/GPU{i}_temp": gpu_temp,
+                     f"Resources/GPU{i}_mem_percent": gpu_mem_percent}, step=step)
         except ModuleNotFoundError:
             pass
             # logging.info(f'pynvml not found, skipping GPU usage')
@@ -693,11 +707,15 @@ class Node(BaseNode):
 
         # Set parameters and communate it to the training process
         if params is not None:
+            logging.info(
+                f"({self.addr}) __wait_aggregated_model | Aggregation done for round {self.round}, including parameters in local model.")
             self.learner.set_parameters(params)
             logging.debug(
                 f"({self.addr}) Broadcast aggregation done for round {self.round}"
             )
             # Share that aggregation is done
+            logging.info(
+                f"({self.addr}) __wait_aggregated_model | Broadcasting aggregation done for round {self.round}")
             self._neighbors.broadcast_msg(
                 self._neighbors.build_msg(
                     LearningNodeMessages.MODELS_READY, [self.round]
@@ -720,11 +738,12 @@ class Node(BaseNode):
             )
             # Logging neighbors (indicate the direct neighbors and undirected neighbors)
             logging.info(
-                f"{self.addr} Direct neighbors: {self.get_neighbors(only_direct=True)} | Undirected neighbors: {self.get_neighbors(only_direct=False)}"
+                f"{self.addr} All neighbors: {self.get_neighbors()} | Direct neighbors: {self.get_neighbors(only_direct=True)}"
             )
 
         # Determine if node is in the train set
-        if self.addr in self.__train_set and (self.config.participant["device_args"]["role"] == Role.AGGREGATOR or self.config.participant["device_args"]["role"] == Role.SERVER):
+        if self.addr in self.__train_set and (self.config.participant["device_args"]["role"] == Role.AGGREGATOR or
+                                              self.config.participant["device_args"]["role"] == Role.SERVER):
             logging.info("[NODE.__train_step] Role.AGGREGATOR/Role.SERVER process...")
             if self.round is not None:
                 # Set Models To Aggregate
@@ -915,10 +934,12 @@ class Node(BaseNode):
     def __train(self):
         logging.info(f"({self.addr}) Training...")
         self.learner.fit()
+        logging.info(f"({self.addr}) Finished training.")
 
     def __evaluate(self):
         logging.info(f"({self.addr}) Evaluating...")
         results = self.learner.evaluate()
+        logging.info(f"({self.addr}) Finished evaluating.")
         # Removed because it is not necessary to send metrics between nodes
         if results is not None:
             logging.info(
@@ -993,12 +1014,16 @@ class Node(BaseNode):
             if untrusted_node != selfName:
                 untrusted_model = current_models[untrusted_node]
                 cossim = cosine_similarity(local_model, untrusted_model)
-                logging.info(f'reputation_calculation cossim at round {self.learner.get_round()}: {untrusted_node}: {cossim}')
-                self.learner.logger.log_metrics({f"Reputation/cossim_{untrusted_node}": cossim}, step=self.learner.get_round())
+                logging.info(
+                    f'reputation_calculation cossim at round {self.learner.get_round()}: {untrusted_node}: {cossim}')
+                self.learner.logger.log_metrics({f"Reputation/cossim_{untrusted_node}": cossim},
+                                                step=self.learner.get_round())
 
                 avg_loss = self.learner.validate_neighbour_model(untrusted_model)
-                logging.info(f'reputation_calculation avg_loss at round {self.learner.get_round()} {untrusted_node}: {avg_loss}')
-                self.learner.logger.log_metrics({f"Reputation/avg_loss_{untrusted_node}": avg_loss}, step=self.learner.get_round())
+                logging.info(
+                    f'reputation_calculation avg_loss at round {self.learner.get_round()} {untrusted_node}: {avg_loss}')
+                self.learner.logger.log_metrics({f"Reputation/avg_loss_{untrusted_node}": avg_loss},
+                                                step=self.learner.get_round())
                 reputation_score[untrusted_node] = (cossim, avg_loss)
 
                 if cossim < cossim_threshold or avg_loss > loss_threshold:
@@ -1029,7 +1054,8 @@ class Node(BaseNode):
                 # logging.info(f"({self.addr}) Stored models: {self.aggregator.get_aggregated_models_weights()}")
                 if self.learner.get_round() > 2:
                     malicious_nodes, _ = self.reputation_calculation(self.aggregator.get_aggregated_models_weights())
-                    logging.info(f"({self.addr}) Malicious nodes  at round {self.learner.get_round()}: {malicious_nodes}, excluding them from the aggregation...")
+                    logging.info(
+                        f"({self.addr}) Malicious nodes  at round {self.learner.get_round()}: {malicious_nodes}, excluding them from the aggregation...")
                     if len(malicious_nodes) > 0:
                         self.send_reputation(malicious_nodes)
                         # disrupt the connection with malicious nodes
@@ -1111,7 +1137,8 @@ class Node(BaseNode):
 
             # Get nodes which need models
             neis = [n for n in self.get_neighbors() if candidate_condition(n)]
-            logging.info(f"({self.addr} Gossip | {neis} need models --> (node not in self.aggregator.get_aggregated_models()) and (node in self.__train_set)")
+            logging.info(
+                f"({self.addr} Gossip | {neis} need models --> (node not in self.aggregator.get_aggregated_models()) and (node in self.__train_set)")
 
             # Determine end of gossip
             if not neis:
@@ -1146,7 +1173,8 @@ class Node(BaseNode):
                 # Send Partial Aggregation
                 if model is not None:
                     logging.info(f"ATAQUE_DEBUG: {model['l3.weight']}")
-                    logging.info(f"({self.addr}) Gossip | Gossiping model to {nei} with {contributors} contributors and weight {weight}")
+                    logging.info(
+                        f"({self.addr}) Gossip | Gossiping model (partial aggregation) to {nei} with contributors: {contributors} and weight: {weight}")
                     encoded_model = self.learner.encode_parameters(params=model)
                     self._neighbors.send_model(
                         nei, self.round, encoded_model, contributors, weight

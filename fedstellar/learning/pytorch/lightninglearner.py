@@ -102,6 +102,7 @@ class LightningLearner(NodeLearner):
         try:
             if self.epochs > 0:
                 self.create_trainer()
+                # torch.autograd.set_detect_anomaly(True)
                 self.__trainer.fit(self.model, self.data)
                 self.__trainer = None
         except Exception as e:
@@ -152,7 +153,7 @@ class LightningLearner(NodeLearner):
         pass
 
     def create_trainer(self):
-        logging.info("[Learner] Creating trainer with accelerator: {}".format(self.config.participant["device_args"]["accelerator"]))
+        logging.debug("[Learner] Creating trainer with accelerator: {}".format(self.config.participant["device_args"]["accelerator"]))
         progress_bar = RichProgressBar(
             theme=RichProgressBarTheme(
                 description="green_yellow",

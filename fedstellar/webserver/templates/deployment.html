@@ -195,7 +195,7 @@
             <h5 class="step-title">Logging</h5>
             <select class="form-control" id="loggingLevel" name="logginglevel" style="display: inline; width: 20%">
                 <option value="false" selected>Only alerts</option>
-                <option value="true">Alerts and info</option>
+                <option value="true">Alerts and logs</option>
             </select>
             <h5>Individual participants</h5>
             <div id="participant-items"></div>
@@ -515,6 +515,10 @@
         document.getElementById("expert-container").style.opacity = "1";
         document.getElementById("expert-container").style.transition = "all 0.5s ease-in-out";
 
+        // Activate Alerts and logs
+        document.getElementById("loggingLevel").value = "true";
+
+
         // openControls();
     });
 
@@ -529,6 +533,9 @@
         document.getElementById("expert-container").style.transition = "all 0.5s ease-in-out";
 
         // closeControls();
+
+        // Disable Alerts and logs
+        document.getElementById("loggingLevel").value = "false";
     });
 
 </script>
