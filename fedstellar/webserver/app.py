@@ -20,7 +20,7 @@ from flask import Flask, session, url_for, redirect, render_template, request, a
 from flask_socketio import SocketIO
 from werkzeug.utils import secure_filename
 from fedstellar.webserver.database import list_users, verify, delete_user_from_db, add_user, scenario_update_record, scenario_set_all_status_to_finished, get_running_scenario, get_user_info, get_scenario_by_name, list_nodes_by_scenario_name, get_all_scenarios, remove_nodes_by_scenario_name, \
-    remove_scenario_by_name, scenario_set_status_to_finished
+    remove_scenario_by_name, scenario_set_status_to_finished, check_scenario_with_role
 from fedstellar.webserver.database import read_note_from_db, write_note_into_db, delete_note_from_db, match_user_id_with_note_id
 from fedstellar.webserver.database import image_upload_record, list_images_for_user, match_user_id_with_image_uid, delete_image_from_db, get_image_file_name, update_node_record
 
@@ -551,6 +551,11 @@ def stop_all_scenarios():
 def fedstellar_stop_scenario(scenario_name):
     # Stop the scenario
     if "user" in session.keys():
+        if session['role'] == "demo":
+            return abort(401)
+        elif session['role'] == "user":
+            if not check_scenario_with_role(session['role'], scenario_name):
+                return abort(401)
         stop_scenario(scenario_name)
         return redirect(url_for('fedstellar_scenario'))
     else:
@@ -565,10 +570,13 @@ def remove_scenario(scenario_name=None):
 
 @app.route("/scenario/<scenario_name>/remove", methods=["GET"])
 def fedstellar_remove_scenario(scenario_name):
-    # Stop the scenario
+    # Remove the scenario
     if "user" in session.keys():
         if session['role'] == "demo":
             return abort(401)
+        elif session['role'] == "user":
+            if not check_scenario_with_role(session['role'], scenario_name):
+                return abort(401)
         remove_scenario(scenario_name)
         return redirect(url_for('fedstellar_scenario'))
     else:
@@ -707,6 +715,11 @@ def fedstellar_scenario_deployment_run():
     if "user" in session.keys():
         if session['role'] == "demo":
             return abort(401)
+        elif session['role'] == "user":
+            # If there is a scenario running, abort
+            if get_running_scenario():
+                print("Scenario running, abort")
+                return abort(401)
         # Receive a JSON data with the scenario configuration
         if request.is_json:
             # Stop the running scenario
@@ -810,7 +823,7 @@ def fedstellar_scenario_deployment_run():
                 print("Error docker-compose up:", e)
                 return redirect(url_for("fedstellar_scenario_deployment"))
             # Generate/Update the scenario in the database
-            scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=data["scenario_title"], description=data["scenario_description"], network_subnet=data["network_subnet"])
+            scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=data["scenario_title"], description=data["scenario_description"], network_subnet=data["network_subnet"], role=session['role'])
             return redirect(url_for("fedstellar_scenario"))
         else:
             return abort(401)
@@ -823,6 +836,9 @@ def fedstellar_scenario_deployment_reload(scenario_name):
     if "user" in session.keys():
         if session['role'] == "demo":
             return abort(401)
+        elif session['role'] == "user":
+            if not check_scenario_with_role(session['role'], scenario_name):
+                return abort(401)
         # Stop the running scenario
         stop_all_scenarios()
         # Load the scenario configuration
@@ -836,7 +852,7 @@ def fedstellar_scenario_deployment_reload(scenario_name):
         controller = Controller(args)
         controller.load_configurations_and_start_nodes()
         # Generate/Update the scenario in the database
-        scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=scenario[3], description=scenario[4])
+        scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=scenario[3], description=scenario[4], network_subnet=scenario[6], role=session['role'])
 
         return redirect(url_for("fedstellar_scenario"))
     else:
