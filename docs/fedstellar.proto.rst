@@ -1,4 +1,4 @@
-fedstellar.utils package
+fedstellar.proto package
 ========================
 
 Submodules
@@ -7,13 +7,13 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   fedstellar.utils.env
-   fedstellar.utils.topologymanager
+   fedstellar.proto.node_pb2
+   fedstellar.proto.node_pb2_grpc
 
 Module contents
 ---------------
 
-.. automodule:: fedstellar.utils
+.. automodule:: fedstellar.proto
    :members:
    :undoc-members:
    :show-inheritance:
