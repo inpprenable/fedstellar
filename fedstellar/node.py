@@ -688,7 +688,6 @@ class Node(BaseNode):
         # Rounds
         self.round = None
         self.totalrounds = None
-        # Leraner
         self.learner.interrupt_fit()
         # Aggregator
         self.aggregator.clear()
@@ -751,7 +750,6 @@ class Node(BaseNode):
 
             # Evaluate and send metrics
             if self.round is not None:
-                logging.info(f"BEFORE_EVALUATE: {self.learner.model.state_dict()['l3.weight']}")
                 self.__evaluate()
 
             # Train
@@ -1172,7 +1170,6 @@ class Node(BaseNode):
 
                 # Send Partial Aggregation
                 if model is not None:
-                    logging.info(f"ATAQUE_DEBUG: {model['l3.weight']}")
                     logging.info(
                         f"({self.addr}) Gossip | Gossiping model (partial aggregation) to {nei} with contributors: {contributors} and weight: {weight}")
                     encoded_model = self.learner.encode_parameters(params=model)

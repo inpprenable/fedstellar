@@ -20,6 +20,9 @@ from fedstellar.learning.pytorch.syscall.models.svm import SyscallModelSGDOneCla
 from fedstellar.node import Node, MaliciousNode
 from fedstellar.learning.pytorch.datamodule import DataModule
 
+from sklearn.svm import LinearSVC
+from fedstellar.learning.scikit.mnist.mnist import MNISTDatasetScikit
+
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
 
@@ -122,10 +125,12 @@ def main():
     dataset = DataModule(dataset.train_set, dataset.test_set, sub_id=idx, number_sub=n_nodes, indices_dir=indices_dir, label_flipping=label_flipping, data_poisoning=data_poisoning, poisoned_persent=poisoned_persent, poisoned_ratio=poisoned_ratio, targeted=targeted, target_label=target_label,
                          target_changed_label=target_changed_label, noise_type=noise_type)
 
-    if aggregation_algorithm == "FedAvg":
-        pass
-    else:
-        raise ValueError(f"Aggregation algorithm {aggregation_algorithm} not supported")
+    # TODO: Improve support for scikit-learn models
+    # - Import MNISTDatasetScikit (not torch component)
+    # - Import scikit-learn model
+    # - Import ScikitDataModule
+    # - Import ScikitLearner as learner
+    # - Import aggregation algorithm adapted to scikit-learn models (e.g. FedAvgSVM)
 
     if not config.participant["device_args"]["malicious"]:
         node_cls = Node
