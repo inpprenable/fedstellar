@@ -46,7 +46,9 @@ class Aggregator:
             Exception: If the aggregation is running.
         """
         if not self.__finish_aggregation_lock.locked():
+            logging.info(f"({self.node_name}) set_nodes_to_aggregate | Setting nodes to aggregate: {l}")
             self.__train_set = l
+            logging.info(f"({self.node_name}) set_nodes_to_aggregate | Clearing __models.")
             self.__models = {}
             logging.info(
                 f"({self.node_name}) set_nodes_to_aggregate | Acquiring __finish_aggregation_lock (timeout={self.config.participant['AGGREGATION_TIMEOUT']})."
@@ -101,7 +103,7 @@ class Aggregator:
         # Get a list of weights added
         return self.__models
 
-    def add_model(self, model, contributors, weight):
+    def add_model(self, model, contributors, weight, source=None):
         """
         Add a model. The first model to be added starts the `run` method (timeout).
 
@@ -113,7 +115,7 @@ class Aggregator:
 
         nodes = list(contributors)
         logging.info(
-            f"({self.node_name}) add_model (aggregator) | __models={self.__models.keys()} | contributors={nodes} | train_set={self.__train_set} | get_aggregated_models={self.get_aggregated_models()}")
+            f"({self.node_name}) add_model (aggregator) | source={source} | __models={self.__models.keys()} | contributors={nodes} | train_set={self.__train_set} | get_aggregated_models={self.get_aggregated_models()}")
 
         # Verify that contributors are not empty
         if contributors == []:
@@ -128,7 +130,7 @@ class Aggregator:
         if self.__waiting_aggregated_model and self.__models == {}:
             if set(contributors) == set(self.__train_set):
                 logging.info(
-                    f"({self.node_name}) add_model (aggregator) | Received an aggregated model because all contributors are in the train set (me too). Overwriting my model with the aggregated model.")
+                    f"({self.node_name}) add_model (aggregator) | __waiting_aggregated_model (True) | Received an aggregated model because all contributors are in the train set (me too). Overwriting my model with the aggregated model.")
                 self.__models = {}
                 self.__models = {" ".join(nodes): (model, 1)}
                 self.__waiting_aggregated_model = False

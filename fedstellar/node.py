@@ -211,6 +211,7 @@ class Node(BaseNode):
         self.__wait_votes_ready_lock = threading.Lock()
         self.__model_initialized_lock = threading.Lock()
         self.__model_initialized_lock.acquire()
+        self.finish_round_lock = threading.Lock()
 
     ######################
     #    Msg Handlers    #
@@ -280,7 +281,7 @@ class Node(BaseNode):
                 for node in sublist:
                     if node not in malicious_nodes:
                         self.aggregator.add_model(
-                            submodel, [node], weights
+                            submodel, [node], weights, source=self.get_name()
                         )
             logging.info(f"get_aggregated_models current aggregator is: {self.aggregator}")
 
@@ -348,18 +349,23 @@ class Node(BaseNode):
         # Check if Learning is running
         if self.round is not None:
             # Check source
-            if request.round != self.round:
-                logging.error(
+            # self.round is modified at the end of the round, so we need to check if the message is from the previous round
+            # implement a lock to avoid concurrent access to round
+            self.finish_round_lock.acquire()
+            current_round = self.round
+            self.finish_round_lock.release()
+            if request.round != current_round:
+                logging.info(
                     f"({self.addr}) add_model (gRPC) | Model Reception in a late round ({request.round} != {self.round})."
                 )
-                return node_pb2.ResponseMessage()  # add model anyway
+                return node_pb2.ResponseMessage()
 
             # Check moment (not init and invalid round)
             if (
                     not self.__model_initialized_lock.locked()
                     and len(self.__train_set) == 0
             ):
-                logging.error(
+                logging.info(
                     f"({self.addr}) add_model (gRPC) | Model Reception when there is no trainset"
                 )
                 return node_pb2.ResponseMessage()
@@ -371,7 +377,7 @@ class Node(BaseNode):
                     decoded_model = self.learner.decode_parameters(request.weights)
                     if self.learner.check_parameters(decoded_model):
                         models_added = self.aggregator.add_model(
-                            decoded_model, request.contributors, request.weight
+                            decoded_model, request.contributors, request.weight, source=request.source
                         )
                         if models_added is not None:
                             logging.info(
@@ -762,6 +768,7 @@ class Node(BaseNode):
                     self.learner.get_parameters(),
                     [self.addr],
                     self.learner.get_num_samples()[0],
+                    source=self.addr
                 )
                 # send model added msg ---->> redundant (a node always owns its model)
                 self._neighbors.broadcast_msg(
@@ -794,6 +801,7 @@ class Node(BaseNode):
                     self.learner.get_parameters(),
                     [self.addr],
                     self.learner.get_num_samples()[0],
+                    source=self.addr
                 )
                 # send model added msg ---->> redundant (a node always owns its model)
                 self._neighbors.broadcast_msg(
@@ -959,11 +967,14 @@ class Node(BaseNode):
 
     def __on_round_finished(self):
         # Set Next Round
+        # implement a lock to avoid concurrent access to round
+        self.finish_round_lock.acquire()
         self.aggregator.clear()
         self.learner.finalize_round()  # check to see if this could look better
         self.round = self.round + 1
         # Clear node aggregation
         self.__models_aggregated = {}
+        self.finish_round_lock.release()
 
         # Next Step or Finish
         logging.info(
