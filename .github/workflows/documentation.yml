@@ -40,13 +40,22 @@ jobs:
     - name: Add files
       run: |
           echo "fedstellar.enriquetomasmb.com" > docs/_build/CNAME
+    - name: List directories
+      run: |
+          ls -la docs/_build/
     - uses: actions/checkout@v4
       with:
         ref: gh-pages
         path: gh-pages
+    - name: List directories
+      run: |
+          ls -la gh-pages/
     - name: Copy documentation to the gh-pages branch
       run: |
         cp -r docs/_build/* gh-pages/
+    - name: List directories
+      run: |
+          ls -la gh-pages/
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
