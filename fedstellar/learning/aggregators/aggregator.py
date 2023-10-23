@@ -24,6 +24,7 @@ class Aggregator:
         self.__train_set = []
         self.__waiting_aggregated_model = False
         self.__models = {}
+        self.__round = 0
 
         # Locks
         self.__agg_lock = threading.Lock()
@@ -85,6 +86,18 @@ class Aggregator:
         logging.info(f"({self.node_name}) clear | Releasing __agg_lock.")
         self.__agg_lock.release()
 
+    def get_round(self):
+        """
+        Get the round of the aggregation.
+        """
+        return self.__round
+
+    def set_round(self, current_round):
+        """
+        Set the round of the aggregation.
+        """
+        self.__round = current_round
+
     def get_aggregated_models(self):
         """
         Get the list of aggregated models.
@@ -103,7 +116,7 @@ class Aggregator:
         # Get a list of weights added
         return self.__models
 
-    def add_model(self, model, contributors, weight, source=None):
+    def add_model(self, model, contributors, weight, source=None, round=None):
         """
         Add a model. The first model to be added starts the `run` method (timeout).
 
@@ -111,6 +124,8 @@ class Aggregator:
             model: Model to add.
             contributors: Nodes that collaborated to get the model.
             weight: Number of samples used to get the model.
+            source: Node that sent the model.
+            round: Round of the aggregation.
         """
 
         nodes = list(contributors)
@@ -121,6 +136,15 @@ class Aggregator:
         if contributors == []:
             logging.info(
                 f"({self.node_name}) Received a model without a list of contributors."
+            )
+            logging.info(f"({self.node_name}) add_model (aggregator) | Releasing __agg_lock.")
+            self.__agg_lock.release()
+            return None
+
+        # Check again if the round is the same as the current one, if not, ignore the model (it is from a previous round)
+        if round != self.__round:
+            logging.info(
+                f"({self.node_name}) add_model (aggregator) | Received a model from a previous round."
             )
             logging.info(f"({self.node_name}) add_model (aggregator) | Releasing __agg_lock.")
             self.__agg_lock.release()

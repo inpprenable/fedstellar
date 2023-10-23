@@ -281,7 +281,7 @@ class Node(BaseNode):
                 for node in sublist:
                     if node not in malicious_nodes:
                         self.aggregator.add_model(
-                            submodel, [node], weights, source=self.get_name()
+                            submodel, [node], weights, source=self.get_name(), round=self.round
                         )
             logging.info(f"get_aggregated_models current aggregator is: {self.aggregator}")
 
@@ -377,7 +377,7 @@ class Node(BaseNode):
                     decoded_model = self.learner.decode_parameters(request.weights)
                     if self.learner.check_parameters(decoded_model):
                         models_added = self.aggregator.add_model(
-                            decoded_model, request.contributors, request.weight, source=request.source
+                            decoded_model, request.contributors, request.weight, source=request.source, round=request.round
                         )
                         if models_added is not None:
                             logging.info(
@@ -768,7 +768,8 @@ class Node(BaseNode):
                     self.learner.get_parameters(),
                     [self.addr],
                     self.learner.get_num_samples()[0],
-                    source=self.addr
+                    source=self.addr,
+                    round=self.round
                 )
                 # send model added msg ---->> redundant (a node always owns its model)
                 self._neighbors.broadcast_msg(
@@ -801,7 +802,8 @@ class Node(BaseNode):
                     self.learner.get_parameters(),
                     [self.addr],
                     self.learner.get_num_samples()[0],
-                    source=self.addr
+                    source=self.addr,
+                    round=self.round
                 )
                 # send model added msg ---->> redundant (a node always owns its model)
                 self._neighbors.broadcast_msg(
@@ -969,17 +971,19 @@ class Node(BaseNode):
         # Set Next Round
         # implement a lock to avoid concurrent access to round
         self.finish_round_lock.acquire()
+        logging.info(
+            f"({self.addr}) Round {self.round} of {self.totalrounds} finished."
+        )
         self.aggregator.clear()
         self.learner.finalize_round()  # check to see if this could look better
         self.round = self.round + 1
+        logging.info(f"({self.addr}) Round {self.round} of {self.totalrounds} started.")
+        self.aggregator.set_round(self.round)
         # Clear node aggregation
         self.__models_aggregated = {}
         self.finish_round_lock.release()
 
         # Next Step or Finish
-        logging.info(
-            f"({self.addr}) Round {self.round} of {self.totalrounds} finished."
-        )
         if self.round < self.totalrounds:
             self.__train_step()
         else:

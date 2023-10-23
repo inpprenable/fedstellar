@@ -164,8 +164,8 @@ def main():
 
     start_node = config.participant["device_args"]["start"]
 
-    print("Node started, grace time for network start-up (20s)")
-    time.sleep(5)
+    print("Node started, grace time for network start-up (10s)")
+    time.sleep(10)
 
     if start_node:
         node.set_start_learning(rounds=rounds, epochs=epochs)  # rounds=10, epochs=5
