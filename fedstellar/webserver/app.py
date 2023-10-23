@@ -79,9 +79,23 @@ def fedstellar_413(error):
     return render_template("413.html"), 413
 
 
+@app.template_filter('datetimeformat')
+def datetimeformat(value, format='%B %d, %Y %I:%M %p'):
+    return datetime.datetime.strptime(value, '%Y-%m-%d %H:%M:%S').strftime(format)
+
+
 @app.route("/")
 def fedstellar_home():
-    return render_template("index.html")
+    # Get alerts and news from API
+    import requests
+    url = "http://federatedlearning.inf.um.es/alerts/alerts"
+    try:
+        response = requests.get(url)
+        alerts = response.json()
+    except requests.exceptions.RequestException as e:
+        print(e)
+        alerts = []
+    return render_template("index.html", alerts=alerts)
 
 
 @app.route("/scenario/<scenario_name>/private/")
@@ -760,10 +774,10 @@ def fedstellar_scenario_deployment_run():
                 "network_subnet": data["network_subnet"],
                 "network_gateway": data["network_gateway"],
                 "attack_matrix": attack_matrix,
-                "with_reputation":  data["with_reputation"],
-                "is_dynamic_topology":  data["is_dynamic_topology"],
-                "is_dynamic_aggregation":  data["is_dynamic_aggregation"],
-                "target_aggregation":  data["target_aggregation"],
+                "with_reputation": data["with_reputation"],
+                "is_dynamic_topology": data["is_dynamic_topology"],
+                "is_dynamic_aggregation": data["is_dynamic_aggregation"],
+                "target_aggregation": data["target_aggregation"],
             }
             # Save args in a file
             scenario_path = os.path.join(app.config['config_dir'], scenario_name)

@@ -1162,7 +1162,7 @@
                     case 'server':
                         // Cube with green color
                         console.log("Three object of node " + node.id + " is server");
-                        geometry = new THREE.BoxGeometry(8, 8, 8);
+                        geometry = new THREE.BoxGeometry(10, 10, 10);
                         main_color = "#1b9e77"
                         break;
                     default:
@@ -1186,7 +1186,7 @@
                     geometry,
                     new THREE.MeshLambertMaterial({
                         color: color,
-                        transparent: true,
+                        transparent: false,
                         opacity: 0.75
                     })
                 );
