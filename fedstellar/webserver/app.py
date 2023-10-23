@@ -80,7 +80,7 @@ def fedstellar_413(error):
 
 
 @app.template_filter('datetimeformat')
-def datetimeformat(value, format='%B %d, %Y %I:%M %p'):
+def datetimeformat(value, format='%B %d, %Y %H:%M'):
     return datetime.datetime.strptime(value, '%Y-%m-%d %H:%M:%S').strftime(format)
 
 
