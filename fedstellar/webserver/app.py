@@ -4,7 +4,6 @@ import hashlib
 import io
 import json
 import os
-import shutil
 import signal
 import sys
 import zipfile
@@ -18,11 +17,21 @@ from ansi2html import Ansi2HTMLConverter
 from fedstellar.controller import Controller
 
 from flask import Flask, session, url_for, redirect, render_template, request, abort, flash, send_file, make_response, jsonify, Response
+from flask_socketio import SocketIO
 from werkzeug.utils import secure_filename
 from fedstellar.webserver.database import list_users, verify, delete_user_from_db, add_user, scenario_update_record, scenario_set_all_status_to_finished, get_running_scenario, get_user_info, get_scenario_by_name, list_nodes_by_scenario_name, get_all_scenarios, remove_nodes_by_scenario_name, \
-    remove_scenario_by_name, scenario_set_status_to_finished
+    remove_scenario_by_name, scenario_set_status_to_finished, check_scenario_with_role
 from fedstellar.webserver.database import read_note_from_db, write_note_into_db, delete_note_from_db, match_user_id_with_note_id
-from fedstellar.webserver.database import image_upload_record, list_images_for_user, match_user_id_with_image_uid, delete_image_from_db, get_image_file_name, update_node_record, list_nodes
+from fedstellar.webserver.database import image_upload_record, list_images_for_user, match_user_id_with_image_uid, delete_image_from_db, get_image_file_name, update_node_record
+
+if os.environ.get("USE_EVENTLET"):
+    import eventlet
+
+    eventlet.monkey_patch()
+
+async_mode = None
+if os.environ.get("USE_EVENTLET"):
+    async_mode = 'eventlet'
 
 app = Flask(__name__)
 app.config.from_object('config')
@@ -31,6 +40,7 @@ app.config['config_dir'] = os.environ.get('FEDSTELLAR_CONFIG_DIR')
 app.config['model_dir'] = os.environ.get('FEDSTELLAR_MODELS_DIR')
 app.config['python_path'] = os.environ.get('FEDSTELLAR_PYTHON_PATH')
 app.config['statistics_port'] = os.environ.get('FEDSTELLAR_STATISTICS_PORT')
+socketio = SocketIO(app, async_mode=async_mode, logger=True, engineio_logger=True, cors_allowed_origins="*")
 
 
 # Detect CTRL+C from parent process
@@ -69,14 +79,29 @@ def fedstellar_413(error):
     return render_template("413.html"), 413
 
 
+@app.template_filter('datetimeformat')
+def datetimeformat(value, format='%B %d, %Y %H:%M'):
+    return datetime.datetime.strptime(value, '%Y-%m-%d %H:%M:%S').strftime(format)
+
+
 @app.route("/")
 def fedstellar_home():
-    return render_template("index.html")
+    # Get alerts and news from API
+    import requests
+    url = "http://federatedlearning.inf.um.es/alerts/alerts"
+    try:
+        response = requests.get(url)
+        alerts = response.json()
+    except requests.exceptions.RequestException as e:
+        print(e)
+        alerts = []
+    return render_template("index.html", alerts=alerts)
 
 
 @app.route("/scenario/<scenario_name>/private/")
 def fedstellar_scenario_private(scenario_name):
     if "user" in session.keys():
+        socketio.emit('scenario_private', {'scenario_private': scenario_name})
         notes_list = read_note_from_db(session['user'])
         notes_table = zip([x[0] for x in notes_list],
                           [x[1] for x in notes_list],
@@ -128,7 +153,7 @@ def fedstellar_delete_note(note_id):
 
 
 # Reference: http://flask.pocoo.org/docs/0.12/patterns/fileuploads/
-ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 
 def allowed_file(filename):
@@ -144,7 +169,7 @@ def fedstellar_upload_image():
             flash('No file part', category='danger')
             return (redirect(url_for("fedstellar_scenario_private")))
         file = request.files['file']
-        # if user does not select file, browser also submit a empty part without filename
+        # if user does not select file, browser also submit an empty part without filename
         if file.filename == '':
             flash('No selected file', category='danger')
             return (redirect(url_for("fedstellar_scenario_private")))
@@ -237,7 +262,7 @@ def fedstellar_delete_user(user):
 @app.route("/add_user", methods=["POST"])
 def fedstellar_add_user():
     if session.get("role", None) == "admin":  # only Admin should be able to add user.
-        # before we add the user, we need to ensure this is doesn't exit in database. We also need to ensure the id is valid.
+        # before we add the user, we need to ensure this doesn't exit in database. We also need to ensure the id is valid.
         if request.form.get('user').upper() in list_users():
             user_list = list_users()
             user_table = zip(range(1, len(user_list) + 1),
@@ -307,7 +332,7 @@ def fedstellar_scenario_monitoring(scenario_name):
                 for i, node in enumerate(nodes_list):
                     with open(os.path.join(app.config['config_dir'], scenario_name, f'participant_{node[1]}.json')) as f:
                         nodes_config.append(json.load(f))
-                    if datetime.datetime.now() - datetime.datetime.strptime(node[8], "%Y-%m-%d %H:%M:%S.%f") > datetime.timedelta(seconds=20):
+                    if datetime.datetime.now() - datetime.datetime.strptime(node[8], "%Y-%m-%d %H:%M:%S.%f") > datetime.timedelta(seconds=25):
                         nodes_status.append(False)
                         nodes_offline.append(node[2] + ':' + str(node[3]))
                     else:
@@ -377,7 +402,8 @@ def update_topology(scenario_name, nodes_list, nodes_config):
     for node in nodes_list:
         for neighbour in node[5].split(" "):
             if neighbour != '':
-                matrix[nodes.index(node[2] + ':' + str(node[3])), nodes.index(neighbour)] = 1
+                if neighbour in nodes:
+                    matrix[nodes.index(node[2] + ':' + str(node[3])), nodes.index(neighbour)] = 1
     from fedstellar.utils.topologymanager import TopologyManager
     tm = TopologyManager(n_nodes=len(nodes_list), topology=matrix, scenario_name=scenario_name)
     tm.update_nodes(nodes_config)
@@ -399,6 +425,11 @@ def fedstellar_update_node(scenario_name):
             update_node_record(str(config['device_args']['uid']), str(config['device_args']['idx']), str(config['network_args']['ip']), str(config['network_args']['port']), str(config['device_args']['role']), str(config['network_args']['neighbors']), str(config['geo_args']['latitude']),
                                str(config['geo_args']['longitude']),
                                str(timestamp), str(config['scenario_args']['federation']), str(config['scenario_args']['name']))
+
+            # Send notification to each connected users
+            socketio.emit('node_update', {'uid': config['device_args']['uid'], 'idx': config['device_args']['idx'], 'ip': config['network_args']['ip'], 'port': str(config['network_args']['port']), 'role': config['device_args']['role'], 'neighbors': config['network_args']['neighbors'],
+                                          'latitude': config['geo_args']['latitude'],
+                                          'longitude': config['geo_args']['longitude'], 'timestamp': str(timestamp), 'federation': config['scenario_args']['federation'], 'name': config['scenario_args']['name']})
 
             return make_response("Node updated successfully", 200)
         else:
@@ -534,6 +565,11 @@ def stop_all_scenarios():
 def fedstellar_stop_scenario(scenario_name):
     # Stop the scenario
     if "user" in session.keys():
+        if session['role'] == "demo":
+            return abort(401)
+        elif session['role'] == "user":
+            if not check_scenario_with_role(session['role'], scenario_name):
+                return abort(401)
         stop_scenario(scenario_name)
         return redirect(url_for('fedstellar_scenario'))
     else:
@@ -548,10 +584,13 @@ def remove_scenario(scenario_name=None):
 
 @app.route("/scenario/<scenario_name>/remove", methods=["GET"])
 def fedstellar_remove_scenario(scenario_name):
-    # Stop the scenario
+    # Remove the scenario
     if "user" in session.keys():
         if session['role'] == "demo":
             return abort(401)
+        elif session['role'] == "user":
+            if not check_scenario_with_role(session['role'], scenario_name):
+                return abort(401)
         remove_scenario(scenario_name)
         return redirect(url_for('fedstellar_scenario'))
     else:
@@ -674,7 +713,7 @@ def attack_node_assign(nodes, federation, attack, poisoned_node_percent, poisone
         node_att = 'No Attack'
         attack_sample_persent = 0
         poisoned_ratio = 0
-        if node in attacked_nodes:
+        if (node in attacked_nodes) or (nodes[node]["malicious"]):
             node_att = attack
             attack_sample_persent = poisoned_sample_percent / 100
             poisoned_ratio = poisoned_noise_percent / 100
@@ -690,6 +729,11 @@ def fedstellar_scenario_deployment_run():
     if "user" in session.keys():
         if session['role'] == "demo":
             return abort(401)
+        elif session['role'] == "user":
+            # If there is a scenario running, abort
+            if get_running_scenario():
+                print("Scenario running, abort")
+                return abort(401)
         # Receive a JSON data with the scenario configuration
         if request.is_json:
             # Stop the running scenario
@@ -730,6 +774,10 @@ def fedstellar_scenario_deployment_run():
                 "network_subnet": data["network_subnet"],
                 "network_gateway": data["network_gateway"],
                 "attack_matrix": attack_matrix,
+                "with_reputation": data["with_reputation"],
+                "is_dynamic_topology": data["is_dynamic_topology"],
+                "is_dynamic_aggregation": data["is_dynamic_aggregation"],
+                "target_aggregation": data["target_aggregation"],
             }
             # Save args in a file
             scenario_path = os.path.join(app.config['config_dir'], scenario_name)
@@ -756,6 +804,7 @@ def fedstellar_scenario_deployment_run():
                 participant_config['device_args']['idx'] = node_config["id"]
                 participant_config["device_args"]["start"] = node_config["start"]
                 participant_config["device_args"]["role"] = node_config["role"]
+                participant_config["device_args"]["malicious"] = node_config["malicious"]
                 # The following parameters have to be same for all nodes (for now)
                 participant_config["scenario_args"]["rounds"] = int(data["rounds"])
                 participant_config["data_args"]["dataset"] = data["dataset"]
@@ -768,6 +817,11 @@ def fedstellar_scenario_deployment_run():
                 participant_config["adversarial_args"]["attacks"] = node_config["attacks"]
                 participant_config["adversarial_args"]["poisoned_sample_percent"] = node_config["poisoned_sample_percent"]
                 participant_config["adversarial_args"]["poisoned_ratio"] = node_config["poisoned_ratio"]
+
+                participant_config["defense_args"]["with_reputation"] = data["with_reputation"]
+                participant_config["defense_args"]["is_dynamic_topology"] = data["is_dynamic_topology"]
+                participant_config["defense_args"]["is_dynamic_aggregation"] = data["is_dynamic_aggregation"]
+                participant_config["defense_args"]["target_aggregation"] = data["target_aggregation"]
 
                 with open(participant_file, 'w') as f:
                     json.dump(participant_config, f, sort_keys=False, indent=2)
@@ -783,7 +837,7 @@ def fedstellar_scenario_deployment_run():
                 print("Error docker-compose up:", e)
                 return redirect(url_for("fedstellar_scenario_deployment"))
             # Generate/Update the scenario in the database
-            scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=data["scenario_title"], description=data["scenario_description"], network_subnet=data["network_subnet"])
+            scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=data["scenario_title"], description=data["scenario_description"], network_subnet=data["network_subnet"], role=session['role'])
             return redirect(url_for("fedstellar_scenario"))
         else:
             return abort(401)
@@ -796,6 +850,9 @@ def fedstellar_scenario_deployment_reload(scenario_name):
     if "user" in session.keys():
         if session['role'] == "demo":
             return abort(401)
+        elif session['role'] == "user":
+            if not check_scenario_with_role(session['role'], scenario_name):
+                return abort(401)
         # Stop the running scenario
         stop_all_scenarios()
         # Load the scenario configuration
@@ -809,7 +866,7 @@ def fedstellar_scenario_deployment_reload(scenario_name):
         controller = Controller(args)
         controller.load_configurations_and_start_nodes()
         # Generate/Update the scenario in the database
-        scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=scenario[3], description=scenario[4])
+        scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=scenario[3], description=scenario[4], network_subnet=scenario[6], role=session['role'])
 
         return redirect(url_for("fedstellar_scenario"))
     else:
@@ -822,4 +879,5 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=5000, help="Port to run the webserver")
     args = parser.parse_args()
     print(f"Starting webserver on port {args.port}")
-    app.run(debug=True, host="0.0.0.0", port=int(args.port))
+    # app.run(debug=True, host="0.0.0.0", port=int(args.port))
+    socketio.run(app, debug=True, host="0.0.0.0", port=int(args.port))

@@ -1,7 +1,7 @@
-fedstellar.gossiper module
+fedstellar.messages module
 ==========================
 
-.. automodule:: fedstellar.gossiper
+.. automodule:: fedstellar.messages
    :members:
    :undoc-members:
    :show-inheritance:

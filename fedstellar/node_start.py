@@ -1,9 +1,7 @@
-import logging
 import os
 import sys
 import time
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))  # Parent directory where is the fedml_api module
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from fedstellar.learning.pytorch.mnist.mnist import MNISTDataset
 from fedstellar.learning.pytorch.syscall.syscall import SYSCALLDataset
@@ -19,10 +17,16 @@ from fedstellar.learning.pytorch.cifar10.models.fastermobilenet import FasterMob
 from fedstellar.learning.pytorch.cifar10.models.simplemobilenet import SimpleMobileNetV1
 from fedstellar.learning.pytorch.cifar10.models.cnn import CIFAR10ModelCNN
 from fedstellar.learning.pytorch.syscall.models.svm import SyscallModelSGDOneClassSVM
-from fedstellar.node import Node
+from fedstellar.node import Node, MaliciousNode
 from fedstellar.learning.pytorch.datamodule import DataModule
 
+from sklearn.svm import LinearSVC
+from fedstellar.learning.scikit.mnist.mnist import MNISTDatasetScikit
+
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
+
+
+# os.environ["GRPC_VERBOSITY"] = "debug"
 
 
 def main():
@@ -121,12 +125,19 @@ def main():
     dataset = DataModule(dataset.train_set, dataset.test_set, sub_id=idx, number_sub=n_nodes, indices_dir=indices_dir, label_flipping=label_flipping, data_poisoning=data_poisoning, poisoned_persent=poisoned_persent, poisoned_ratio=poisoned_ratio, targeted=targeted, target_label=target_label,
                          target_changed_label=target_changed_label, noise_type=noise_type)
 
-    if aggregation_algorithm == "FedAvg":
-        pass
-    else:
-        raise ValueError(f"Aggregation algorithm {aggregation_algorithm} not supported")
+    # TODO: Improve support for scikit-learn models
+    # - Import MNISTDatasetScikit (not torch component)
+    # - Import scikit-learn model
+    # - Import ScikitDataModule
+    # - Import ScikitLearner as learner
+    # - Import aggregation algorithm adapted to scikit-learn models (e.g. FedAvgSVM)
 
-    node = Node(
+    if not config.participant["device_args"]["malicious"]:
+        node_cls = Node
+    else:
+        node_cls = MaliciousNode
+
+    node = node_cls(
         idx=idx,
         experiment_name=experiment_name,
         model=model,
@@ -142,19 +153,19 @@ def main():
     )
 
     node.start()
-    print("Node started, grace time for network start-up (30s)")
-    time.sleep(30)  # Wait for the participant to start and register in the network
+    time.sleep(10)
 
     # Node Connection to the neighbors
     for i in neighbors:
         print(f"Connecting to {i}")
-        node.connect_to(i.split(':')[0], int(i.split(':')[1]), full=False)
-        time.sleep(5)
-
-    logging.info(f"Neighbors: {node.get_neighbors()}")
-    logging.info(f"Network nodes: {node.get_network_nodes()}")
+        addr = f"{i.split(':')[0]}:{i.split(':')[1]}"
+        node.connect(addr)
+        time.sleep(2)
 
     start_node = config.participant["device_args"]["start"]
+
+    print("Node started, grace time for network start-up (20s)")
+    time.sleep(5)
 
     if start_node:
         node.set_start_learning(rounds=rounds, epochs=epochs)  # rounds=10, epochs=5

@@ -1,7 +1,7 @@
-fedstellar.encrypter module
+fedstellar.neighbors module
 ===========================
 
-.. automodule:: fedstellar.encrypter
+.. automodule:: fedstellar.neighbors
    :members:
    :undoc-members:
    :show-inheritance:

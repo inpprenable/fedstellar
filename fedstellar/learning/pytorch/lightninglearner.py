@@ -5,18 +5,18 @@
 
 import logging
 import pickle
-import time
 from collections import OrderedDict
+import traceback
 
 import torch
 from lightning import Trainer
-from lightning.pytorch.callbacks import ModelSummary
 from lightning.pytorch.callbacks import RichProgressBar, RichModelSummary
 from lightning.pytorch.callbacks.progress.rich_progress import RichProgressBarTheme
+import copy
 
 from fedstellar.learning.exceptions import DecodingParamsError, ModelNotMatchingError
 from fedstellar.learning.learner import NodeLearner
-
+from torch.nn import functional as F
 
 ###########################
 #    LightningLearner     #
@@ -42,7 +42,7 @@ class LightningLearner(NodeLearner):
         self.logger = logger
         self.__trainer = None
         self.epochs = 1
-        logging.getLogger("lightning.pytorch").setLevel(logging.WARNING)
+        logging.getLogger("lightning.pytorch").setLevel(logging.INFO)
 
         # FL information
         self.round = 0
@@ -51,6 +51,8 @@ class LightningLearner(NodeLearner):
 
         self.logger.log_metrics({"Round": self.round}, step=self.logger.global_step)
 
+    def get_round(self):
+        return self.round
 
     def set_model(self, model):
         self.model = model
@@ -58,22 +60,20 @@ class LightningLearner(NodeLearner):
     def set_data(self, data):
         self.data = data
 
+    ####
+    # Model weights
+    ####
     def encode_parameters(self, params=None, contributors=None, weight=None):
         if params is None:
             params = self.model.state_dict()
         array = [val.cpu().numpy() for _, val in params.items()]
-        return pickle.dumps((array, contributors, weight))
+        return pickle.dumps(array)
 
     def decode_parameters(self, data):
         try:
-            params, contributors, weight = pickle.loads(data)
-            params_dict = zip(self.model.state_dict().keys(), params)
-            return (
-                OrderedDict({k: torch.tensor(v) for k, v in params_dict}),
-                contributors,
-                weight,
-            )
-        except DecodingParamsError:
+            params_dict = zip(self.model.state_dict().keys(), pickle.loads(data))
+            return OrderedDict({k: torch.tensor(v) for k, v in params_dict})
+        except:
             raise DecodingParamsError("Error decoding parameters")
 
     def check_parameters(self, params):
@@ -89,7 +89,7 @@ class LightningLearner(NodeLearner):
     def set_parameters(self, params):
         try:
             self.model.load_state_dict(params)
-        except ModelNotMatchingError:
+        except:
             raise ModelNotMatchingError("Not matching models")
 
     def get_parameters(self):
@@ -102,10 +102,13 @@ class LightningLearner(NodeLearner):
         try:
             if self.epochs > 0:
                 self.create_trainer()
+                torch.autograd.set_detect_anomaly(True)
                 self.__trainer.fit(self.model, self.data)
                 self.__trainer = None
         except Exception as e:
             logging.error("Something went wrong with pytorch lightning. {}".format(e))
+            # Log full traceback
+            logging.error(traceback.format_exc())
 
     def interrupt_fit(self):
         if self.__trainer is not None:
@@ -128,6 +131,8 @@ class LightningLearner(NodeLearner):
                 return None
         except Exception as e:
             logging.error("Something went wrong with pytorch lightning. {}".format(e))
+            # Log full traceback
+            logging.error(traceback.format_exc())
             return None
 
     def log_validation_metrics(self, loss, metric, round=None, name=None):
@@ -140,20 +145,15 @@ class LightningLearner(NodeLearner):
             len(self.data.test_dataloader().dataset),
         )
 
-    def init(self):
-        self.close()
-
-    def close(self):
-        if self.logger is not None:
-            pass
-
     def finalize_round(self):
         self.logger.global_step = self.logger.global_step + self.logger.local_step
         self.logger.local_step = 0
+        self.round += 1
+        self.logger.log_metrics({"Round": self.round}, step=self.logger.global_step)
         pass
 
     def create_trainer(self):
-        logging.info("[Learner] Creating trainer with accelerator: {}".format(self.config.participant["device_args"]["accelerator"]))
+        logging.debug("[Learner] Creating trainer with accelerator: {}".format(self.config.participant["device_args"]["accelerator"]))
         progress_bar = RichProgressBar(
             theme=RichProgressBarTheme(
                 description="green_yellow",
@@ -180,3 +180,33 @@ class LightningLearner(NodeLearner):
             enable_model_summary=False,
             enable_progress_bar=True
         )
+
+    def validate_neighbour_model(self, neighbour_model_param):
+        avg_loss = 0
+        running_loss = 0
+        bootstrap_dataloader = self.data.bootstrap_dataloader()
+        num_samples = 0
+        neighbour_model = copy.deepcopy(self.model)
+        neighbour_model.load_state_dict(neighbour_model_param)
+
+        # enable evaluation mode, prevent memory leaks.
+        # no need to switch back to training since model is not further used.
+        if torch.cuda.is_available():
+            neighbour_model = neighbour_model.to('cuda')
+        neighbour_model.eval()
+
+        # bootstrap_dataloader = bootstrap_dataloader.to('cuda')
+
+        with torch.no_grad():
+            for inputs, labels in bootstrap_dataloader:
+                if torch.cuda.is_available():
+                    inputs = inputs.to('cuda')
+                    labels = labels.to('cuda')
+                outputs = neighbour_model(inputs)
+                loss = F.cross_entropy(outputs, labels)
+                running_loss += loss.item()
+                num_samples += inputs.size(0)
+
+        avg_loss = running_loss / len(bootstrap_dataloader)
+        logging.debug("[Learner.validate_neighbour]: Computed neighbor loss over {} data samples".format(num_samples))
+        return avg_loss

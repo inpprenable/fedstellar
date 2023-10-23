@@ -9,7 +9,7 @@ from math import floor
 # To Avoid Crashes with a lot of nodes
 import torch.multiprocessing
 from lightning import LightningDataModule
-from torch.utils.data import DataLoader, Subset, random_split
+from torch.utils.data import DataLoader, random_split, RandomSampler
 from torchvision import transforms
 from torchvision.datasets import FashionMNIST
 from fedstellar.learning.pytorch.changeablesubset import ChangeableSubset
@@ -37,7 +37,7 @@ class DataModule(LightningDataModule):
             sub_id=0,
             number_sub=1,
             batch_size=32,
-            num_workers=4,
+            num_workers=0,
             val_percent=0.1,
             label_flipping=False,
             data_poisoning=False,
@@ -135,6 +135,17 @@ class DataModule(LightningDataModule):
             drop_last=True,
             pin_memory=False,
         )
+        random_sampler = RandomSampler(
+            data_source=data_val,
+            replacement=False,
+            num_samples=max(int(len(data_val)/3), 300)
+        )
+        self.bootstrap_loader = DataLoader(
+            data_train,
+            batch_size=self.batch_size,
+            shuffle=False,
+            sampler=random_sampler
+        )
         print(
             "Train: {} Val:{} Test:{}".format(
                 len(data_train), len(data_val), len(te_subset)
@@ -152,3 +163,8 @@ class DataModule(LightningDataModule):
     def test_dataloader(self):
         """ """
         return self.test_loader
+    
+    def bootstrap_dataloader(self):
+        """ """
+        return self.bootstrap_loader
+

@@ -337,6 +337,11 @@
 <script>
     var initizalization = false;
 
+    let gData = {
+        nodes: [],
+        links: []
+    };
+
     function async_update_nodes_page() {
         // Get all divs with id "node-vars" and update them with value returned by async GET request
         var scenario_name = document.getElementById('scenario_name').innerHTML;
@@ -413,7 +418,7 @@
                     // Add data to the Graph topology
                     // Check if there are new nodes to add to the graph
                     if (!initizalization || Graph.graphData().nodes.length < data['nodes_table'].length) {
-                        const gData = {
+                        gData = {
                             // if data['nodes_table'][i][0] is not in nodes_offline, then add the node to the graph
                             nodes: data['nodes_table'].map(node => ({
                                 id: node[1],
@@ -458,7 +463,111 @@
     window.onload = async function () {
         await async_update_nodes_page();
     };
-    setInterval(async_update_nodes_page, 5000); // Update the nodes every 2 seconds
+    setInterval(async_update_nodes_page, 2000); // Update the nodes every 2 seconds
+</script>
+
+<script type="text/javascript">
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+    socket.on('node_update', function (data) {
+        console.log("Received node_update from WebSocket");
+        console.log(data);
+        // Add the new node to the gData and update the graph (if the node is not already in the graph)
+        var nodeExists = false;
+        for (var i = 0; i < gData.nodes.length; i++) {
+            if (gData.nodes[i].port === data.port) {  // TODO: Change to ip:port
+                nodeExists = true;
+                break;
+            }
+        }
+        if (!nodeExists) {
+            console.log("Adding new node to the graph")
+            showAlert("success", "New node added to the graph");
+            gData.nodes.push({
+                id: data.idx,
+                ip: data.ip,
+                port: data.port,
+                ipport: data.ip + ":" + data.port,
+                role: data.role,
+                color: offlineNodes.has(data.ipport) ? 'grey' :
+                    (data.role === "trainer" ? '#0173B2'
+                        : (data.role === "aggregator" ? 'rgba(255,136,0,0.6)'
+                            : (data.role === "evaluator" ? '#F44336' : undefined))),
+            });
+            // Create a link between the new node and its neighbors
+            var links = [];
+            if (data.neighbors !== "") {
+                var neighbors = data.neighbors.split(" ");
+                neighbors.forEach(function (neighbor) {
+                    links.push({
+                        source: data.ipport,
+                        target: neighbor,
+                        value: offlineNodes.has(data.ipport) || offlineNodes.has(neighbor) ? 0 : 1,
+                    });
+                });
+            }
+            gData.links.push(links);
+            // Update the graph
+            console.log(gData);
+            updateGraph(gData);
+        } else {
+            console.log("Node already exists in the graph")
+        }
+
+        // Detect if the data.node has different neighbors in the graph, then remove the links that are not in the new neighbors
+        console.log("Detecting if the node has different neighbors");
+        var node = gData.nodes.filter(n => n.ipport === data.ip + ":" + data.port)[0];
+        console.log("Node in the graph using event received from WebSocket");
+        console.log(node);
+        var neighbors = data.neighbors.split(" ");
+        console.log(neighbors);
+        var linksToRemove = [];
+        // Identify the links to remove, the new neighbors are in neighbors. If a link is not in neighbors, then remove it
+        // Compare both source and target because the links are bidirectional
+        for (var i = 0; i < gData.links.length; i++) {
+            console.log(gData.links[i])
+            if (gData.links[i].source.ipport === node.ipport && !neighbors.includes(gData.links[i].target.ipport)) {
+                linksToRemove.push(gData.links[i]);
+            } else if (gData.links[i].target.ipport === node.ipport && !neighbors.includes(gData.links[i].source.ipport)) {
+                linksToRemove.push(gData.links[i]);
+            }
+        }
+        console.log("Links to remove");
+        console.log(linksToRemove);
+        // Remove the links
+        for (var i = 0; i < linksToRemove.length; i++) {
+            for (var j = 0; j < gData.links.length; j++) {
+                if (gData.links[j].source.ipport === linksToRemove[i].source.ipport && gData.links[j].target.ipport === linksToRemove[i].target.ipport) {
+                    gData.links.splice(j, 1);
+                    showAlert("warning", "Link removed from the graph")
+                } else if (gData.links[j].source.ipport === linksToRemove[i].target.ipport && gData.links[j].target.ipport === linksToRemove[i].source.ipport) {
+                    gData.links.splice(j, 1);
+                    showAlert("warning", "Link removed from the graph")
+                }
+            }
+        }
+        // Update the graph
+        console.log(gData);
+        updateGraph(gData);
+
+
+    });
+
+    socket.on('node_delete', function (data) {
+        console.log("Received node_delete from WebSocket");
+        console.log(data);
+        // data has the following format: {"node": self.__self_addr, "neighbor": nei}, where nei is the neighbor that has been deleted
+        // Remove the link between the node and its neighbor
+        for (var i = 0; i < gData.links.length; i++) {
+            if (gData.links[i].source === data.node && gData.links[i].target === data.neighbor) {
+                gData.links.splice(i, 1);
+                break;
+            }
+        }
+        // Update the graph
+        console.log(gData);
+        updateGraph(gData);
+    });
 </script>
 
 {% endif %}

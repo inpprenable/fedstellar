@@ -8,7 +8,6 @@ import time
 import pytest
 
 from fedstellar.base_node import BaseNode
-from fedstellar.communication_protocol import CommunicationProtocol
 from fedstellar.config.config import Config
 from test.utils import set_test_settings, wait_network_nodes
 
