@@ -10,21 +10,18 @@ from setuptools import find_packages, setup
 HERE = Path(__file__).parent
 
 PACKAGE_NAME = "fedstellar"
-VERSION = "0.1"
+VERSION = "2.0"
 AUTHOR = "Enrique Tomás Martínez Beltrán"
 AUTHOR_EMAIL = "enriquetomas@um.es"
 URL = "https://github.com/enriquetomasmb/fedstellar"
-DESCRIPTION = "Platform for dynamic scenario management using Decentralized Federated Learning"
+DESCRIPTION = "A Platform for Decentralized Federated Learning"
 LONG_DESCRIPTION = (HERE / "README.md").read_text(encoding="utf-8")
 LONG_DESC_TYPE = "text/markdown"
 LICENSE = "MIT"
 
 INSTALL_REQUIRES = [
-    "torch==1.11.0",
-    "tensorboard",
-    "pytorch-lightning",
-    "torchvision",
-    "pycryptodome",
+    "torch",
+    "lightning"
 ]
 
 
