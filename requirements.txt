@@ -24,7 +24,6 @@ requests==2.31.0
 torchmetrics==1.2.0
 Pillow==10.1.0
 ansi2html==1.8.0
-Werkzeug==2.2.3
 pycryptodome==3.16.0
 furo==2023.9.10
 Sphinx==7.1.2
