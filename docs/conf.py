@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.abspath('..'))
 project = 'Fedstellar'
 copyright = '2023, Enrique Tomás Martínez Beltrán'
 author = 'Enrique Tomás Martínez Beltrán'
-release = '0.1'
+release = '2.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
