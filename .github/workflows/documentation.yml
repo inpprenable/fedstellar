@@ -56,9 +56,13 @@ jobs:
     - name: List directories
       run: |
           ls -la gh-pages/
-    - name: Push changes
-      uses: ad-m/github-push-action@master
-      with:
-        directory: gh-pages
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: gh-pages
+    - name: Commit and Push changes
+      run: |
+        cd gh-pages
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git add .
+        git commit -m "Update documentation" -a || echo "No changes to commit"
+        git push origin gh-pages
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
