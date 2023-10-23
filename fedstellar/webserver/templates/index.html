@@ -13,7 +13,7 @@
 <br>
 <div class="col-md-12 container-shadow grey">
     <div class="col-md-12">
-        <h3>Alerts and News!</h3>
+        <h3>Alerts and News</h3>
         {% for alert in alerts %}
             <div class="alert {{ 'alert-info' if alert['alert_type'] == 'info' else 'alert-warning' if alert['alert_type'] == 'warning' else 'alert-danger' }}">
                 <strong>[{{ alert['timestamp']|datetimeformat }}]  {{ alert['title'] }}:</strong> {{ alert['message'] }}
