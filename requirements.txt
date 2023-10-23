@@ -26,8 +26,9 @@ Pillow==9.4.0
 ansi2html==1.8.0
 Werkzeug==2.2.3
 pycryptodome==3.16.0
-Sphinx==6.1.3
-sphinx-autoapi==2.0.0
+furo==2023.9.10
+Sphinx==7.1.2
+sphinx-autoapi==3.0.0
 psutil==5.9.4
 wandb==0.13.9
 rich==13.6.0
