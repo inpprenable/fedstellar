@@ -11,6 +11,7 @@ torchdata==0.7.0
 lightning==2.1.0
 tensorboard==2.14.0
 tensorboardx==2.6.2.2
+requirements.txt
 flask==3.0.0
 flask-socketio==5.3.6
 eventlet==0.33.3
