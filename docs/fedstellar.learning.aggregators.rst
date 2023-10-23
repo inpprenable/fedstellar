@@ -9,7 +9,7 @@ Submodules
 
    fedstellar.learning.aggregators.aggregator
    fedstellar.learning.aggregators.fedavg
-   fedstellar.learning.aggregators.fltrust
+   fedstellar.learning.aggregators.fedavgSVM
    fedstellar.learning.aggregators.helper
    fedstellar.learning.aggregators.krum
    fedstellar.learning.aggregators.median
