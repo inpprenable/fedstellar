@@ -1,6 +1,6 @@
-import sqlite3
-import hashlib
 import datetime
+import hashlib
+import sqlite3
 
 user_db_file_location = "database_file/users.db"
 note_db_file_location = "database_file/notes.db"
@@ -250,7 +250,7 @@ def list_nodes_by_scenario_name(scenario_name):
     return result
 
 
-def update_node_record(node_uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, scenario):
+def update_node_record(node_uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, federation_round, scenario):
     # Check if the node record with node_uid and scenario already exists in the database
     # If it does, update the record
     # If it does not, create a new record
@@ -264,10 +264,10 @@ def update_node_record(node_uid, idx, ip, port, role, neighbors, latitude, longi
     print(result)
     if result is None:
         # Create a new record
-        _c.execute("INSERT INTO nodes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (node_uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, scenario))
+        _c.execute("INSERT INTO nodes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (node_uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, federation_round, scenario))
     else:
         # Update the record
-        command = "UPDATE nodes SET idx = '" + idx + "', ip = '" + ip + "', port = '" + port + "', role = '" + role + "', neighbors = '" + neighbors + "', latitude = '" + latitude + "', longitude = '" + longitude + "', timestamp = '" + timestamp + "', federation = '" + federation + "' WHERE uid = '" + node_uid + "' AND scenario = '" + scenario + "';"
+        command = "UPDATE nodes SET idx = '" + idx + "', ip = '" + ip + "', port = '" + port + "', role = '" + role + "', neighbors = '" + neighbors + "', latitude = '" + latitude + "', longitude = '" + longitude + "', timestamp = '" + timestamp + "', federation = '" + federation + "', round = '" + federation_round + "' WHERE uid = '" + node_uid + "' AND scenario = '" + scenario + "';"
         _c.execute(command)
 
     _conn.commit()
@@ -314,7 +314,26 @@ def get_all_scenarios(sort_by="start_time"):
     return result
 
 
-def scenario_update_record(scenario_name, start_time, end_time, title, description, status, network_subnet, role):
+def get_all_scenarios_check_completed(sort_by="start_time"):
+    _conn = sqlite3.connect(scenario_db_file_location)
+    _c = _conn.cursor()
+    command = "SELECT * FROM scenarios ORDER BY " + sort_by + ";"
+    _c.execute(command)
+    result = _c.fetchall()
+
+    _conn.commit()
+    _conn.close()
+
+    for scenario in result:
+        if scenario[5] == "running":
+            if check_scenario_federation_completed(scenario[0]):
+                scenario_set_status_to_completed(scenario[0])
+                result = get_all_scenarios()
+
+    return result
+
+
+def scenario_update_record(scenario_name, start_time, end_time, title, description, status, network_subnet, rounds, role):
     _conn = sqlite3.connect(scenario_db_file_location)
     _c = _conn.cursor()
 
@@ -324,10 +343,10 @@ def scenario_update_record(scenario_name, start_time, end_time, title, descripti
 
     if result is None:
         # Create a new record
-        _c.execute("INSERT INTO scenarios VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (scenario_name, start_time, end_time, title, description, status, network_subnet, role))
+        _c.execute("INSERT INTO scenarios VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (scenario_name, start_time, end_time, title, description, status, network_subnet, rounds, role))
     else:
         # Update the record
-        command = "UPDATE scenarios SET start_time = '" + start_time + "', end_time = '" + end_time + "', title = '" + title + "', description = '" + description + "', status = '" + status + "', network_subnet = '" + network_subnet + "', role = '" + role + "' WHERE name = '" + scenario_name + "';"
+        command = "UPDATE scenarios SET start_time = '" + start_time + "', end_time = '" + end_time + "', title = '" + title + "', description = '" + description + "', status = '" + status + "', network_subnet = '" + network_subnet + "', rounds = '" + rounds + "', role = '" + role + "' WHERE name = '" + scenario_name + "';"
         _c.execute(command)
 
     _conn.commit()
@@ -357,10 +376,22 @@ def scenario_set_status_to_finished(scenario_name):
     _conn.close()
 
 
+def scenario_set_status_to_completed(scenario_name):
+    _conn = sqlite3.connect(scenario_db_file_location)
+    _c = _conn.cursor()
+
+    command = "UPDATE scenarios SET status = 'completed' WHERE name = '" + scenario_name + "';"
+    _c.execute(command)
+
+    _conn.commit()
+    _conn.close()
+
+
 def get_running_scenario():
     _conn = sqlite3.connect(scenario_db_file_location)
     _c = _conn.cursor()
-    command = "SELECT * FROM scenarios WHERE status = 'running';"
+    # running or completed
+    command = "SELECT * FROM scenarios WHERE status = 'running' OR status = 'completed';"
     _c.execute(command)
     result = _c.fetchone()
 
@@ -369,6 +400,18 @@ def get_running_scenario():
 
     return result
 
+
+def get_completed_scenario():
+    _conn = sqlite3.connect(scenario_db_file_location)
+    _c = _conn.cursor()
+    command = "SELECT * FROM scenarios WHERE status = 'completed';"
+    _c.execute(command)
+    result = _c.fetchone()
+
+    _conn.commit()
+    _conn.close()
+
+    return result
 
 def get_scenario_by_name(scenario_name):
     _conn = sqlite3.connect(scenario_db_file_location)
@@ -392,6 +435,42 @@ def remove_scenario_by_name(scenario_name):
 
     _conn.commit()
     _conn.close()
+
+
+def check_scenario_federation_completed(scenario_name):
+    # Check if all nodes in the scenario have finished the federation comparing the round number with the total rounds
+    # Nodes has a column called round, which is the current round number of the node
+    # Scenario has a column called rounds, which is the total rounds of the scenario
+    # All nodes in the scenario have finished the federation if the round number of all nodes are equal to the total rounds of the scenario
+    _conn = sqlite3.connect(scenario_db_file_location)
+    _c = _conn.cursor()
+
+    command = "SELECT * FROM scenarios WHERE name = '" + scenario_name + "';"
+    _c.execute(command)
+    scenario = _c.fetchone()
+
+    _conn.commit()
+    _conn.close()
+
+    _conn = sqlite3.connect(node_db_file_location)
+    _c = _conn.cursor()
+
+    command = "SELECT * FROM nodes WHERE scenario = '" + scenario_name + "';"
+    _c.execute(command)
+    nodes = _c.fetchall()
+
+    _conn.commit()
+    _conn.close()
+
+    if len(nodes) == 0:
+        return False
+
+    for node in nodes:
+        if node[10] != scenario[7]:
+            return False  # The round number of the node is not equal to the total rounds of the scenario
+
+    return True  # All nodes in the scenario have finished the federation
+
 
 def check_scenario_with_role(role, scenario_name):
     _conn = sqlite3.connect(scenario_db_file_location)

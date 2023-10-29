@@ -21,11 +21,15 @@
 {% if scenario[5] == "running" %}
 <h5>Scenario status: <span id="scenario_status" class="label label-success">Running</span></h5>
 <a href="{{ url_for('fedstellar_stop_scenario', scenario_name=scenario[0]) }}" class="btn btn-danger">Stop scenario</a>
+{% elif scenario[5] == "completed" %}
+<h5>Scenario status: <span id="scenario_status" class="label label-info">Completed</span></h5>
+<a href="{{ url_for('fedstellar_stop_scenario', scenario_name=scenario[0]) }}" class="btn btn-danger">Stop scenario</a>
 {% else %}
 <h5>Scenario status: <span id="scenario_status" class="label label-danger">Finished</span></h5>
 {% endif %}
 
-<a href="{{ url_for('fedstellar_scenario_private', scenario_name=scenario[0]) }}" class="btn btn-primary">Private page</a>
+<a href="{{ url_for('fedstellar_scenario_statistics', scenario_name=name) }}" class="btn btn-dark">Real-time metrics</a>
+<a href="{{ url_for('fedstellar_scenario_private', scenario_name=scenario[0]) }}" class="btn btn-dark">Private page</a>
 <hr>
 
 <h3>Nodes in the database</h3>
@@ -46,12 +50,13 @@
             <th>Longitude</th>
             <th>Timestamp</th>
             <th>Federation</th>
+            <th>Round</th>
             <th>Status</th>
             <th>Logs</th>
 
         </tr>
         </thead>
-        {% for uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, scenario, status in nodes %}
+        {% for uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, round, scenario, status in nodes %}
         <tr id="node-vars">
             <td id="uid"> {{ uid }}</td>
             <td id="idx"> {{ idx }}</td>
@@ -63,6 +68,7 @@
             <td id="longitude">{{ longitude }}</td>
             <td id="timestamp"> {{ timestamp }}</td>
             <td id="federation"> {{ federation }}</td>
+            <td id="round"> {{ round }}</td>
             {% if status %}
             <td id="status"><span class="label label-success">Online</span></td>
             {% else %}
@@ -115,7 +121,7 @@
 
 <h3>Topology Image</h3>
 <p class="text-muted">This functionality enables you to generate a topology image of the scenario. The image is generated using the following button.</p>
-<a class="btn btn-primary" style="padding: 10px;margin-bottom: 10px" href="{{ url_for('fedstellar_monitoring_image', scenario_name=scenario[0]) }}">Download topology</a>
+<a class="btn btn-dark" style="padding: 10px;margin-bottom: 10px" href="{{ url_for('fedstellar_monitoring_image', scenario_name=scenario[0]) }}">Download topology</a>
 
 <h3>Topology 3D</h3>
 <p class="text-muted">This functionality enables you to generate a 3D topology image of the scenario. The grey nodes are the ones that are not online. The image is generated below automatically.</p>
@@ -375,7 +381,8 @@
                                 node_row[i].querySelector("#longitude").innerHTML = node[7];
                                 node_row[i].querySelector("#timestamp").innerHTML = node[8];
                                 node_row[i].querySelector("#federation").innerHTML = node[9];
-                                if (node[11]) {
+                                node_row[i].querySelector("#round").innerHTML = node[10];
+                                if (node[12]) {
                                     node_row[i].querySelector("#status").innerHTML = '<span class="label label-success">Online</span>';
                                 } else {
                                     nodes_offline.push(node[2] + ":" + node[3]);

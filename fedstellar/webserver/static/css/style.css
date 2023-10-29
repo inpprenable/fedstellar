@@ -16,6 +16,15 @@
     }
 }
 
+a {
+    color: #9a5773;
+}
+
+a:hover {
+    color: #491935;
+    text-decoration: none;
+}
+
 .nav-item label {
     cursor: pointer;
     margin-bottom: 0;
@@ -121,6 +130,18 @@ td {
     color: #000000;
     background-color: #FFEFCB;
     border-color: #FFEFCB;
+}
+
+.btn-light {
+    color: #fff;
+    background-color: #9a5773;
+    border-color: #9a5773;
+}
+
+.btn-dark {
+    color: #ffffff;
+    background-color: #772953;
+    border-color: #772953;
 }
 
 .dropdown {

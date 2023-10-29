@@ -20,7 +20,7 @@ from flask import Flask, session, url_for, redirect, render_template, request, a
 from flask_socketio import SocketIO
 from werkzeug.utils import secure_filename
 from fedstellar.webserver.database import list_users, verify, delete_user_from_db, add_user, scenario_update_record, scenario_set_all_status_to_finished, get_running_scenario, get_user_info, get_scenario_by_name, list_nodes_by_scenario_name, get_all_scenarios, remove_nodes_by_scenario_name, \
-    remove_scenario_by_name, scenario_set_status_to_finished, check_scenario_with_role
+    remove_scenario_by_name, scenario_set_status_to_finished, get_all_scenarios_check_completed, check_scenario_with_role
 from fedstellar.webserver.database import read_note_from_db, write_note_into_db, delete_note_from_db, match_user_id_with_note_id
 from fedstellar.webserver.database import image_upload_record, list_images_for_user, match_user_id_with_image_uid, delete_image_from_db, get_image_file_name, update_node_record
 
@@ -290,12 +290,15 @@ def fedstellar_add_user():
 def fedstellar_scenario():
     if "user" in session.keys() or request.path == "/api/scenario/":
         # Get the list of scenarios
-        scenarios = get_all_scenarios()
+        scenarios = get_all_scenarios_check_completed()  # Get all scenarios after checking if they are completed
         scenario_running = get_running_scenario()
-
+        # Check if status of scenario_running is "completed"
+        bool_completed = False
+        if scenario_running:
+            bool_completed = scenario_running[5] == "completed"
         if scenarios:
             if request.path == "/scenario/":
-                return render_template("scenario.html", scenarios=scenarios, scenario_running=scenario_running)
+                return render_template("scenario.html", scenarios=scenarios, scenario_running=scenario_running, scenario_completed=bool_completed)
             elif request.path == "/api/scenario/":
                 return jsonify(scenarios), 200
             else:
@@ -351,7 +354,8 @@ def fedstellar_scenario_monitoring(scenario_name):
                                   [x[7] for x in nodes_list],  # Longitude
                                   [x[8] for x in nodes_list],  # Timestamp
                                   [x[9] for x in nodes_list],  # Federation
-                                  [x[10] for x in nodes_list],  # Scenario name
+                                  [x[10] for x in nodes_list],  # Round
+                                  [x[11] for x in nodes_list],  # Scenario name
                                   nodes_status  # Status
                                   )
 
@@ -424,7 +428,7 @@ def fedstellar_update_node(scenario_name):
             # Update the node in database
             update_node_record(str(config['device_args']['uid']), str(config['device_args']['idx']), str(config['network_args']['ip']), str(config['network_args']['port']), str(config['device_args']['role']), str(config['network_args']['neighbors']), str(config['geo_args']['latitude']),
                                str(config['geo_args']['longitude']),
-                               str(timestamp), str(config['scenario_args']['federation']), str(config['scenario_args']['name']))
+                               str(timestamp), str(config['scenario_args']['federation']), str(config['federation_args']['round']), str(config['scenario_args']['name']))
 
             # Send notification to each connected users
             socketio.emit('node_update', {'uid': config['device_args']['uid'], 'idx': config['device_args']['idx'], 'ip': config['network_args']['ip'], 'port': str(config['network_args']['port']), 'role': config['device_args']['role'], 'neighbors': config['network_args']['neighbors'],
@@ -837,7 +841,7 @@ def fedstellar_scenario_deployment_run():
                 print("Error docker-compose up:", e)
                 return redirect(url_for("fedstellar_scenario_deployment"))
             # Generate/Update the scenario in the database
-            scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=data["scenario_title"], description=data["scenario_description"], network_subnet=data["network_subnet"], role=session['role'])
+            scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=data["scenario_title"], description=data["scenario_description"], network_subnet=data["network_subnet"], rounds=data["rounds"], role=session['role'])
             return redirect(url_for("fedstellar_scenario"))
         else:
             return abort(401)
@@ -866,7 +870,7 @@ def fedstellar_scenario_deployment_reload(scenario_name):
         controller = Controller(args)
         controller.load_configurations_and_start_nodes()
         # Generate/Update the scenario in the database
-        scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=scenario[3], description=scenario[4], network_subnet=scenario[6], role=session['role'])
+        scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=scenario[3], description=scenario[4], network_subnet=scenario[6], rounds=scenario[7], role=session['role'])
 
         return redirect(url_for("fedstellar_scenario"))
     else:

@@ -977,6 +977,7 @@ class Node(BaseNode):
         self.aggregator.clear()
         self.learner.finalize_round()  # check to see if this could look better
         self.round = self.round + 1
+        self.config.participant["federation_args"]["round"] = self.round  # Set current round in config (it is sent to the controller)
         logging.info(f"({self.addr}) Round {self.round} of {self.totalrounds} started.")
         self.aggregator.set_round(self.round)
         # Clear node aggregation

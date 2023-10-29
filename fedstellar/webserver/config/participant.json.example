@@ -27,6 +27,9 @@
     "latitude": "46.762520",
     "longitude": "7.600490"
   },
+  "federation_args": {
+    "round": 0
+  },
   "network_args": {
     "ip": "",
     "ipdemo": "",
