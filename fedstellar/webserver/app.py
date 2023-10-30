@@ -7,22 +7,64 @@ import os
 import signal
 import sys
 import zipfile
+from urllib.parse import urlencode
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # Add the path two directories up to the system path
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 
 from ansi2html import Ansi2HTMLConverter
 
 from fedstellar.controller import Controller
 
-from flask import Flask, session, url_for, redirect, render_template, request, abort, flash, send_file, make_response, jsonify, Response
+from flask import (
+    Flask,
+    session,
+    url_for,
+    redirect,
+    render_template,
+    request,
+    abort,
+    flash,
+    send_file,
+    make_response,
+    jsonify,
+    Response,
+)
 from flask_socketio import SocketIO
 from werkzeug.utils import secure_filename
-from fedstellar.webserver.database import list_users, verify, delete_user_from_db, add_user, scenario_update_record, scenario_set_all_status_to_finished, get_running_scenario, get_user_info, get_scenario_by_name, list_nodes_by_scenario_name, get_all_scenarios, remove_nodes_by_scenario_name, \
-    remove_scenario_by_name, scenario_set_status_to_finished, get_all_scenarios_check_completed, check_scenario_with_role
-from fedstellar.webserver.database import read_note_from_db, write_note_into_db, delete_note_from_db, match_user_id_with_note_id
-from fedstellar.webserver.database import image_upload_record, list_images_for_user, match_user_id_with_image_uid, delete_image_from_db, get_image_file_name, update_node_record
+from fedstellar.webserver.database import (
+    list_users,
+    verify,
+    delete_user_from_db,
+    add_user,
+    scenario_update_record,
+    scenario_set_all_status_to_finished,
+    get_running_scenario,
+    get_user_info,
+    get_scenario_by_name,
+    list_nodes_by_scenario_name,
+    get_all_scenarios,
+    remove_nodes_by_scenario_name,
+    remove_scenario_by_name,
+    scenario_set_status_to_finished,
+    get_all_scenarios_check_completed,
+    check_scenario_with_role,
+)
+from fedstellar.webserver.database import (
+    read_note_from_db,
+    write_note_into_db,
+    delete_note_from_db,
+    match_user_id_with_note_id,
+)
+from fedstellar.webserver.database import (
+    image_upload_record,
+    list_images_for_user,
+    match_user_id_with_image_uid,
+    delete_image_from_db,
+    get_image_file_name,
+    update_node_record,
+)
 
 if os.environ.get("USE_EVENTLET"):
     import eventlet
@@ -31,21 +73,27 @@ if os.environ.get("USE_EVENTLET"):
 
 async_mode = None
 if os.environ.get("USE_EVENTLET"):
-    async_mode = 'eventlet'
+    async_mode = "eventlet"
 
 app = Flask(__name__)
-app.config.from_object('config')
-app.config['log_dir'] = os.environ.get('FEDSTELLAR_LOGS_DIR')
-app.config['config_dir'] = os.environ.get('FEDSTELLAR_CONFIG_DIR')
-app.config['model_dir'] = os.environ.get('FEDSTELLAR_MODELS_DIR')
-app.config['python_path'] = os.environ.get('FEDSTELLAR_PYTHON_PATH')
-app.config['statistics_port'] = os.environ.get('FEDSTELLAR_STATISTICS_PORT')
-socketio = SocketIO(app, async_mode=async_mode, logger=True, engineio_logger=True, cors_allowed_origins="*")
+app.config.from_object("config")
+app.config["log_dir"] = os.environ.get("FEDSTELLAR_LOGS_DIR")
+app.config["config_dir"] = os.environ.get("FEDSTELLAR_CONFIG_DIR")
+app.config["model_dir"] = os.environ.get("FEDSTELLAR_MODELS_DIR")
+app.config["python_path"] = os.environ.get("FEDSTELLAR_PYTHON_PATH")
+app.config["statistics_port"] = os.environ.get("FEDSTELLAR_STATISTICS_PORT")
+socketio = SocketIO(
+    app,
+    async_mode=async_mode,
+    logger=True,
+    engineio_logger=True,
+    cors_allowed_origins="*",
+)
 
 
 # Detect CTRL+C from parent process
 def signal_handler(signal, frame):
-    print('You pressed Ctrl+C [webserver]!')
+    print("You pressed Ctrl+C [webserver]!")
     scenario_set_all_status_to_finished()
     # remove_all_nodes()
     sys.exit(0)
@@ -79,15 +127,16 @@ def fedstellar_413(error):
     return render_template("413.html"), 413
 
 
-@app.template_filter('datetimeformat')
-def datetimeformat(value, format='%B %d, %Y %H:%M'):
-    return datetime.datetime.strptime(value, '%Y-%m-%d %H:%M:%S').strftime(format)
+@app.template_filter("datetimeformat")
+def datetimeformat(value, format="%B %d, %Y %H:%M"):
+    return datetime.datetime.strptime(value, "%Y-%m-%d %H:%M:%S").strftime(format)
 
 
 @app.route("/")
 def fedstellar_home():
     # Get alerts and news from API
     import requests
+
     url = "http://federatedlearning.inf.um.es/alerts/alerts"
     try:
         response = requests.get(url)
@@ -101,21 +150,30 @@ def fedstellar_home():
 @app.route("/scenario/<scenario_name>/private/")
 def fedstellar_scenario_private(scenario_name):
     if "user" in session.keys():
-        socketio.emit('scenario_private', {'scenario_private': scenario_name})
-        notes_list = read_note_from_db(session['user'])
-        notes_table = zip([x[0] for x in notes_list],
-                          [x[1] for x in notes_list],
-                          [x[2] for x in notes_list],
-                          ["/delete_note/" + x[0] for x in notes_list])
+        socketio.emit("scenario_private", {"scenario_private": scenario_name})
+        notes_list = read_note_from_db(session["user"])
+        notes_table = zip(
+            [x[0] for x in notes_list],
+            [x[1] for x in notes_list],
+            [x[2] for x in notes_list],
+            ["/delete_note/" + x[0] for x in notes_list],
+        )
 
-        images_list = list_images_for_user(session['user'])
-        images_table = zip([x[0] for x in images_list],
-                           [x[1] for x in images_list],
-                           [x[2] for x in images_list],
-                           ["/delete_image/" + x[0] for x in images_list],
-                           ["/images/" + x[0] for x in images_list])
+        images_list = list_images_for_user(session["user"])
+        images_table = zip(
+            [x[0] for x in images_list],
+            [x[1] for x in images_list],
+            [x[2] for x in images_list],
+            ["/delete_image/" + x[0] for x in images_list],
+            ["/images/" + x[0] for x in images_list],
+        )
 
-        return render_template("private.html", scenario_name=scenario_name, notes=notes_table, images=images_table)
+        return render_template(
+            "private.html",
+            scenario_name=scenario_name,
+            notes=notes_table,
+            images=images_table,
+        )
     else:
         return abort(401)
 
@@ -126,10 +184,12 @@ def fedstellar_admin():
         user_list = list_users(all_info=True)
         user_names = [x[0] for x in user_list]
         user_roles = [x[2] for x in user_list]
-        user_table = zip(range(1, len(user_list) + 1),
-                         user_names,
-                         user_roles,
-                         [x + y for x, y in zip(["/delete_user/"] * len(user_names), user_names)])
+        user_table = zip(
+            range(1, len(user_list) + 1),
+            user_names,
+            user_roles,
+            [x + y for x, y in zip(["/delete_user/"] * len(user_names), user_names)],
+        )
         return render_template("admin.html", users=user_table)
     else:
         return abort(401)
@@ -138,61 +198,66 @@ def fedstellar_admin():
 @app.route("/write_note", methods=["POST"])
 def fedstellar_write_note():
     text_to_write = request.form.get("text_note_to_take")
-    write_note_into_db(session['user'], text_to_write)
+    write_note_into_db(session["user"], text_to_write)
 
-    return (redirect(url_for("fedstellar_scenario_private")))
+    return redirect(url_for("fedstellar_scenario_private"))
 
 
 @app.route("/delete_note/<note_id>", methods=["GET"])
 def fedstellar_delete_note(note_id):
-    if session.get("user", None) == match_user_id_with_note_id(note_id):  # Ensure the current user is NOT operating on other users' note.
+    if session.get("user", None) == match_user_id_with_note_id(
+        note_id
+    ):  # Ensure the current user is NOT operating on other users' note.
         delete_note_from_db(note_id)
     else:
         return abort(401)
-    return (redirect(url_for("fedstellar_scenario_private")))
+    return redirect(url_for("fedstellar_scenario_private"))
 
 
 # Reference: http://flask.pocoo.org/docs/0.12/patterns/fileuploads/
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 
 def allowed_file(filename):
-    return '.' in filename and \
-        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@app.route("/upload_image", methods=['POST'])
+@app.route("/upload_image", methods=["POST"])
 def fedstellar_upload_image():
-    if request.method == 'POST':
+    if request.method == "POST":
         # check if the post request has the file part
-        if 'file' not in request.files:
-            flash('No file part', category='danger')
-            return (redirect(url_for("fedstellar_scenario_private")))
-        file = request.files['file']
+        if "file" not in request.files:
+            flash("No file part", category="danger")
+            return redirect(url_for("fedstellar_scenario_private"))
+        file = request.files["file"]
         # if user does not select file, browser also submit an empty part without filename
-        if file.filename == '':
-            flash('No selected file', category='danger')
-            return (redirect(url_for("fedstellar_scenario_private")))
+        if file.filename == "":
+            flash("No selected file", category="danger")
+            return redirect(url_for("fedstellar_scenario_private"))
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             upload_time = str(datetime.datetime.now())
             image_uid = hashlib.sha1((upload_time + filename).encode()).hexdigest()
             # Save the image into UPLOAD_FOLDER
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], image_uid + "-" + filename))
+            file.save(
+                os.path.join(app.config["UPLOAD_FOLDER"], image_uid + "-" + filename)
+            )
             # Record this uploading in database
-            image_upload_record(image_uid, session['user'], filename, upload_time)
-            return (redirect(url_for("fedstellar_scenario_private")))
+            image_upload_record(image_uid, session["user"], filename, upload_time)
+            return redirect(url_for("fedstellar_scenario_private"))
 
-    return (redirect(url_for("fedstellar_scenario_private")))
+    return redirect(url_for("fedstellar_scenario_private"))
 
 
-@app.route("/images/<image_uid>/", methods=['GET'])
+@app.route("/images/<image_uid>/", methods=["GET"])
 def fedstellar_get_image(image_uid):
-    if session.get("user", None) == match_user_id_with_image_uid(image_uid):  # Ensure the current user is NOT operating on other users' note.
+    if session.get("user", None) == match_user_id_with_image_uid(
+        image_uid
+    ):  # Ensure the current user is NOT operating on other users' note.
         # Return the image to the browser
         image_file_name = get_image_file_name(image_uid)
         print("Sending image: " + image_file_name)
-        return send_from_directory(app.config['UPLOAD_FOLDER'], image_file_name)
+        return send_from_directory(app.config["UPLOAD_FOLDER"], image_file_name)
     else:
         return abort(401)
 
@@ -209,24 +274,32 @@ def send_from_directory(directory, filename, **options):
 
 @app.route("/delete_image/<image_uid>", methods=["GET"])
 def fedstellar_delete_image(image_uid):
-    if session.get("user", None) == match_user_id_with_image_uid(image_uid):  # Ensure the current user is NOT operating on other users' note.
+    if session.get("user", None) == match_user_id_with_image_uid(
+        image_uid
+    ):  # Ensure the current user is NOT operating on other users' note.
         # delete the corresponding record in database
         delete_image_from_db(image_uid)
         # delete the corresponding image file from image pool
-        image_to_delete_from_pool = [y for y in [x for x in os.listdir(app.config['UPLOAD_FOLDER'])] if y.split("-", 1)[0] == image_uid][0]
-        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], image_to_delete_from_pool))
+        image_to_delete_from_pool = [
+            y
+            for y in [x for x in os.listdir(app.config["UPLOAD_FOLDER"])]
+            if y.split("-", 1)[0] == image_uid
+        ][0]
+        os.remove(os.path.join(app.config["UPLOAD_FOLDER"], image_to_delete_from_pool))
     else:
         return abort(401)
-    return (redirect(url_for("fedstellar_scenario_private")))
+    return redirect(url_for("fedstellar_scenario_private"))
 
 
 @app.route("/login", methods=["POST"])
 def fedstellar_login():
     user_submitted = request.form.get("user").upper()
-    if (user_submitted in list_users()) and verify(user_submitted, request.form.get("password")):
+    if (user_submitted in list_users()) and verify(
+        user_submitted, request.form.get("password")
+    ):
         user_info = get_user_info(user_submitted)
-        session['user'] = user_submitted
-        session['role'] = user_info[2]
+        session["user"] = user_submitted
+        session["role"] = user_info[2]
         return "Login successful", 200
     else:
         # flash(u'Invalid password provided', 'error')
@@ -236,25 +309,31 @@ def fedstellar_login():
 @app.route("/logout/")
 def fedstellar_logout():
     session.pop("user", None)
-    return (redirect(url_for("fedstellar_home")))
+    return redirect(url_for("fedstellar_home"))
 
 
-@app.route("/delete_user/<user>/", methods=['GET'])
+@app.route("/delete_user/<user>/", methods=["GET"])
 def fedstellar_delete_user(user):
     if session.get("role", None) == "admin":
         if user == "ADMIN":  # ADMIN account can't be deleted.
             return abort(403)
-        if user == session['user']:  # Current user can't delete himself.
+        if user == session["user"]:  # Current user can't delete himself.
             return abort(403)
 
         # [1] Delete this user's images in image pool
         images_to_remove = [x[0] for x in list_images_for_user(user)]
         for f in images_to_remove:
-            image_to_delete_from_pool = [y for y in [x for x in os.listdir(app.config['UPLOAD_FOLDER'])] if y.split("-", 1)[0] == f][0]
-            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], image_to_delete_from_pool))
+            image_to_delete_from_pool = [
+                y
+                for y in [x for x in os.listdir(app.config["UPLOAD_FOLDER"])]
+                if y.split("-", 1)[0] == f
+            ][0]
+            os.remove(
+                os.path.join(app.config["UPLOAD_FOLDER"], image_to_delete_from_pool)
+            )
         # [2] Delete the records in database files
         delete_user_from_db(user)
-        return (redirect(url_for("fedstellar_admin")))
+        return redirect(url_for("fedstellar_admin"))
     else:
         return abort(401)
 
@@ -263,21 +342,37 @@ def fedstellar_delete_user(user):
 def fedstellar_add_user():
     if session.get("role", None) == "admin":  # only Admin should be able to add user.
         # before we add the user, we need to ensure this doesn't exit in database. We also need to ensure the id is valid.
-        if request.form.get('user').upper() in list_users():
+        if request.form.get("user").upper() in list_users():
             user_list = list_users()
-            user_table = zip(range(1, len(user_list) + 1),
-                             user_list,
-                             [x + y for x, y in zip(["/delete_user/"] * len(user_list), user_list)])
-            return render_template("admin.html", id_to_add_is_duplicated=True, users=user_table)
-        if " " in request.form.get('user') or "'" in request.form.get('user') or '"' in request.form.get('user'):
+            user_table = zip(
+                range(1, len(user_list) + 1),
+                user_list,
+                [x + y for x, y in zip(["/delete_user/"] * len(user_list), user_list)],
+            )
+            return render_template(
+                "admin.html", id_to_add_is_duplicated=True, users=user_table
+            )
+        if (
+            " " in request.form.get("user")
+            or "'" in request.form.get("user")
+            or '"' in request.form.get("user")
+        ):
             user_list = list_users()
-            user_table = zip(range(1, len(user_list) + 1),
-                             user_list,
-                             [x + y for x, y in zip(["/delete_user/"] * len(user_list), user_list)])
-            return render_template("admin.html", id_to_add_is_invalid=True, users=user_table)
+            user_table = zip(
+                range(1, len(user_list) + 1),
+                user_list,
+                [x + y for x, y in zip(["/delete_user/"] * len(user_list), user_list)],
+            )
+            return render_template(
+                "admin.html", id_to_add_is_invalid=True, users=user_table
+            )
         else:
-            add_user(request.form.get('user'), request.form.get('password'), request.form.get('role'))
-            return (redirect(url_for("fedstellar_admin")))
+            add_user(
+                request.form.get("user"),
+                request.form.get("password"),
+                request.form.get("role"),
+            )
+            return redirect(url_for("fedstellar_admin"))
     else:
         return abort(401)
 
@@ -290,7 +385,9 @@ def fedstellar_add_user():
 def fedstellar_scenario():
     if "user" in session.keys() or request.path == "/api/scenario/":
         # Get the list of scenarios
-        scenarios = get_all_scenarios_check_completed()  # Get all scenarios after checking if they are completed
+        scenarios = (
+            get_all_scenarios_check_completed()
+        )  # Get all scenarios after checking if they are completed
         scenario_running = get_running_scenario()
         # Check if status of scenario_running is "completed"
         bool_completed = False
@@ -298,7 +395,12 @@ def fedstellar_scenario():
             bool_completed = scenario_running[5] == "completed"
         if scenarios:
             if request.path == "/scenario/":
-                return render_template("scenario.html", scenarios=scenarios, scenario_running=scenario_running, scenario_completed=bool_completed)
+                return render_template(
+                    "scenario.html",
+                    scenarios=scenarios,
+                    scenario_running=scenario_running,
+                    scenario_completed=bool_completed,
+                )
             elif request.path == "/api/scenario/":
                 return jsonify(scenarios), 200
             else:
@@ -308,7 +410,7 @@ def fedstellar_scenario():
             if request.path == "/scenario/":
                 return render_template("scenario.html")
             elif request.path == "/api/scenario/":
-                return jsonify({'scenarios_status': 'not found in database'}), 200
+                return jsonify({"scenarios_status": "not found in database"}), 200
             else:
                 return abort(401)
     else:
@@ -318,6 +420,7 @@ def fedstellar_scenario():
 #                                                   #
 # ------------------- Monitoring ------------------ #
 #                                                   #
+
 
 @app.route("/api/scenario/<scenario_name>/monitoring", methods=["GET"])
 @app.route("/scenario/<scenario_name>/monitoring", methods=["GET"])
@@ -333,63 +436,128 @@ def fedstellar_scenario_monitoring(scenario_name):
                 nodes_status = []
                 nodes_offline = []
                 for i, node in enumerate(nodes_list):
-                    with open(os.path.join(app.config['config_dir'], scenario_name, f'participant_{node[1]}.json')) as f:
+                    with open(
+                        os.path.join(
+                            app.config["config_dir"],
+                            scenario_name,
+                            f"participant_{node[1]}.json",
+                        )
+                    ) as f:
                         nodes_config.append(json.load(f))
-                    if datetime.datetime.now() - datetime.datetime.strptime(node[8], "%Y-%m-%d %H:%M:%S.%f") > datetime.timedelta(seconds=25):
+                    if datetime.datetime.now() - datetime.datetime.strptime(
+                        node[8], "%Y-%m-%d %H:%M:%S.%f"
+                    ) > datetime.timedelta(seconds=25):
                         nodes_status.append(False)
-                        nodes_offline.append(node[2] + ':' + str(node[3]))
+                        nodes_offline.append(node[2] + ":" + str(node[3]))
                     else:
                         nodes_status.append(True)
                 # print("------------------------------BEFORE--------------------------------------------")
                 # print(nodes_list)
                 # print(nodes_config)
                 # print("--------------------------------------------------------------------------------")
-                nodes_table = zip([x[0] for x in nodes_list],  # UID
-                                  [x[1] for x in nodes_list],  # IDX
-                                  [x[2] for x in nodes_list],  # IP
-                                  [x[3] for x in nodes_list],  # Port
-                                  [x[4] for x in nodes_list],  # Role
-                                  [x[5] for x in nodes_list],  # Neighbors
-                                  [x[6] for x in nodes_list],  # Latitude
-                                  [x[7] for x in nodes_list],  # Longitude
-                                  [x[8] for x in nodes_list],  # Timestamp
-                                  [x[9] for x in nodes_list],  # Federation
-                                  [x[10] for x in nodes_list],  # Round
-                                  [x[11] for x in nodes_list],  # Scenario name
-                                  nodes_status  # Status
-                                  )
+                nodes_table = zip(
+                    [x[0] for x in nodes_list],  # UID
+                    [x[1] for x in nodes_list],  # IDX
+                    [x[2] for x in nodes_list],  # IP
+                    [x[3] for x in nodes_list],  # Port
+                    [x[4] for x in nodes_list],  # Role
+                    [x[5] for x in nodes_list],  # Neighbors
+                    [x[6] for x in nodes_list],  # Latitude
+                    [x[7] for x in nodes_list],  # Longitude
+                    [x[8] for x in nodes_list],  # Timestamp
+                    [x[9] for x in nodes_list],  # Federation
+                    [x[10] for x in nodes_list],  # Round
+                    [x[11] for x in nodes_list],  # Scenario name
+                    nodes_status,  # Status
+                )
 
                 # print("-----------------------------AFTER----------------------------------------------")
                 # print(nodes_list)
                 # print(nodes_config)
                 # print("--------------------------------------------------------------------------------")
-                if os.path.exists(os.path.join(app.config['config_dir'], scenario_name, 'topology.png')):
-                    if os.path.getmtime(os.path.join(app.config['config_dir'], scenario_name, 'topology.png')) < max([os.path.getmtime(os.path.join(app.config['config_dir'], scenario_name, f'participant_{node[1]}.json')) for node in nodes_list]):
+                if os.path.exists(
+                    os.path.join(
+                        app.config["config_dir"], scenario_name, "topology.png"
+                    )
+                ):
+                    if os.path.getmtime(
+                        os.path.join(
+                            app.config["config_dir"], scenario_name, "topology.png"
+                        )
+                    ) < max(
+                        [
+                            os.path.getmtime(
+                                os.path.join(
+                                    app.config["config_dir"],
+                                    scenario_name,
+                                    f"participant_{node[1]}.json",
+                                )
+                            )
+                            for node in nodes_list
+                        ]
+                    ):
                         # Update the 3D topology and image
                         update_topology(scenario[0], nodes_list, nodes_config)
                 else:
                     update_topology(scenario[0], nodes_list, nodes_config)
 
                 if request.path == "/scenario/" + scenario_name + "/monitoring":
-                    return render_template("monitoring.html", scenario_name=scenario_name, scenario=scenario, nodes=nodes_table)
+                    return render_template(
+                        "monitoring.html",
+                        scenario_name=scenario_name,
+                        scenario=scenario,
+                        nodes=nodes_table,
+                    )
                 elif request.path == "/api/scenario/" + scenario_name + "/monitoring":
-                    return jsonify({'scenario_status': scenario[5], 'nodes_table': list(nodes_table), 'scenario_name': scenario[0], 'scenario_title': scenario[3], 'scenario_description': scenario[4]}), 200
+                    return (
+                        jsonify(
+                            {
+                                "scenario_status": scenario[5],
+                                "nodes_table": list(nodes_table),
+                                "scenario_name": scenario[0],
+                                "scenario_title": scenario[3],
+                                "scenario_description": scenario[4],
+                            }
+                        ),
+                        200,
+                    )
                 else:
                     return abort(401)
             else:
                 # There is a scenario but no nodes
                 if request.path == "/scenario/" + scenario_name + "/monitoring":
-                    return render_template("monitoring.html", scenario_name=scenario_name, scenario=scenario, nodes=[])
+                    return render_template(
+                        "monitoring.html",
+                        scenario_name=scenario_name,
+                        scenario=scenario,
+                        nodes=[],
+                    )
                 elif request.path == "/api/scenario/" + scenario_name + "/monitoring":
-                    return jsonify({'scenario_status': scenario[5], 'nodes_table': [], 'scenario_name': scenario[0], 'scenario_title': scenario[3], 'scenario_description': scenario[4]}), 200
+                    return (
+                        jsonify(
+                            {
+                                "scenario_status": scenario[5],
+                                "nodes_table": [],
+                                "scenario_name": scenario[0],
+                                "scenario_title": scenario[3],
+                                "scenario_description": scenario[4],
+                            }
+                        ),
+                        200,
+                    )
                 else:
                     return abort(401)
         else:
             # There is no scenario
             if request.path == "/scenario/" + scenario_name + "/monitoring":
-                return render_template("monitoring.html", scenario_name=scenario_name, scenario=None, nodes=[])
+                return render_template(
+                    "monitoring.html",
+                    scenario_name=scenario_name,
+                    scenario=None,
+                    nodes=[],
+                )
             elif request.path == "/api/scenario/" + scenario_name + "/monitoring":
-                return jsonify({'scenario_status': 'not exists'}), 200
+                return jsonify({"scenario_status": "not exists"}), 200
             else:
                 return abort(401)
     else:
@@ -397,43 +565,82 @@ def fedstellar_scenario_monitoring(scenario_name):
 
 
 def update_topology(scenario_name, nodes_list, nodes_config):
-    print("Updating topology (3D and image)... Num. nodes: " + str(len(nodes_config)))
     import numpy as np
+
     nodes = []
     for node in nodes_list:
-        nodes.append(node[2] + ':' + str(node[3]))
+        nodes.append(node[2] + ":" + str(node[3]))
     matrix = np.zeros((len(nodes), len(nodes)))
     for node in nodes_list:
         for neighbour in node[5].split(" "):
-            if neighbour != '':
+            if neighbour != "":
                 if neighbour in nodes:
-                    matrix[nodes.index(node[2] + ':' + str(node[3])), nodes.index(neighbour)] = 1
+                    matrix[
+                        nodes.index(node[2] + ":" + str(node[3])),
+                        nodes.index(neighbour),
+                    ] = 1
     from fedstellar.utils.topologymanager import TopologyManager
-    tm = TopologyManager(n_nodes=len(nodes_list), topology=matrix, scenario_name=scenario_name)
+
+    tm = TopologyManager(
+        n_nodes=len(nodes_list), topology=matrix, scenario_name=scenario_name
+    )
     tm.update_nodes(nodes_config)
-    tm.draw_graph(path=os.path.join(app.config['config_dir'], scenario_name, f'topology.png'))  # TODO: Improve this
+    tm.draw_graph(
+        path=os.path.join(app.config["config_dir"], scenario_name, f"topology.png")
+    )  # TODO: Improve this
 
 
-@app.route("/scenario/<scenario_name>/node/update", methods=['POST'])
+@app.route("/scenario/<scenario_name>/node/update", methods=["POST"])
 def fedstellar_update_node(scenario_name):
-    if request.method == 'POST':
+    if request.method == "POST":
         # Check if the post request is a json, if not, return 400
         if request.is_json:
             config = request.get_json()
             timestamp = datetime.datetime.now()
             # Update file in the local directory
-            with open(os.path.join(app.config['config_dir'], scenario_name, f'participant_{config["device_args"]["idx"]}.json'), "w") as f:
+            with open(
+                os.path.join(
+                    app.config["config_dir"],
+                    scenario_name,
+                    f'participant_{config["device_args"]["idx"]}.json',
+                ),
+                "w",
+            ) as f:
                 json.dump(config, f, sort_keys=False, indent=2)
 
             # Update the node in database
-            update_node_record(str(config['device_args']['uid']), str(config['device_args']['idx']), str(config['network_args']['ip']), str(config['network_args']['port']), str(config['device_args']['role']), str(config['network_args']['neighbors']), str(config['geo_args']['latitude']),
-                               str(config['geo_args']['longitude']),
-                               str(timestamp), str(config['scenario_args']['federation']), str(config['federation_args']['round']), str(config['scenario_args']['name']))
+            update_node_record(
+                str(config["device_args"]["uid"]),
+                str(config["device_args"]["idx"]),
+                str(config["network_args"]["ip"]),
+                str(config["network_args"]["port"]),
+                str(config["device_args"]["role"]),
+                str(config["network_args"]["neighbors"]),
+                str(config["geo_args"]["latitude"]),
+                str(config["geo_args"]["longitude"]),
+                str(timestamp),
+                str(config["scenario_args"]["federation"]),
+                str(config["federation_args"]["round"]),
+                str(config["scenario_args"]["name"]),
+            )
 
             # Send notification to each connected users
-            socketio.emit('node_update', {'uid': config['device_args']['uid'], 'idx': config['device_args']['idx'], 'ip': config['network_args']['ip'], 'port': str(config['network_args']['port']), 'role': config['device_args']['role'], 'neighbors': config['network_args']['neighbors'],
-                                          'latitude': config['geo_args']['latitude'],
-                                          'longitude': config['geo_args']['longitude'], 'timestamp': str(timestamp), 'federation': config['scenario_args']['federation'], 'name': config['scenario_args']['name']})
+            socketio.emit(
+                "node_update",
+                {
+                    "uid": config["device_args"]["uid"],
+                    "idx": config["device_args"]["idx"],
+                    "ip": config["network_args"]["ip"],
+                    "port": str(config["network_args"]["port"]),
+                    "role": config["device_args"]["role"],
+                    "neighbors": config["network_args"]["neighbors"],
+                    "latitude": config["geo_args"]["latitude"],
+                    "longitude": config["geo_args"]["longitude"],
+                    "timestamp": str(timestamp),
+                    "federation": config["scenario_args"]["federation"],
+                    "name": config["scenario_args"]["name"],
+                },
+            )
 
             return make_response("Node updated successfully", 200)
         else:
@@ -451,12 +658,13 @@ def fedstellar_update_node(scenario_name):
 #
 #         return make_response("Logs received successfully", 200)
 
+
 @app.route("/logs", methods=["GET"])
 def fedstellar_logs():
     if "user" in session.keys():
-        logs = os.path.join(app.config['log_dir'], f'server.log')
+        logs = os.path.join(app.config["log_dir"], f"server.log")
         if os.path.exists(logs):
-            return send_file(logs, mimetype='text/plain')
+            return send_file(logs, mimetype="text/plain")
         else:
             abort(404)
     else:
@@ -466,12 +674,12 @@ def fedstellar_logs():
 @app.route("/logs/erase", methods=["GET"])
 def fedstellar_logs_erase():
     if "user" in session.keys():
-        logs = os.path.join(app.config['log_dir'], f'server.log')
+        logs = os.path.join(app.config["log_dir"], f"server.log")
         if os.path.exists(logs):
             # Overwrite the file with "Fedstellar Core Logs" string
             with open(logs, "w") as f:
                 f.write("Fedstellar Core Logs")
-            return redirect(url_for('fedstellar_logs'))
+            return redirect(url_for("fedstellar_logs"))
         else:
             abort(404)
 
@@ -479,9 +687,11 @@ def fedstellar_logs_erase():
 @app.route("/scenario/<scenario_name>/node/<id>/infolog", methods=["GET"])
 def fedstellar_monitoring_log(scenario_name, id):
     if "user" in session.keys():
-        logs = os.path.join(app.config['log_dir'], scenario_name, f'participant_{id}.log')
+        logs = os.path.join(
+            app.config["log_dir"], scenario_name, f"participant_{id}.log"
+        )
         if os.path.exists(logs):
-            return send_file(logs, mimetype='text/plain', as_attachment=True)
+            return send_file(logs, mimetype="text/plain", as_attachment=True)
         else:
             abort(404)
     else:
@@ -492,21 +702,23 @@ def fedstellar_monitoring_log(scenario_name, id):
 def fedstellar_monitoring_log_x(scenario_name, id, number):
     if "user" in session.keys():
         # Send file (is not a json file) with the log
-        logs = os.path.join(app.config['log_dir'], scenario_name, f'participant_{id}.log')
+        logs = os.path.join(
+            app.config["log_dir"], scenario_name, f"participant_{id}.log"
+        )
         if os.path.exists(logs):
             # Open file maintaining the file format (for example, new lines)
-            with open(logs, 'r') as f:
+            with open(logs, "r") as f:
                 # Read the last n lines of the file
-                lines = f.readlines()[-int(number):]
+                lines = f.readlines()[-int(number) :]
                 # Join the lines in a single string
-                lines = ''.join(lines)
+                lines = "".join(lines)
                 # Convert the ANSI escape codes to HTML
                 converter = Ansi2HTMLConverter()
                 html_text = converter.convert(lines, full=False)
                 # Return the string
-                return Response(html_text, mimetype='text/plain')
+                return Response(html_text, mimetype="text/plain")
         else:
-            return Response("No logs available", mimetype='text/plain')
+            return Response("No logs available", mimetype="text/plain")
 
     else:
         make_response("You are not authorized to access this page.", 401)
@@ -515,9 +727,11 @@ def fedstellar_monitoring_log_x(scenario_name, id, number):
 @app.route("/scenario/<scenario_name>/node/<id>/debuglog", methods=["GET"])
 def fedstellar_monitoring_log_debug(scenario_name, id):
     if "user" in session.keys():
-        logs = os.path.join(app.config['log_dir'], scenario_name, f'participant_{id}_debug.log')
+        logs = os.path.join(
+            app.config["log_dir"], scenario_name, f"participant_{id}_debug.log"
+        )
         if os.path.exists(logs):
-            return send_file(logs, mimetype='text/plain', as_attachment=True)
+            return send_file(logs, mimetype="text/plain", as_attachment=True)
         else:
             abort(404)
     else:
@@ -527,21 +741,27 @@ def fedstellar_monitoring_log_debug(scenario_name, id):
 @app.route("/scenario/<scenario_name>/node/<id>/errorlog", methods=["GET"])
 def fedstellar_monitoring_log_error(scenario_name, id):
     if "user" in session.keys():
-        logs = os.path.join(app.config['log_dir'], scenario_name, f'participant_{id}_error.log')
+        logs = os.path.join(
+            app.config["log_dir"], scenario_name, f"participant_{id}_error.log"
+        )
         if os.path.exists(logs):
-            return send_file(logs, mimetype='text/plain', as_attachment=True)
+            return send_file(logs, mimetype="text/plain", as_attachment=True)
         else:
             abort(404)
     else:
         make_response("You are not authorized to access this page.", 401)
 
 
-@app.route("/scenario/<scenario_name>/topology/image/", methods=["GET"])  # TODO: maybe change scenario name and save directly in config folder
+@app.route(
+    "/scenario/<scenario_name>/topology/image/", methods=["GET"]
+)  # TODO: maybe change scenario name and save directly in config folder
 def fedstellar_monitoring_image(scenario_name):
     if "user" in session.keys():
-        topology_image = os.path.join(app.config['config_dir'], scenario_name, f'topology.png')
+        topology_image = os.path.join(
+            app.config["config_dir"], scenario_name, f"topology.png"
+        )
         if os.path.exists(topology_image):
-            return send_file(topology_image, mimetype='image/png')
+            return send_file(topology_image, mimetype="image/png")
         else:
             abort(404)
     else:
@@ -550,6 +770,7 @@ def fedstellar_monitoring_image(scenario_name):
 
 def stop_scenario(scenario_name):
     from fedstellar.controller import Controller
+
     Controller.killdockers()
     # nodes = list_nodes()
     # for node in nodes:
@@ -561,6 +782,7 @@ def stop_scenario(scenario_name):
 
 def stop_all_scenarios():
     from fedstellar.controller import Controller
+
     Controller.killdockers()
     scenario_set_all_status_to_finished()
 
@@ -569,13 +791,13 @@ def stop_all_scenarios():
 def fedstellar_stop_scenario(scenario_name):
     # Stop the scenario
     if "user" in session.keys():
-        if session['role'] == "demo":
+        if session["role"] == "demo":
             return abort(401)
-        elif session['role'] == "user":
-            if not check_scenario_with_role(session['role'], scenario_name):
+        elif session["role"] == "user":
+            if not check_scenario_with_role(session["role"], scenario_name):
                 return abort(401)
         stop_scenario(scenario_name)
-        return redirect(url_for('fedstellar_scenario'))
+        return redirect(url_for("fedstellar_scenario"))
     else:
         return abort(401)
 
@@ -590,13 +812,13 @@ def remove_scenario(scenario_name=None):
 def fedstellar_remove_scenario(scenario_name):
     # Remove the scenario
     if "user" in session.keys():
-        if session['role'] == "demo":
+        if session["role"] == "demo":
             return abort(401)
-        elif session['role'] == "user":
-            if not check_scenario_with_role(session['role'], scenario_name):
+        elif session["role"] == "user":
+            if not check_scenario_with_role(session["role"], scenario_name):
                 return abort(401)
         remove_scenario(scenario_name)
-        return redirect(url_for('fedstellar_scenario'))
+        return redirect(url_for("fedstellar_scenario"))
     else:
         return abort(401)
 
@@ -605,39 +827,88 @@ def fedstellar_remove_scenario(scenario_name):
 # ------------------- Statistics ------------------ #
 #                                                   #
 
+
 @app.route("/scenario/statistics/", methods=["GET"])
 @app.route("/scenario/<scenario_name>/statistics/", methods=["GET"])
 def fedstellar_scenario_statistics(scenario_name=None):
     if "user" in session.keys():
+        # Adjust the filter to the scenario name
+        tensorboard_url = "/statistics/"
+        if scenario_name is not None:
+            tensorboard_url += f"?runFilter={scenario_name}"
+
+        return render_template("statistics.html", tensorboard_url=tensorboard_url)
+    else:
+        return abort(401)
+
+
+@app.route("/statistics/", methods=["GET", "POST"])
+@app.route("/statistics/<path:path>", methods=["GET", "POST"])
+def statistics_proxy(path=None):
+    if "user" in session.keys():
+        import requests
+
+        query_string = urlencode(request.args)
+
         import re
+
         # Get the URL requested by the user (only the domain) and add the port of the statistics server
         url = request.url_root
         url = url.replace("http://", "")
         url = url.replace("https://", "")
         url = url.replace("/", "")
         # Remove any number at the end of the URL
-        url = re.sub(r'\d+$', '', url)
+        url = re.sub(r"\d+$", "", url)
         url = url.replace(":", "")
-        print("Statistics URL:", url)
         if url == "federatedlearning.inf.um.es":
             if request.is_secure:
-                url = "https://federatedlearning.inf.um.es/statistics/"
+                url = "https://federatedlearning.inf.um.es/"
             else:
-                url = "http://federatedlearning.inf.um.es/statistics/"
+                url = "http://federatedlearning.inf.um.es/"
         elif url == "dev.federatedlearning.inf.um.es":
             if request.is_secure:
-                url = "https://dev.federatedlearning.inf.um.es/statistics/"
+                url = "https://dev.federatedlearning.inf.um.es/"
             else:
-                url = "http://dev.federatedlearning.inf.um.es/statistics/"
+                url = "http://dev.federatedlearning.inf.um.es/"
         else:
             url = f"http://{url}:{app.config['statistics_port']}"
 
-        # Adjust the filter to the scenario name
-        if scenario_name is not None:
-            url = url + f"?runFilter={scenario_name}"
+        tensorboard_url = f"{url}{('/' + path) if path else ''}" + (
+            "?" + query_string if query_string else ""
+        )
 
-        print("Statistics Endpoint:", url)
-        return render_template("statistics.html", endpoint_statistics=url)
+        response = requests.request(
+            method=request.method,
+            url=tensorboard_url,
+            headers={key: value for (key, value) in request.headers if key != "Host"},
+            data=request.get_data(),
+            cookies=request.cookies,
+            allow_redirects=False,
+        )
+
+        excluded_headers = [
+            "content-encoding",
+            "content-length",
+            "transfer-encoding",
+            "connection",
+        ]
+        headers = [
+            (name, value)
+            for (name, value) in response.raw.headers.items()
+            if name.lower() not in excluded_headers
+        ]
+
+        if "text/html" in response.headers["Content-Type"]:
+            # Replace the resources URLs to point to the proxy
+            content = response.text
+            content = content.replace("url(/", f"url(/statistics/")
+            response = Response(content, response.status_code, headers)
+            return response
+
+        # Construye y envía la respuesta
+        response = Response(response.content, response.status_code, headers)
+        return response
+
     else:
         return abort(401)
 
@@ -646,26 +917,32 @@ def zipdir(path, ziph):
     # ziph is zipfile handle
     for root, dirs, files in os.walk(path):
         for file in files:
-            ziph.write(os.path.join(root, file),
-                       os.path.relpath(os.path.join(root, file),
-                                       os.path.join(path, '..')))
+            ziph.write(
+                os.path.join(root, file),
+                os.path.relpath(os.path.join(root, file), os.path.join(path, "..")),
+            )
 
 
 @app.route("/scenario/<scenario_name>/download", methods=["GET"])
 def fedstellar_scenario_download(scenario_name):
     if "user" in session.keys():
-        log_folder = os.path.join(app.config['log_dir'], scenario_name)
-        config_folder = os.path.join(app.config['config_dir'], scenario_name)
+        log_folder = os.path.join(app.config["log_dir"], scenario_name)
+        config_folder = os.path.join(app.config["config_dir"], scenario_name)
         if os.path.exists(log_folder) and os.path.exists(config_folder):
             # Create a zip file with the logs and the config files, send it to the user and delete it
             memory_file = io.BytesIO()
-            with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            with zipfile.ZipFile(memory_file, "w", zipfile.ZIP_DEFLATED) as zipf:
                 zipdir(log_folder, zipf)
                 zipdir(config_folder, zipf)
 
             memory_file.seek(0)
 
-            return send_file(memory_file, mimetype='application/zip', as_attachment=True, download_name=f'{scenario_name}.zip')
+            return send_file(
+                memory_file,
+                mimetype="application/zip",
+                as_attachment=True,
+                download_name=f"{scenario_name}.zip",
+            )
     else:
         return abort(401)
 
@@ -684,7 +961,14 @@ def fedstellar_scenario_deployment():
         return abort(401)
 
 
-def attack_node_assign(nodes, federation, attack, poisoned_node_percent, poisoned_sample_percent, poisoned_noise_percent):
+def attack_node_assign(
+    nodes,
+    federation,
+    attack,
+    poisoned_node_percent,
+    poisoned_sample_percent,
+    poisoned_noise_percent,
+):
     """Identify which nodes will be attacked"""
     import random
     import math
@@ -714,16 +998,16 @@ def attack_node_assign(nodes, federation, attack, poisoned_node_percent, poisone
 
     # Assign the role of each node
     for node in nodes:
-        node_att = 'No Attack'
+        node_att = "No Attack"
         attack_sample_persent = 0
         poisoned_ratio = 0
         if (node in attacked_nodes) or (nodes[node]["malicious"]):
             node_att = attack
             attack_sample_persent = poisoned_sample_percent / 100
             poisoned_ratio = poisoned_noise_percent / 100
-        nodes[node]['attacks'] = node_att
-        nodes[node]['poisoned_sample_percent'] = attack_sample_persent
-        nodes[node]['poisoned_ratio'] = poisoned_ratio
+        nodes[node]["attacks"] = node_att
+        nodes[node]["poisoned_sample_percent"] = attack_sample_persent
+        nodes[node]["poisoned_ratio"] = poisoned_ratio
         attack_matrix.append([node, node_att, attack_sample_persent, poisoned_ratio])
     return nodes, attack_matrix
 
@@ -731,12 +1015,11 @@ def attack_node_assign(nodes, federation, attack, poisoned_node_percent, poisone
 @app.route("/scenario/deployment/run", methods=["POST"])
 def fedstellar_scenario_deployment_run():
     if "user" in session.keys():
-        if session['role'] == "demo":
+        if session["role"] == "demo":
             return abort(401)
-        elif session['role'] == "user":
+        elif session["role"] == "user":
             # If there is a scenario running, abort
             if get_running_scenario():
-                print("Scenario running, abort")
                 return abort(401)
         # Receive a JSON data with the scenario configuration
         if request.is_json:
@@ -744,7 +1027,7 @@ def fedstellar_scenario_deployment_run():
             stop_all_scenarios()
 
             data = request.get_json()
-            nodes = data['nodes']
+            nodes = data["nodes"]
             scenario_name = f'fedstellar_{data["federation"]}_{datetime.datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}'
 
             # Get attack info
@@ -754,16 +1037,20 @@ def fedstellar_scenario_deployment_run():
             poisoned_noise_percent = int(data["poisoned_noise_percent"])
             federation = data["federation"]
             # Get attack matrix
-            print("Generating attack matrix...")
-            nodes, attack_matrix = attack_node_assign(nodes, federation, attack, poisoned_node_percent, poisoned_sample_percent, poisoned_noise_percent)
-            print(nodes)
-            print(attack_matrix)
+            nodes, attack_matrix = attack_node_assign(
+                nodes,
+                federation,
+                attack,
+                poisoned_node_percent,
+                poisoned_sample_percent,
+                poisoned_noise_percent,
+            )
 
             args = {
                 "scenario_name": scenario_name,
-                "config": app.config['config_dir'],
-                "logs": app.config['log_dir'],
-                "models": app.config['model_dir'],
+                "config": app.config["config_dir"],
+                "logs": app.config["log_dir"],
+                "models": app.config["model_dir"],
                 "n_nodes": data["n_nodes"],
                 "matrix": data["matrix"],
                 "federation": data["federation"],
@@ -773,8 +1060,10 @@ def fedstellar_scenario_deployment_run():
                 "env": None,
                 "dev": True if "dev" in request.host else False,
                 "webserver": True,
-                "webport": request.host.split(":")[1] if ":" in request.host else 80,  # Get the port of the webserver, if not specified, use 80
-                "python": app.config['python_path'],
+                "webport": request.host.split(":")[1]
+                if ":" in request.host
+                else 80,  # Get the port of the webserver, if not specified, use 80
+                "python": app.config["python_path"],
                 "network_subnet": data["network_subnet"],
                 "network_gateway": data["network_gateway"],
                 "attack_matrix": attack_matrix,
@@ -784,64 +1073,112 @@ def fedstellar_scenario_deployment_run():
                 "target_aggregation": data["target_aggregation"],
             }
             # Save args in a file
-            scenario_path = os.path.join(app.config['config_dir'], scenario_name)
+            scenario_path = os.path.join(app.config["config_dir"], scenario_name)
             os.makedirs(scenario_path, exist_ok=True)
-            controller_file = os.path.join(app.config['config_dir'], scenario_name, 'controller.json')
-            with open(controller_file, 'w') as f:
+            controller_file = os.path.join(
+                app.config["config_dir"], scenario_name, "controller.json"
+            )
+            with open(controller_file, "w") as f:
                 json.dump(args, f)
             # For each node, create a new file in config directory
             import shutil
+
             # Loop dictionary of nodes
             for node in nodes:
                 node_config = nodes[node]
                 # Create a copy of participant.json.example and update the file with the update values
-                participant_file = os.path.join(app.config['config_dir'], scenario_name, f'participant_{node_config["id"]}.json')
+                participant_file = os.path.join(
+                    app.config["config_dir"],
+                    scenario_name,
+                    f'participant_{node_config["id"]}.json',
+                )
                 os.makedirs(os.path.dirname(participant_file), exist_ok=True)
                 # Create a copy of participant.json.example
-                shutil.copy(os.path.join(app.config['CONFIG_FOLDER_WEBSERVER'], f'participant.json.example'), participant_file)
+                shutil.copy(
+                    os.path.join(
+                        app.config["CONFIG_FOLDER_WEBSERVER"],
+                        f"participant.json.example",
+                    ),
+                    participant_file,
+                )
                 # Update IP, port, and role
                 with open(participant_file) as f:
                     participant_config = json.load(f)
-                participant_config['network_args']['ip'] = node_config["ip"]
-                participant_config['network_args']['ipdemo'] = node_config["ipdemo"]  # legacy code
-                participant_config['network_args']['port'] = int(node_config["port"])
-                participant_config['device_args']['idx'] = node_config["id"]
+                participant_config["network_args"]["ip"] = node_config["ip"]
+                participant_config["network_args"]["ipdemo"] = node_config[
+                    "ipdemo"
+                ]  # legacy code
+                participant_config["network_args"]["port"] = int(node_config["port"])
+                participant_config["device_args"]["idx"] = node_config["id"]
                 participant_config["device_args"]["start"] = node_config["start"]
                 participant_config["device_args"]["role"] = node_config["role"]
-                participant_config["device_args"]["malicious"] = node_config["malicious"]
+                participant_config["device_args"]["malicious"] = node_config[
+                    "malicious"
+                ]
                 # The following parameters have to be same for all nodes (for now)
                 participant_config["scenario_args"]["rounds"] = int(data["rounds"])
                 participant_config["data_args"]["dataset"] = data["dataset"]
                 participant_config["model_args"]["model"] = data["model"]
                 participant_config["training_args"]["epochs"] = int(data["epochs"])
-                participant_config["device_args"]["accelerator"] = data["accelerator"]  # same for all nodes
-                participant_config["device_args"]["logging"] = data["logginglevel"]  # same for all nodes
+                participant_config["device_args"]["accelerator"] = data[
+                    "accelerator"
+                ]  # same for all nodes
+                participant_config["device_args"]["logging"] = data[
+                    "logginglevel"
+                ]  # same for all nodes
 
                 # Get attack config for each node
-                participant_config["adversarial_args"]["attacks"] = node_config["attacks"]
-                participant_config["adversarial_args"]["poisoned_sample_percent"] = node_config["poisoned_sample_percent"]
-                participant_config["adversarial_args"]["poisoned_ratio"] = node_config["poisoned_ratio"]
+                participant_config["adversarial_args"]["attacks"] = node_config[
+                    "attacks"
+                ]
+                participant_config["adversarial_args"][
+                    "poisoned_sample_percent"
+                ] = node_config["poisoned_sample_percent"]
+                participant_config["adversarial_args"]["poisoned_ratio"] = node_config[
+                    "poisoned_ratio"
+                ]
 
-                participant_config["defense_args"]["with_reputation"] = data["with_reputation"]
-                participant_config["defense_args"]["is_dynamic_topology"] = data["is_dynamic_topology"]
-                participant_config["defense_args"]["is_dynamic_aggregation"] = data["is_dynamic_aggregation"]
-                participant_config["defense_args"]["target_aggregation"] = data["target_aggregation"]
+                participant_config["defense_args"]["with_reputation"] = data[
+                    "with_reputation"
+                ]
+                participant_config["defense_args"]["is_dynamic_topology"] = data[
+                    "is_dynamic_topology"
+                ]
+                participant_config["defense_args"]["is_dynamic_aggregation"] = data[
+                    "is_dynamic_aggregation"
+                ]
+                participant_config["defense_args"]["target_aggregation"] = data[
+                    "target_aggregation"
+                ]
 
-                with open(participant_file, 'w') as f:
+                with open(participant_file, "w") as f:
                     json.dump(participant_config, f, sort_keys=False, indent=2)
 
             # Create a argparse object
             import argparse
             import subprocess
+
             args = argparse.Namespace(**args)
-            controller = Controller(args)  # Generate an instance of controller in this new process
+            controller = Controller(
+                args
+            )  # Generate an instance of controller in this new process
             try:
                 controller.load_configurations_and_start_nodes()
             except subprocess.CalledProcessError as e:
                 print("Error docker-compose up:", e)
                 return redirect(url_for("fedstellar_scenario_deployment"))
             # Generate/Update the scenario in the database
-            scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=data["scenario_title"], description=data["scenario_description"], network_subnet=data["network_subnet"], rounds=data["rounds"], role=session['role'])
+            scenario_update_record(
+                scenario_name=controller.scenario_name,
+                start_time=controller.start_date_scenario,
+                end_time="",
+                status="running",
+                title=data["scenario_title"],
+                description=data["scenario_description"],
+                network_subnet=data["network_subnet"],
+                rounds=data["rounds"],
+                role=session["role"],
+            )
             return redirect(url_for("fedstellar_scenario"))
         else:
             return abort(401)
@@ -852,25 +1189,38 @@ def fedstellar_scenario_deployment_run():
 @app.route("/scenario/<scenario_name>/deployment/reload", methods=["GET"])
 def fedstellar_scenario_deployment_reload(scenario_name):
     if "user" in session.keys():
-        if session['role'] == "demo":
+        if session["role"] == "demo":
             return abort(401)
-        elif session['role'] == "user":
-            if not check_scenario_with_role(session['role'], scenario_name):
+        elif session["role"] == "user":
+            if not check_scenario_with_role(session["role"], scenario_name):
                 return abort(401)
         # Stop the running scenario
         stop_all_scenarios()
         # Load the scenario configuration
         scenario = get_scenario_by_name(scenario_name)
-        controller_config = os.path.join(app.config['config_dir'], scenario_name, 'controller.json')
+        controller_config = os.path.join(
+            app.config["config_dir"], scenario_name, "controller.json"
+        )
         with open(controller_config) as f:
             args = json.load(f)
         # Create a argparse object
         import argparse
+
         args = argparse.Namespace(**args)
         controller = Controller(args)
         controller.load_configurations_and_start_nodes()
         # Generate/Update the scenario in the database
-        scenario_update_record(scenario_name=controller.scenario_name, start_time=controller.start_date_scenario, end_time="", status="running", title=scenario[3], description=scenario[4], network_subnet=scenario[6], rounds=scenario[7], role=session['role'])
+        scenario_update_record(
+            scenario_name=controller.scenario_name,
+            start_time=controller.start_date_scenario,
+            end_time="",
+            status="running",
+            title=scenario[3],
+            description=scenario[4],
+            network_subnet=scenario[6],
+            rounds=scenario[7],
+            role=session["role"],
+        )
 
         return redirect(url_for("fedstellar_scenario"))
     else:
@@ -880,8 +1230,15 @@ def fedstellar_scenario_deployment_reload(scenario_name):
 if __name__ == "__main__":
     # Parse args from command line
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=5000, help="Port to run the webserver")
+    parser.add_argument(
+        "--port", type=int, default=5000, help="Port to run the webserver"
+    )
     args = parser.parse_args()
     print(f"Starting webserver on port {args.port}")
     # app.run(debug=True, host="0.0.0.0", port=int(args.port))
-    socketio.run(app, debug=True, host="0.0.0.0", port=int(args.port))
+    # Get env variables
+    controller_env = os.environ.copy()
+    if controller_env.get("FEDSTELLAR_CLOUD") is None:
+        socketio.run(app, debug=True, host="0.0.0.0", port=int(args.port))
+    else:
+        socketio.run(app, debug=False, host="0.0.0.0", port=int(args.port))

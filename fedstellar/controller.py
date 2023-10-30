@@ -128,6 +128,7 @@ class Controller:
         os.environ["FEDSTELLAR_MODELS_DIR"] = self.model_dir
         os.environ["FEDSTELLAR_PYTHON_PATH"] = self.python_path
         os.environ["FEDSTELLAR_STATISTICS_PORT"] = str(self.statistics_port)
+        os.environ["FEDSTELLAR_CLOUD"] = str(self.cloud)
 
         if self.webserver:
             self.run_webserver()

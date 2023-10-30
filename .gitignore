@@ -136,3 +136,4 @@ _build/
 *.DS_Store
 app/
 *.yaml
+data/
