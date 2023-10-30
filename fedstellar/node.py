@@ -574,13 +574,27 @@ class Node(BaseNode):
                 gpu_temp = pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
                 gpu_mem = pynvml.nvmlDeviceGetMemoryInfo(handle)
                 gpu_mem_percent = gpu_mem.used / gpu_mem.total * 100
-                # logging.info(f'Resources: GPU-{i} {gpu_percent}%, GPU temp {gpu_temp}C, GPU mem {gpu_mem_percent}%')
-                self.learner.logger.log_metrics(
-                    {f"Resources/GPU{i}_percent": gpu_percent, f"Resources/GPU{i}_temp": gpu_temp,
-                     f"Resources/GPU{i}_mem_percent": gpu_mem_percent}, step=step)
+                gpu_power = pynvml.nvmlDeviceGetPowerUsage(handle) / 1000.0
+                gpu_clocks = pynvml.nvmlDeviceGetClockInfo(handle, pynvml.NVML_CLOCK_SM)
+                gpu_memory_clocks = pynvml.nvmlDeviceGetClockInfo(handle, pynvml.NVML_CLOCK_MEM)
+                gpu_utilization = pynvml.nvmlDeviceGetUtilizationRates(handle)
+                gpu_fan_speed = pynvml.nvmlDeviceGetFanSpeed(handle)
+                gpu_info = {
+                    f"Resources/GPU{i}_percent": gpu_percent,
+                    f"Resources/GPU{i}_temp": gpu_temp,
+                    f"Resources/GPU{i}_mem_percent": gpu_mem_percent,
+                    f"Resources/GPU{i}_power": gpu_power,
+                    f"Resources/GPU{i}_clocks": gpu_clocks,
+                    f"Resources/GPU{i}_memory_clocks": gpu_memory_clocks,
+                    f"Resources/GPU{i}_utilization": gpu_utilization.gpu,
+                    f"Resources/GPU{i}_fan_speed": gpu_fan_speed
+                }
+                self.learner.logger.log_metrics(gpu_info, step=step)
         except ModuleNotFoundError:
             pass
             # logging.info(f'pynvml not found, skipping GPU usage')
+        except Exception as e:
+            logging.error(f'Error getting GPU usage: {e}')
 
     ##########################
     #    Learning Setters    #
