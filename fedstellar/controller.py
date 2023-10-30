@@ -431,6 +431,8 @@ class Controller:
         participant_gpu_template = textwrap.dedent("""
             participant{}:
                 image: fedstellar-gpu
+                environment:
+                    - NVIDIA_DISABLE_REQUIRE=true
                 restart: always
                 volumes:
                     - {}:/fedstellar
@@ -461,6 +463,8 @@ class Controller:
         participant_gpu_template_start = textwrap.dedent("""
             participant{}:
                 image: fedstellar-gpu
+                environment:
+                    - NVIDIA_DISABLE_REQUIRE=true
                 restart: always
                 volumes:
                     - {}:/fedstellar
@@ -472,7 +476,7 @@ class Controller:
                     - /bin/bash
                     - -c
                     - |
-                        /bin/sleep 60 && ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
+                        ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
                 deploy:
                     resources:
                         reservations:
@@ -522,7 +526,7 @@ class Controller:
                                                             path,
                                                             idx_start_node,
                                                             node['network_args']['ip'])
-            else:  # Start the node with a delay of 60 seconds
+            else:
                 if node['device_args']['accelerator'] == "gpu":
                     logging.info("Node {} is using GPU".format(idx))
                     services += participant_gpu_template_start.format(idx,
