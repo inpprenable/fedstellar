@@ -130,7 +130,6 @@ dmypy.json
 .pyre/
 
 # Own
-*.txt
 .idea/
 _build/
 *.DS_Store
