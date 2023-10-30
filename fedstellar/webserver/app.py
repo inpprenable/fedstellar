@@ -850,28 +850,7 @@ def statistics_proxy(path=None):
 
         query_string = urlencode(request.args)
 
-        import re
-
-        # Get the URL requested by the user (only the domain) and add the port of the statistics server
-        url = request.url_root
-        url = url.replace("http://", "")
-        url = url.replace("https://", "")
-        url = url.replace("/", "")
-        # Remove any number at the end of the URL
-        url = re.sub(r"\d+$", "", url)
-        url = url.replace(":", "")
-        if url == "federatedlearning.inf.um.es":
-            if request.is_secure:
-                url = "https://federatedlearning.inf.um.es/"
-            else:
-                url = "http://federatedlearning.inf.um.es/"
-        elif url == "dev.federatedlearning.inf.um.es":
-            if request.is_secure:
-                url = "https://dev.federatedlearning.inf.um.es/"
-            else:
-                url = "http://dev.federatedlearning.inf.um.es/"
-        else:
-            url = f"http://{url}:{app.config['statistics_port']}"
+        url = f"http://localhost:{app.config['statistics_port']}"
 
         tensorboard_url = f"{url}{('/' + path) if path else ''}" + (
             "?" + query_string if query_string else ""
