@@ -263,7 +263,7 @@ class Controller:
                 for command in commands:
                     time.sleep(1)
                     exit_code = os.system(f"powershell.exe -Command \"{command}\"")
-                    logging.info(f"Windows Command '{command}' executed with exit codehhhh: {exit_code}")
+                    logging.info(f"Windows Command '{command}' executed with exit code: {exit_code}")
 
             except Exception as e:
                 raise Exception("Error while killing docker containers: {}".format(e))
@@ -280,7 +280,7 @@ class Controller:
                 for command in commands:
                     time.sleep(1)
                     exit_code = os.system(command)
-                    logging.info(f"Linux Command '{command}' executed with exit codehhhh: {exit_code}")
+                    logging.info(f"Linux Command '{command}' executed with exit code: {exit_code}")
 
             except Exception as e:
                 raise Exception("Error while killing docker containers: {}".format(e))
