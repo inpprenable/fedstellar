@@ -185,9 +185,9 @@ class Controller:
             with open(f'{self.log_dir}/server.log', 'w', encoding='utf-8') as log_file:
                 # Remove option --reload for production
                 if self.dev:
-                    subprocess.Popen(["gunicorn", "--worker-class", "eventlet", "--workers", "1", "--bind", f"unix:/tmp/fedstellar-dev.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:socketio"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+                    subprocess.Popen(["gunicorn", "--worker-class", "eventlet", "--workers", "1", "--bind", f"unix:/tmp/fedstellar-dev.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
                 else:
-                    subprocess.Popen(["gunicorn", "--worker-class", "eventlet", "--workers", "1", "--bind", f"unix:/tmp/fedstellar.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:socketio"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+                    subprocess.Popen(["gunicorn", "--worker-class", "eventlet", "--workers", "1", "--bind", f"unix:/tmp/fedstellar.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
 
         else:
             logging.info(f"Running Fedstellar Webserver (local): http://127.0.0.1:{self.webserver_port}")
