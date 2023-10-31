@@ -36,7 +36,8 @@ jobs:
           ls -la
     - name: Build Sphinx Documentation
       run: |
-          sphinx-build -b html docs/ docs/_build/7ecafa3f19d05b4e9da98f734fd69aca7baa4965
+          cd docs
+          make html
     - name: Add files
       run: |
           echo "fedstellar.enriquetomasmb.com" > docs/_build/CNAME
