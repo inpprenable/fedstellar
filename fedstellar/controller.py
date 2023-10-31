@@ -248,31 +248,42 @@ class Controller:
         os.system(command)
 
     @staticmethod
-    def killdockers():
-        try:
-            # kill all the docker containers which contain the word "fedstellar"
-            command = '''docker kill $(docker ps -q --filter ancestor=fedstellar) > /dev/null 2>&1'''
-            time.sleep(1)
-            os.system(command)
-            command = '''docker rm $(docker ps -a -q --filter ancestor=fedstellar) > /dev/null 2>&1'''
-            time.sleep(1)
-            os.system(command)
+    def killdockers():  # for windows user
+        if sys.platform == "win32":
+            try:
+                # kill all the docker containers which contain the word "fedstellar"
+                commands = [
+                    '''docker kill $(docker ps -q --filter ancestor=fedstellar) | Out-Null''',
+                    '''docker rm $(docker ps -a -q --filter ancestor=fedstellar) | Out-Null''',
+                    '''docker kill $(docker ps -q --filter ancestor=fedstellar-gpu) | Out-Null''',
+                    '''docker rm $(docker ps -a -q --filter ancestor=fedstellar-gpu) | Out-Null''',
+                    '''docker network rm $(docker network ls | Where-Object { ($_ -split '\s+')[1] -like '*fedstellar*' } | ForEach-Object { ($_ -split '\s+')[0] }) | Out-Null'''
+                ]
 
-            # the same but for fedstellar-gpu
-            command = '''docker kill $(docker ps -q --filter ancestor=fedstellar-gpu) > /dev/null 2>&1'''
-            time.sleep(1)
-            os.system(command)
-            command = '''docker rm $(docker ps -a -q --filter ancestor=fedstellar-gpu) > /dev/null 2>&1'''
-            time.sleep(1)
-            os.system(command)
+                for command in commands:
+                    time.sleep(1)
+                    exit_code = os.system(f"powershell.exe -Command \"{command}\"")
+                    logging.info(f"Windows Command '{command}' executed with exit codehhhh: {exit_code}")
 
-            # remove all docker networks which contain the word "fedstellar"
-            command = '''docker network rm $(docker network ls | grep fedstellar | awk '{print $1}') > /dev/null 2>&1'''
-            time.sleep(1)
-            os.system(command)
+            except Exception as e:
+                raise Exception("Error while killing docker containers: {}".format(e))
+        else:
+            try:
+                commands = [
+                    '''docker kill $(docker ps -q --filter ancestor=fedstellar) > /dev/null 2>&1''',
+                    '''docker rm $(docker ps -a -q --filter ancestor=fedstellar) > /dev/null 2>&1''',
+                    '''docker kill $(docker ps -q --filter ancestor=fedstellar-gpu) > /dev/null 2>&1''',
+                    '''docker rm $(docker ps -a -q --filter ancestor=fedstellar-gpu) > /dev/null 2>&1''',
+                    '''docker network rm $(docker network ls | grep fedstellar | awk '{print $1}') > /dev/null 2>&1'''
+                ]
 
-        except Exception as e:
-            raise Exception("Error while killing docker containers: {}".format(e))
+                for command in commands:
+                    time.sleep(1)
+                    exit_code = os.system(command)
+                    logging.info(f"Linux Command '{command}' executed with exit codehhhh: {exit_code}")
+
+            except Exception as e:
+                raise Exception("Error while killing docker containers: {}".format(e))
 
     def load_configurations_and_start_nodes(self):
         if not self.scenario_name:
