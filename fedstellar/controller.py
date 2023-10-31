@@ -128,7 +128,6 @@ class Controller:
         os.environ["FEDSTELLAR_MODELS_DIR"] = self.model_dir
         os.environ["FEDSTELLAR_PYTHON_PATH"] = self.python_path
         os.environ["FEDSTELLAR_STATISTICS_PORT"] = str(self.statistics_port)
-        os.environ["FEDSTELLAR_CLOUD"] = str(self.cloud)
 
         if self.webserver:
             self.run_webserver()
@@ -179,20 +178,22 @@ class Controller:
             logging.info(f"Running Fedstellar Webserver (cloud): http://127.0.0.1:{self.webserver_port}")
             # Add USE_EVENTLET to environment variables
             os.environ["USE_EVENTLET"] = "1"
+            os.environ["FEDSTELLAR_CLOUD"] = "1"
             controller_env = os.environ.copy()
             current_dir = os.path.dirname(os.path.abspath(__file__))
             webserver_path = os.path.join(current_dir, "webserver")
             with open(f'{self.log_dir}/server.log', 'w', encoding='utf-8') as log_file:
                 # Remove option --reload for production
                 if self.dev:
-                    subprocess.Popen(["gunicorn", "--worker-class", "eventlet", "--workers", "2", "--bind", f"unix:/tmp/fedstellar-dev.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+                    subprocess.Popen(["gunicorn", "--worker-class", "eventlet", "--workers", "1", "--bind", f"unix:/tmp/fedstellar-dev.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:socketio"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
                 else:
-                    subprocess.Popen(["gunicorn", "--worker-class", "eventlet", "--workers", "6", "--bind", f"unix:/tmp/fedstellar.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:app"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
+                    subprocess.Popen(["gunicorn", "--worker-class", "eventlet", "--workers", "1", "--bind", f"unix:/tmp/fedstellar.sock", "--access-logfile", f"{self.log_dir}/server.log", "app:socketio"], cwd=webserver_path, env=controller_env, stdout=log_file, stderr=log_file, encoding='utf-8')
 
         else:
             logging.info(f"Running Fedstellar Webserver (local): http://127.0.0.1:{self.webserver_port}")
             # Add USE_EVENTLET to environment variables
             os.environ["USE_EVENTLET"] = "1"
+            os.environ["FEDSTELLAR_CLOUD"] = "0"
             controller_env = os.environ.copy()
             current_dir = os.path.dirname(os.path.abspath(__file__))
             webserver_path = os.path.join(current_dir, "webserver")

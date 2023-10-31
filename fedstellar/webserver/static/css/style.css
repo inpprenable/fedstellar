@@ -39,6 +39,10 @@ a:hover {
     margin-left: 0;
 }
 
+.alert {
+    margin: 5px 0 5px 0;
+}
+
 @media (min-width: 768px) {
     .nav > li > a {
         padding: 5px 10px;

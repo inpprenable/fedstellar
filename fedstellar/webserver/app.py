@@ -1216,8 +1216,4 @@ if __name__ == "__main__":
     print(f"Starting webserver on port {args.port}")
     # app.run(debug=True, host="0.0.0.0", port=int(args.port))
     # Get env variables
-    controller_env = os.environ.copy()
-    if controller_env.get("FEDSTELLAR_CLOUD") is None:
-        socketio.run(app, debug=True, host="0.0.0.0", port=int(args.port))
-    else:
-        socketio.run(app, debug=False, host="0.0.0.0", port=int(args.port))
+    socketio.run(app, debug=True, host="0.0.0.0", port=int(args.port))

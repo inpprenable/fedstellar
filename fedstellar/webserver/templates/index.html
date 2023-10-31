@@ -14,6 +14,10 @@
 <div class="col-md-12 container-shadow grey">
     <div class="col-md-12">
         <h3>Alerts and News</h3>
+        <p style="display: inline-block; margin-right: 10px;"><strong>Give us a star on GitHub! <i class="fa fa-star"></i></strong></p>
+        <a href="https://github.com/enriquetomasmb/fedstellar" target="_blank" style="display: inline-block; vertical-align: middle;">
+            <img alt="enriquetomasmb/fedstellar" src="https://img.shields.io/github/stars/enriquetomasmb/fedstellar?style=for-the-badge&logo=github&label=Fedstellar&color=success">
+        </a>
         {% for alert in alerts %}
             <div class="alert {{ 'alert-info' if alert['alert_type'] == 'info' else 'alert-warning' if alert['alert_type'] == 'warning' else 'alert-danger' }}">
                 <strong>[{{ alert['timestamp']|datetimeformat }}]  {{ alert['title'] }}:</strong> {{ alert['message'] }}
