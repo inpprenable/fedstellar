@@ -4,11 +4,21 @@ fedstellar.learning.pytorch.sentiment140.models package
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.learning.pytorch.sentiment140.models.cnn module
+----------------------------------------------------------
 
-   fedstellar.learning.pytorch.sentiment140.models.cnn
-   fedstellar.learning.pytorch.sentiment140.models.rnn
+.. automodule:: fedstellar.learning.pytorch.sentiment140.models.cnn
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.learning.pytorch.sentiment140.models.rnn module
+----------------------------------------------------------
+
+.. automodule:: fedstellar.learning.pytorch.sentiment140.models.rnn
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

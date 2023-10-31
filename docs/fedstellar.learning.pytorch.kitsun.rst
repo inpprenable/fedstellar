@@ -12,10 +12,13 @@ Subpackages
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.learning.pytorch.kitsun.kitsun module
+------------------------------------------------
 
-   fedstellar.learning.pytorch.kitsun.kitsun
+.. automodule:: fedstellar.learning.pytorch.kitsun.kitsun
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

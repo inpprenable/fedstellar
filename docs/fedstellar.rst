@@ -17,16 +17,61 @@ Subpackages
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.base\_node module
+----------------------------
 
-   fedstellar.base_node
-   fedstellar.controller
-   fedstellar.messages
-   fedstellar.neighbors
-   fedstellar.node
-   fedstellar.node_start
-   fedstellar.role
+.. automodule:: fedstellar.base_node
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.controller module
+----------------------------
+
+.. automodule:: fedstellar.controller
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.messages module
+--------------------------
+
+.. automodule:: fedstellar.messages
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.neighbors module
+---------------------------
+
+.. automodule:: fedstellar.neighbors
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.node module
+----------------------
+
+.. automodule:: fedstellar.node
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.node\_start module
+-----------------------------
+
+.. automodule:: fedstellar.node_start
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.role module
+----------------------
+
+.. automodule:: fedstellar.role
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

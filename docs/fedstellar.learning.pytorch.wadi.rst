@@ -12,10 +12,13 @@ Subpackages
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.learning.pytorch.wadi.wadi module
+--------------------------------------------
 
-   fedstellar.learning.pytorch.wadi.wadi
+.. automodule:: fedstellar.learning.pytorch.wadi.wadi
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

@@ -12,10 +12,13 @@ Subpackages
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.attacks.aggregation module
+-------------------------------------
 
-   fedstellar.attacks.aggregation
+.. automodule:: fedstellar.attacks.aggregation
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

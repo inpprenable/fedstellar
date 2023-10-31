@@ -12,10 +12,13 @@ Subpackages
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.learning.scikit.scikitlearner module
+-----------------------------------------------
 
-   fedstellar.learning.scikit.scikitlearner
+.. automodule:: fedstellar.learning.scikit.scikitlearner
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

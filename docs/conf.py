@@ -5,6 +5,9 @@
 
 import os
 import sys
+import subprocess
+
+subprocess.call(['sphinx-apidoc', '-f', '-o', '.', '../fedstellar'])  # The same that 'make apidoc'
 
 sys.path.insert(0, os.path.abspath('..'))
 
@@ -14,22 +17,38 @@ sys.path.insert(0, os.path.abspath('..'))
 project = 'Fedstellar'
 copyright = '2023, Enrique Tomás Martínez Beltrán'
 author = 'Enrique Tomás Martínez Beltrán'
-release = '2.0'
+# The short X.Y version
+version = '2.0'
+# The full version, including alpha/beta/rc tags
+release = '2.0.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
+# extensions = [
+#     'sphinx.ext.autodoc',
+#     'sphinx.ext.napoleon',
+#     # 'sphinx.ext.viewcode',
+#     'autoapi.extension'
+# ]
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
-    # 'sphinx.ext.viewcode',
-    'autoapi.extension'
+    'sphinx.ext.napoleon',  # Support for NumPy and Google style docstrings
+    'autoapi.extension',  # Automatically generate API documentation
+    'sphinx.ext.intersphinx',  # Link to other project's documentation
+    'sphinx.ext.todo',  # Support for todo items
 ]
+
 
 autodoc_typehints = 'description'
 
 templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'app', 'test', 'setup.py']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'app', 'test', 'setup.py', 'docs']
+
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = 'sphinx'
+
+# If true, `todo` and `todoList` produce output, else they produce nothing.
+todo_include_todos = True
 
 
 # -- Options for HTML output -------------------------------------------------

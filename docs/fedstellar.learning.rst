@@ -14,11 +14,21 @@ Subpackages
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.learning.exceptions module
+-------------------------------------
 
-   fedstellar.learning.exceptions
-   fedstellar.learning.learner
+.. automodule:: fedstellar.learning.exceptions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.learning.learner module
+----------------------------------
+
+.. automodule:: fedstellar.learning.learner
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

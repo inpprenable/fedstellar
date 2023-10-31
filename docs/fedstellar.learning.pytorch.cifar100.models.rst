@@ -4,10 +4,13 @@ fedstellar.learning.pytorch.cifar100.models package
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.learning.pytorch.cifar100.models.cnn module
+------------------------------------------------------
 
-   fedstellar.learning.pytorch.cifar100.models.cnn
+.. automodule:: fedstellar.learning.pytorch.cifar100.models.cnn
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

@@ -4,11 +4,21 @@ fedstellar.learning.pytorch.fashionmnist.models package
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.learning.pytorch.fashionmnist.models.cnn module
+----------------------------------------------------------
 
-   fedstellar.learning.pytorch.fashionmnist.models.cnn
-   fedstellar.learning.pytorch.fashionmnist.models.mlp
+.. automodule:: fedstellar.learning.pytorch.fashionmnist.models.cnn
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.learning.pytorch.fashionmnist.models.mlp module
+----------------------------------------------------------
+
+.. automodule:: fedstellar.learning.pytorch.fashionmnist.models.mlp
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

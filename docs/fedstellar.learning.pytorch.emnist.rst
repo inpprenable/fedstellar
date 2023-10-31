@@ -12,10 +12,13 @@ Subpackages
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.learning.pytorch.emnist.emnist module
+------------------------------------------------
 
-   fedstellar.learning.pytorch.emnist.emnist
+.. automodule:: fedstellar.learning.pytorch.emnist.emnist
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

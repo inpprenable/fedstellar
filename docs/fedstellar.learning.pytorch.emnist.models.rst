@@ -4,11 +4,21 @@ fedstellar.learning.pytorch.emnist.models package
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.learning.pytorch.emnist.models.cnn module
+----------------------------------------------------
 
-   fedstellar.learning.pytorch.emnist.models.cnn
-   fedstellar.learning.pytorch.emnist.models.mlp
+.. automodule:: fedstellar.learning.pytorch.emnist.models.cnn
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.learning.pytorch.emnist.models.mlp module
+----------------------------------------------------
+
+.. automodule:: fedstellar.learning.pytorch.emnist.models.mlp
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

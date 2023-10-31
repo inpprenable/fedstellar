@@ -4,12 +4,29 @@ fedstellar.webserver package
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.webserver.app module
+-------------------------------
 
-   fedstellar.webserver.app
-   fedstellar.webserver.config
-   fedstellar.webserver.database
+.. automodule:: fedstellar.webserver.app
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.webserver.config module
+----------------------------------
+
+.. automodule:: fedstellar.webserver.config
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.webserver.database module
+------------------------------------
+
+.. automodule:: fedstellar.webserver.database
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

@@ -12,10 +12,13 @@ Subpackages
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.learning.pytorch.syscall.syscall module
+--------------------------------------------------
 
-   fedstellar.learning.pytorch.syscall.syscall
+.. automodule:: fedstellar.learning.pytorch.syscall.syscall
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

@@ -4,10 +4,13 @@ fedstellar.learning.scikit.mnist package
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.learning.scikit.mnist.mnist module
+---------------------------------------------
 
-   fedstellar.learning.scikit.mnist.mnist
+.. automodule:: fedstellar.learning.scikit.mnist.mnist
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

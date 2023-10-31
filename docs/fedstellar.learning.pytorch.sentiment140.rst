@@ -12,10 +12,13 @@ Subpackages
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.learning.pytorch.sentiment140.sentiment140 module
+------------------------------------------------------------
 
-   fedstellar.learning.pytorch.sentiment140.sentiment140
+.. automodule:: fedstellar.learning.pytorch.sentiment140.sentiment140
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

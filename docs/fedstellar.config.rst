@@ -4,11 +4,21 @@ fedstellar.config package
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.config.config module
+-------------------------------
 
-   fedstellar.config.config
-   fedstellar.config.mender
+.. automodule:: fedstellar.config.config
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.config.mender module
+-------------------------------
+
+.. automodule:: fedstellar.config.mender
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

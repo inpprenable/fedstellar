@@ -4,12 +4,29 @@ fedstellar.attacks.poisoning package
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.attacks.poisoning.datapoison module
+----------------------------------------------
 
-   fedstellar.attacks.poisoning.datapoison
-   fedstellar.attacks.poisoning.labelflipping
-   fedstellar.attacks.poisoning.modelpoison
+.. automodule:: fedstellar.attacks.poisoning.datapoison
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.attacks.poisoning.labelflipping module
+-------------------------------------------------
+
+.. automodule:: fedstellar.attacks.poisoning.labelflipping
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.attacks.poisoning.modelpoison module
+-----------------------------------------------
+
+.. automodule:: fedstellar.attacks.poisoning.modelpoison
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

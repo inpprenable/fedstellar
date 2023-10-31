@@ -4,11 +4,21 @@ fedstellar.proto package
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.proto.node\_pb2 module
+---------------------------------
 
-   fedstellar.proto.node_pb2
-   fedstellar.proto.node_pb2_grpc
+.. automodule:: fedstellar.proto.node_pb2
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.proto.node\_pb2\_grpc module
+---------------------------------------
+
+.. automodule:: fedstellar.proto.node_pb2_grpc
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

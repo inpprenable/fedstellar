@@ -4,10 +4,13 @@ fedstellar.learning.pytorch.wadi.models package
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.learning.pytorch.wadi.models.mlp module
+--------------------------------------------------
 
-   fedstellar.learning.pytorch.wadi.models.mlp
+.. automodule:: fedstellar.learning.pytorch.wadi.models.mlp
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

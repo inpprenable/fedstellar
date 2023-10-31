@@ -4,13 +4,37 @@ fedstellar.learning.pytorch.cifar10.models package
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.learning.pytorch.cifar10.models.cnn module
+-----------------------------------------------------
 
-   fedstellar.learning.pytorch.cifar10.models.cnn
-   fedstellar.learning.pytorch.cifar10.models.fastermobilenet
-   fedstellar.learning.pytorch.cifar10.models.resnet
-   fedstellar.learning.pytorch.cifar10.models.simplemobilenet
+.. automodule:: fedstellar.learning.pytorch.cifar10.models.cnn
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.learning.pytorch.cifar10.models.fastermobilenet module
+-----------------------------------------------------------------
+
+.. automodule:: fedstellar.learning.pytorch.cifar10.models.fastermobilenet
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.learning.pytorch.cifar10.models.resnet module
+--------------------------------------------------------
+
+.. automodule:: fedstellar.learning.pytorch.cifar10.models.resnet
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.learning.pytorch.cifar10.models.simplemobilenet module
+-----------------------------------------------------------------
+
+.. automodule:: fedstellar.learning.pytorch.cifar10.models.simplemobilenet
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

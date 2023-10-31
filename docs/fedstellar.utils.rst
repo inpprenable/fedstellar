@@ -4,11 +4,21 @@ fedstellar.utils package
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.utils.env module
+---------------------------
 
-   fedstellar.utils.env
-   fedstellar.utils.topologymanager
+.. automodule:: fedstellar.utils.env
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.utils.topologymanager module
+---------------------------------------
+
+.. automodule:: fedstellar.utils.topologymanager
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

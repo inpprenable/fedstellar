@@ -4,10 +4,13 @@ fedstellar.learning.pytorch.kitsun.models package
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.learning.pytorch.kitsun.models.mlp module
+----------------------------------------------------
 
-   fedstellar.learning.pytorch.kitsun.models.mlp
+.. automodule:: fedstellar.learning.pytorch.kitsun.models.mlp
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

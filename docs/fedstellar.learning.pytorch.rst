@@ -20,15 +20,53 @@ Subpackages
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.learning.pytorch.changeablesubset module
+---------------------------------------------------
 
-   fedstellar.learning.pytorch.changeablesubset
-   fedstellar.learning.pytorch.datamodule
-   fedstellar.learning.pytorch.lightninglearner
-   fedstellar.learning.pytorch.remotelogger
-   fedstellar.learning.pytorch.statisticslogger
-   fedstellar.learning.pytorch.statisticsloggerv2
+.. automodule:: fedstellar.learning.pytorch.changeablesubset
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.learning.pytorch.datamodule module
+---------------------------------------------
+
+.. automodule:: fedstellar.learning.pytorch.datamodule
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.learning.pytorch.lightninglearner module
+---------------------------------------------------
+
+.. automodule:: fedstellar.learning.pytorch.lightninglearner
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.learning.pytorch.remotelogger module
+-----------------------------------------------
+
+.. automodule:: fedstellar.learning.pytorch.remotelogger
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.learning.pytorch.statisticslogger module
+---------------------------------------------------
+
+.. automodule:: fedstellar.learning.pytorch.statisticslogger
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.learning.pytorch.statisticsloggerv2 module
+-----------------------------------------------------
+
+.. automodule:: fedstellar.learning.pytorch.statisticsloggerv2
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

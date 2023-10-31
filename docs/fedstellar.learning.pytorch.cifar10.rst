@@ -12,10 +12,13 @@ Subpackages
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+fedstellar.learning.pytorch.cifar10.cifar10 module
+--------------------------------------------------
 
-   fedstellar.learning.pytorch.cifar10.cifar10
+.. automodule:: fedstellar.learning.pytorch.cifar10.cifar10
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------
