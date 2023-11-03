@@ -767,6 +767,7 @@ def fedstellar_monitoring_image(scenario_name):
 
 def stop_scenario(scenario_name):
     from fedstellar.controller import Controller
+
     Controller.killdockers_participants()
     scenario_set_status_to_finished(scenario_name)
 
@@ -795,6 +796,7 @@ def fedstellar_stop_scenario(scenario_name):
 
 def remove_scenario(scenario_name=None):
     from fedstellar.controller import Controller
+
     remove_nodes_by_scenario_name(scenario_name)
     remove_scenario_by_name(scenario_name)
     Controller.remove_files_by_scenario(scenario_name)
@@ -986,7 +988,7 @@ def attack_node_assign(
 @app.route("/scenario/deployment/run", methods=["POST"])
 def fedstellar_scenario_deployment_run():
     from fedstellar.controller import Controller
-    
+
     if "user" in session.keys():
         if session["role"] == "demo":
             return abort(401)
@@ -1160,6 +1162,7 @@ def fedstellar_scenario_deployment_run():
 @app.route("/scenario/<scenario_name>/deployment/reload", methods=["GET"])
 def fedstellar_scenario_deployment_reload(scenario_name):
     from fedstellar.controller import Controller
+
     if "user" in session.keys():
         if session["role"] == "demo":
             return abort(401)
