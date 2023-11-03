@@ -185,6 +185,7 @@ class Controller:
                 container_name: fedstellar-frontend
                 image: fedstellar-frontend
                 build: .
+                restart: unless-stopped
                 volumes:
                     - {path}:/fedstellar
                     - /var/run/docker.sock:/var/run/docker.sock
