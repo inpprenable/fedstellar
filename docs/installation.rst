@@ -93,14 +93,17 @@ by listing the version of the Fedstellar with the following command line::
     python app/main.py --version
 
 
-Building the fedstellar participant - Docker image (CPU version)
+Building the fedstellar participant
 ====================================
+
+Docker image (CPU version)
+-------------------------
 You can build the docker image using the following command line in the root directory::
 
     docker build -t fedstellar -f Dockerfile-cpu .
 
-Building the fedstellar participant - Docker image (GPU version)
-====================================
+Docker image (GPU version)
+-------------------------
 You can build the docker image using the following command line in the root directory::
 
     docker build -t fedstellar-gpu -f Dockerfile-gpu .
