@@ -576,7 +576,6 @@ class Controller:
     def remove_files_by_scenario(cls, scenario_name):
         import shutil
         shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_CONFIG_DIR"], scenario_name))
-        shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_MODELS_DIR"], scenario_name))
         try:
             shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_LOGS_DIR"], scenario_name))
         except PermissionError:
@@ -584,6 +583,20 @@ class Controller:
             logging.warning("Not enough permissions to remove the files, moving them to tmp folder")
             os.makedirs(os.path.join(os.environ["FEDSTELLAR_ROOT"], "app", "tmp", scenario_name), exist_ok=True)
             shutil.move(os.path.join(os.environ["FEDSTELLAR_LOGS_DIR"], scenario_name), os.path.join(os.environ["FEDSTELLAR_ROOT"], "app", "tmp", scenario_name))
+        except FileNotFoundError:
+            logging.warning("Files not found, nothing to remove")
+        except Exception as e:
+            logging.error("Unknown error while removing files")
+            logging.error(e)
+            raise e
+        
+        try:
+            shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_MODELS_DIR"], scenario_name))
+        except PermissionError:
+            # Avoid error if the user does not have enough permissions to remove the .pk files
+            logging.warning("Not enough permissions to remove the files, moving them to tmp folder")
+            os.makedirs(os.path.join(os.environ["FEDSTELLAR_ROOT"], "app", "tmp", scenario_name), exist_ok=True)
+            shutil.move(os.path.join(os.environ["FEDSTELLAR_MODELS_DIR"], scenario_name), os.path.join(os.environ["FEDSTELLAR_ROOT"], "app", "tmp", scenario_name))
         except FileNotFoundError:
             logging.warning("Files not found, nothing to remove")
         except Exception as e:
