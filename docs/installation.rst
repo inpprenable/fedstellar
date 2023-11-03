@@ -149,6 +149,15 @@ You can login with the following credentials::
 If not working the default credentials, send an email to `Enrique Tomás Martínez Beltrán <https://www.enriquetomasmb.com/>`_ to get the credentials.
 
 
+Stop Fedstellar
+==================
+To stop Fedstellar, you can use the following command line::
+
+    python app/main.py --stop
+
+Be careful, this command will stop all the containers related to Fedstellar: frontend, controller, and participants.
+
+
 Possible issues during the installation or execution
 ====================================================
 
