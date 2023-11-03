@@ -11,10 +11,10 @@ argparser = argparse.ArgumentParser(description='Controller of Fedstellar platfo
 argparser.add_argument('-dd', '--dev', dest='dev', action='store_true', default=False, help='Run platform in dev mode')
 argparser.add_argument('-t', '--topology', dest='topology', default="fully",
                           help='Topology: fully, ring, random, or star (default: fully)')
-argparser.add_argument('-wp', '--webport', dest='webport', default=5000,
-                       help='Frontend port (default: 5000)')
-argparser.add_argument('-sp', '--statsport', dest='statsport', default=5100,
-                       help='Statistics port (default: 5100)')
+argparser.add_argument('-wp', '--webport', dest='webport', default=6060,
+                       help='Frontend port (default: 6060)')
+argparser.add_argument('-sp', '--statsport', dest='statsport', default=6065,
+                       help='Statistics port (default: 6065)')
 argparser.add_argument('-s', '--simulation', action='store_false', dest='simulation', help='Run simulation')
 argparser.add_argument('-c', '--config', dest='config', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config'),
                        help='Config directory path')
