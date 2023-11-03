@@ -580,10 +580,8 @@ class Controller:
                         ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
                 networks:
                     fedstellar-net-scenario:
-                        name: fedstellar-net-scenario
                         ipv4_address: {}
                     fedstellar-net-base:
-                        name: fedstellar-net-base
         """
         )
         participant_template = textwrap.indent(participant_template, " " * 4)
@@ -615,10 +613,8 @@ class Controller:
                                   capabilities: [gpu]
                 networks:
                     fedstellar-net-scenario:
-                        name: fedstellar-net-scenario
                         ipv4_address: {}
                     fedstellar-net-base:
-                        name: fedstellar-net-base
         """
         )
         participant_gpu_template = textwrap.indent(participant_gpu_template, " " * 4)
