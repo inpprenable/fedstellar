@@ -42,17 +42,14 @@ logging.basicConfig(
     level=logging.DEBUG,
     handlers=[
         console_handler,
-    ]
+    ],
 )
 
 
 # Detect ctrl+c and run killports
 def signal_handler(sig, frame):
     logging.info("Closing Fedstellar (exiting from components)... Please wait")
-    Controller.killdockers_participants()
-    Controller.killdocker_frontend()
-    Controller.killdocker_statistics()
-    Controller.killdocker_network()
+    Controller.stop()
     sys.exit(0)
 
 
@@ -69,9 +66,8 @@ class Controller:
             args.scenario_name if hasattr(args, "scenario_name") else None
         )
         self.start_date_scenario = None
-        self.dev = args.dev if hasattr(args, "dev") else None
         self.federation = args.federation if hasattr(args, "federation") else None
-        self.topology = args.topology
+        self.topology = args.topology if hasattr(args, "topology") else None
         self.frontend_port = args.webport if hasattr(args, "webport") else 5000
         self.statistics_port = args.statsport if hasattr(args, "statsport") else 5100
         self.simulation = args.simulation
@@ -264,7 +260,7 @@ class Controller:
             logging.error(e)
             raise e
 
-    def killdocker_frontend():
+    def stop_frontend():
         if sys.platform == "win32":
             try:
                 # kill all the docker containers which contain the word "fedstellar"
@@ -295,7 +291,7 @@ class Controller:
             except Exception as e:
                 raise Exception("Error while killing docker containers: {}".format(e))
 
-    def killdocker_statistics():
+    def stop_statistics():
         if sys.platform == "win32":
             try:
                 # kill all the docker containers which contain the word "fedstellar"
@@ -326,7 +322,7 @@ class Controller:
             except Exception as e:
                 raise Exception("Error while killing docker containers: {}".format(e))
 
-    def killdocker_network():
+    def stop_network():
         if sys.platform == "win32":
             try:
                 # kill all the docker containers which contain the word "fedstellar"
@@ -356,7 +352,7 @@ class Controller:
                 raise Exception("Error while killing docker containers: {}".format(e))
 
     @staticmethod
-    def killdockers_participants():
+    def stop_participants():
         if sys.platform == "win32":
             try:
                 # kill all the docker containers which contain the word "fedstellar"
@@ -392,6 +388,15 @@ class Controller:
 
             except Exception as e:
                 raise Exception("Error while killing docker containers: {}".format(e))
+
+    @staticmethod
+    def stop():
+        logging.info("Closing Fedstellar (exiting from components)... Please wait")
+        Controller.stop_participants()
+        Controller.stop_frontend()
+        Controller.stop_statistics()
+        Controller.stop_network()
+        sys.exit(0)
 
     def load_configurations_and_start_nodes(self):
         if not self.scenario_name:

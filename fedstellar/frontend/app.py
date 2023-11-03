@@ -768,14 +768,14 @@ def fedstellar_monitoring_image(scenario_name):
 def stop_scenario(scenario_name):
     from fedstellar.controller import Controller
 
-    Controller.killdockers_participants()
+    Controller.stop_participants()
     scenario_set_status_to_finished(scenario_name)
 
 
 def stop_all_scenarios():
     from fedstellar.controller import Controller
 
-    Controller.killdockers_participants()
+    Controller.stop_participants()
     scenario_set_all_status_to_finished()
 
 
@@ -1033,7 +1033,6 @@ def fedstellar_scenario_deployment_run():
                 "simulation": data["simulation"],
                 "env": None,
                 "root_path": app.config["root_host_path"],
-                "dev": True if "dev" in request.host else False,
                 "webport": request.host.split(":")[1]
                 if ":" in request.host
                 else 80,  # Get the port of the frontend, if not specified, use 80

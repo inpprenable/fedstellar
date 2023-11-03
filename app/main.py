@@ -13,26 +13,19 @@ argparser = argparse.ArgumentParser(
 )
 
 argparser.add_argument(
-    "-dd",
-    "--dev",
-    dest="dev",
-    action="store_true",
-    default=False,
-    help="Run platform in dev mode",
-)
-argparser.add_argument(
-    "-t",
-    "--topology",
-    dest="topology",
-    default="fully",
-    help="Topology: fully, ring, random, or star (default: fully)",
-)
-argparser.add_argument(
     "-wp",
     "--webport",
     dest="webport",
     default=6060,
     help="Frontend port (default: 6060)",
+)
+argparser.add_argument(
+    "-st",
+    "--stop",
+    dest="stop",
+    action="store_true",
+    default=False,
+    help="Stop Fedstellar platform",
 )
 argparser.add_argument(
     "-sp",
@@ -97,4 +90,8 @@ args = argparser.parse_args()
 Code for deploying the controller 
 """
 if __name__ == "__main__":
+    
+    if args.stop:
+        Controller.stop()
+    
     Controller(args).start()
