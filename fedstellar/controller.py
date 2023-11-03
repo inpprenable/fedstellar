@@ -580,9 +580,10 @@ class Controller:
                         ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
                 networks:
                     fedstellar-net-scenario:
+                        name: fedstellar-net-scenario
                         ipv4_address: {}
                     fedstellar-net-base:
-                        ipv4_address: {}
+                        name: fedstellar-net-base
         """
         )
         participant_template = textwrap.indent(participant_template, " " * 4)
@@ -614,10 +615,10 @@ class Controller:
                                   capabilities: [gpu]
                 networks:
                     fedstellar-net-scenario:
+                        name: fedstellar-net-scenario
                         ipv4_address: {}
                     fedstellar-net-base:
                         name: fedstellar-net-base
-                        ipv4_address: {}
         """
         )
         participant_gpu_template = textwrap.indent(participant_gpu_template, " " * 4)
@@ -626,6 +627,7 @@ class Controller:
             """
             networks:
                 fedstellar-net-scenario:
+                    name: fedstellar-net-scenario
                     driver: bridge
                     ipam:
                         config:
@@ -656,7 +658,6 @@ class Controller:
                     self.network_gateway,
                     path,
                     node["network_args"]["ip"],
-                    "192.168.100.{}".format(node["network_args"]["ip"].split(".")[-1]),
                 )
             else:
                 logging.info("Node {} is using CPU".format(idx))
@@ -666,7 +667,6 @@ class Controller:
                     self.network_gateway,
                     path,
                     node["network_args"]["ip"],
-                    "192.168.100.{}".format(node["network_args"]["ip"].split(".")[-1]),
                 )
         docker_compose_file = docker_compose_template.format(services)
         docker_compose_file += network_template.format(
