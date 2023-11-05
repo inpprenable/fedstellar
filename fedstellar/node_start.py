@@ -163,10 +163,10 @@ def main():
         time.sleep(2)
 
     print("Node started, grace time for network start-up (10s)")
-    time.sleep(10)
+    time.sleep(5)
 
     if config.participant["device_args"]["start"]:
-        time.sleep(5)
+        time.sleep(10)
         node.set_start_learning(rounds=rounds, epochs=epochs)  # rounds=10, epochs=5
 
 

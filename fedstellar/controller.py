@@ -48,7 +48,6 @@ logging.basicConfig(
 
 # Detect ctrl+c and run killports
 def signal_handler(sig, frame):
-    logging.info("Closing Fedstellar (exiting from components)... Please wait")
     Controller.stop()
     sys.exit(0)
 
@@ -566,7 +565,7 @@ class Controller:
             """
             participant{}:
                 image: fedstellar
-                restart: always
+                restart: no
                 volumes:
                     - {}:/fedstellar
                 extra_hosts:
@@ -592,7 +591,7 @@ class Controller:
                 image: fedstellar-gpu
                 environment:
                     - NVIDIA_DISABLE_REQUIRE=true
-                restart: always
+                restart: no
                 volumes:
                     - {}:/fedstellar
                 extra_hosts:
