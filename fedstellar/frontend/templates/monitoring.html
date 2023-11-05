@@ -28,7 +28,7 @@
 <h5>Scenario status: <span id="scenario_status" class="label label-danger">Finished</span></h5>
 {% endif %}
 
-<a href="{{ url_for('fedstellar_scenario_statistics', scenario_name=name) }}" class="btn btn-dark">Real-time metrics</a>
+<a href="{{ url_for('fedstellar_scenario_statistics', scenario_name=scenario[0]) }}" class="btn btn-dark">Real-time metrics</a>
 <a href="{{ url_for('fedstellar_scenario_private', scenario_name=scenario[0]) }}" class="btn btn-dark">Private page</a>
 <hr>
 

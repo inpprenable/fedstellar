@@ -765,6 +765,7 @@
                     malicious: false,
                     start: (i === 0),
                     neighbors: [],
+                    links: []
                 })),
                 links: []
             };
@@ -1293,7 +1294,6 @@
                 changeRole.classList.add("dropdown-item");
                 changeRole.addEventListener("click", function () {
                     console.log("Change role");
-                    // If the node is selected, change its color and role
                     if (node.role === 'trainer') {
                         node.role = 'aggregator';
                         aggregators.add(node);
@@ -1316,16 +1316,17 @@
                 changeMalicious.classList.add("dropdown-item");
                 changeMalicious.addEventListener("click", function () {
                     console.log("Change malicious");
-                    // If the node is selected, change its malicious
                     node.malicious = !node.malicious;
                     updateGraph();
                 });
 
                 // Add the options to the dropdown
                 dropdown.appendChild(title);
-                dropdown.appendChild(addNode);
-                dropdown.appendChild(removeNode);
-                dropdown.appendChild(changeRole);
+                if (document.getElementById("federationArchitecture").value !== "CFL") {
+                    dropdown.appendChild(addNode);
+                    dropdown.appendChild(removeNode);
+                    dropdown.appendChild(changeRole);
+                }
                 dropdown.appendChild(changeMalicious);
 
             })
@@ -1342,17 +1343,26 @@
                     document.getElementById("custom-topology-btn").checked = true;
                     document.getElementById("predefined-topology").style.display = "none";
                     const [a, b] = selectedNodes;
-                    const link = {source: a, target: b};
-                    a.neighbors.push(b.id);
-                    b.neighbors.push(a.id);
-                    gData.links.push(link);
+                    if (document.getElementById("federationArchitecture").value !== "CFL") {
+                        // Add link between the two nodes
+                        const link = {source: a, target: b};
+                        a.neighbors.push(b.id);
+                        b.neighbors.push(a.id);
+                        gData.links.push(link);
+                    }
                     selectedNodes.clear();
                 }
                 updateGraph();
             })
             .onLinkClick(link => {
                 // Remove link
+                console.log("Remove link");
+                // Only remove the link if the federation architecture is not CFL
+                if (document.getElementById("federationArchitecture").value === "CFL") {
+                    return;
+                }
                 const index = gData.links.indexOf(link);
+                console.log(index);
                 if (index > -1) {
                     gData.links.splice(index, 1);
                 }

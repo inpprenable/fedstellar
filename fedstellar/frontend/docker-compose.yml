@@ -5,6 +5,7 @@ services:
         container_name: fedstellar-frontend
         image: fedstellar-frontend
         build: .
+        restart: unless-stopped
         volumes:
             - /Users/enrique/Documents/PhD/fedstellar:/fedstellar
             - /var/run/docker.sock:/var/run/docker.sock
@@ -22,8 +23,8 @@ services:
         ipc: host
         privileged: true
         ports:
-            - 5000:80
-            - 5100:8080
+            - 6060:80
+            - 6065:8080
         networks:
             fedstellar-net-base:
                 ipv4_address: 192.168.100.100
