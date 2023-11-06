@@ -134,7 +134,7 @@ def fedstellar_home():
     # Get alerts and news from API
     import requests
 
-    url = "http://federatedlearning.inf.um.es/alerts/alerts"
+    url = "https://federatedlearning.inf.um.es/alerts/alerts"
     try:
         response = requests.get(url)
         alerts = response.json()

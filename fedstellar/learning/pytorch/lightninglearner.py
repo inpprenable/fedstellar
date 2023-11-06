@@ -111,7 +111,7 @@ class LightningLearner(NodeLearner):
         try:
             if self.epochs > 0:
                 self.create_trainer()
-                torch.autograd.set_detect_anomaly(True)
+                # torch.autograd.set_detect_anomaly(True)
                 self.__trainer.fit(self.model, self.data)
                 self.__trainer = None
         except Exception as e:
