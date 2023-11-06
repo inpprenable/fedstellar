@@ -265,6 +265,7 @@ class Controller:
             logging.error(e)
             raise e
 
+    @staticmethod
     def stop_frontend():
         if sys.platform == "win32":
             try:
@@ -296,6 +297,7 @@ class Controller:
             except Exception as e:
                 raise Exception("Error while killing docker containers: {}".format(e))
 
+    @staticmethod
     def stop_statistics():
         if sys.platform == "win32":
             try:
@@ -327,6 +329,7 @@ class Controller:
             except Exception as e:
                 raise Exception("Error while killing docker containers: {}".format(e))
 
+    @staticmethod
     def stop_network():
         if sys.platform == "win32":
             try:
