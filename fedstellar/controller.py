@@ -189,9 +189,8 @@ class Controller:
                 restart: unless-stopped
                 volumes:
                     - {path}:/fedstellar
-                    - {docker_socket}:/var/run/docker.sock
+                    - /var/run/docker.sock:/var/run/docker.sock
                     - ./config/fedstellar:/etc/nginx/sites-available/default
-                    - ./start_services.sh:/start_services.sh
                 environment:
                     - SERVER_LOG=/fedstellar/app/logs/server.log
                     - FEDSTELLAR_LOGS_DIR=/fedstellar/app/logs/
@@ -234,7 +233,6 @@ class Controller:
             ip="192.168.100.100",
             frontend_port=self.frontend_port,
             statistics_port=self.statistics_port,
-            docker_socket="//./pipe/docker_engine" if sys.platform == "win32" else "/var/run/docker.sock",
         )
         docker_compose_file = docker_compose_template.format(services)
         docker_compose_file += network_template.format(
@@ -256,6 +254,7 @@ class Controller:
                     "-f",
                     f"{os.path.join(os.environ['FEDSTELLAR_ROOT'], 'fedstellar', 'frontend', 'docker-compose.yml')}",
                     "up",
+                    "--build",
                     "-d",
                 ]
             )

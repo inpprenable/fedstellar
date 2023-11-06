@@ -17,7 +17,7 @@ RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN python3.8 get-pip.py
 
 # Install gcc and git
-RUN apt-get update && apt-get install -y gcc git
+RUN apt-get update && apt-get install -y gcc git dos2unix
 
 # Install docker
 RUN apt-get install -y ca-certificates curl gnupg
@@ -43,7 +43,10 @@ RUN python3.8 -m pip install --ignore-installed -r requirements-frontend.txt
 # COPY /config/fedstellar /etc/nginx/sites-available/
 # RUN ln -s /etc/nginx/sites-available/fedstellar /etc/nginx/sites-enabled/
 
-# COPY start_services.sh .
-# RUN chmod +x start_services.sh
+COPY start_services.sh .
 
-CMD ["/start_services.sh"]
+RUN dos2unix start_services.sh
+
+RUN chmod +x start_services.sh
+
+ENTRYPOINT ["/bin/bash", "/start_services.sh"]
