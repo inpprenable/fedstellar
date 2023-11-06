@@ -696,6 +696,8 @@ class Node(BaseNode):
             if wait_time > 0:
                 time.sleep(wait_time)
 
+            logging.info(f"({self.addr}) Round {self.round} of {self.totalrounds} started.")
+            
             # Train
             self.learner.set_epochs(epochs)
             self.learner.create_trainer()
@@ -761,14 +763,13 @@ class Node(BaseNode):
             )
 
         # Determine if node is in the train set
-        if self.addr in self.__train_set and (self.config.participant["device_args"]["role"] == Role.AGGREGATOR or
-                                              self.config.participant["device_args"]["role"] == Role.SERVER):
-            logging.info("[NODE.__train_step] Role.AGGREGATOR/Role.SERVER process...")
+        if self.config.participant["device_args"]["role"] == Role.AGGREGATOR:
+            logging.info("[NODE.__train_step] Role.AGGREGATOR process...")
             if self.round is not None:
                 # Set Models To Aggregate
                 self.aggregator.set_nodes_to_aggregate(self.__train_set)
 
-            # Evaluate and send metrics
+            # Evaluate
             if self.round is not None:
                 self.__evaluate()
 
@@ -791,25 +792,21 @@ class Node(BaseNode):
                         LearningNodeMessages.MODELS_AGGREGATED, models_added
                     )
                 )
-                if self.config.participant["device_args"]["role"] == Role.SERVER:
-                    self.__gossip_model_difusion()
-                else:
-                    self.__gossip_model_aggregation()
-
-        elif self.config.participant["device_args"]["role"] == Role.TRAINER:
-            logging.info("[NODE.__train_step] Role.TRAINER process...")
+                
+                self.__gossip_model_aggregation()
+                
+        elif self.config.participant["device_args"]["role"] == Role.SERVER:
+            logging.info("[NODE.__train_step] Role.SERVER process...")
+            logging.info(f"({self.addr}) Model hash start: {self.learner.get_hash_model()}")
+            # No train, evaluate, aggregate the models and send model to the trainer node
             if self.round is not None:
                 # Set Models To Aggregate
                 self.aggregator.set_nodes_to_aggregate(self.__train_set)
-
-            # Evaluate and send metrics
+                
+            # Evaluate
             if self.round is not None:
                 self.__evaluate()
-
-            # Train
-            if self.round is not None:
-                self.__train()
-
+                
             # Aggregate Model
             if self.round is not None:
                 models_added = self.aggregator.add_model(
@@ -826,12 +823,53 @@ class Node(BaseNode):
                     )
                 )
                 self.__gossip_model_aggregation()
-                # self.__wait_aggregated_model()
+                
+        elif self.config.participant["device_args"]["role"] == Role.TRAINER:
+            logging.info("[NODE.__train_step] Role.TRAINER process...")
+            logging.info(f"({self.addr}) Model hash start: {self.learner.get_hash_model()}")
+            if self.round is not None:
+                # Set Models To Aggregate
+                self.aggregator.set_nodes_to_aggregate(self.__train_set)
+                logging.info(f"({self.addr}) Waiting aggregation | Assign __waiting_aggregated_model = True")
                 self.aggregator.set_waiting_aggregated_model(self.__train_set)
-                time.sleep(5)
+
+            # Evaluate
+            if self.round is not None:
+                self.__evaluate()
+
+            # Train
+            if self.round is not None:
+                self.__train()
+                logging.info(f"({self.addr}) Model hash after local training: {self.learner.get_hash_model()}")
+
+            # Aggregate Model
+            if self.round is not None:
+                models_added = self.aggregator.add_model(
+                    self.learner.get_parameters(),
+                    [self.addr],
+                    self.learner.get_num_samples()[0],
+                    source=self.addr,
+                    round=self.round,
+                    local=True
+                )
+                
+                # send model added msg ---->> redundant (a node always owns its model)
+                self._neighbors.broadcast_msg(
+                    self._neighbors.build_msg(
+                       LearningNodeMessages.MODELS_AGGREGATED, models_added
+                   )
+                )
+                                
+                logging.info(f"({self.addr}) Gossiping (difusion) my current model parameters.")
+                self.__gossip_model_difusion()  # TODO: Check this function, not doing "aggregation"
+
 
         elif self.config.participant["device_args"]["role"] == Role.IDLE:
-            # self.__wait_aggregated_model()
+            # If the received model has the __train_set as contributors, then the node overwrites its model with the received one
+            logging.info("[NODE.__train_step] Role.IDLE process...")
+            # Set Models To Aggregate
+            self.aggregator.set_nodes_to_aggregate(self.__train_set)
+            logging.info(f"({self.addr}) Waiting aggregation.")
             self.aggregator.set_waiting_aggregated_model(self.__train_set)
 
         else:
@@ -1201,7 +1239,7 @@ class Node(BaseNode):
                 # Send Partial Aggregation
                 if model is not None:
                     logging.info(
-                        f"({self.addr}) Gossip | Gossiping model (partial aggregation) to {nei} with contributors: {contributors} and weight: {weight}")
+                        f"({self.addr}) Gossip | Gossiping model to {nei} with contributors: {contributors} and weight: {weight}")
                     encoded_model = self.learner.encode_parameters(params=model)
                     self._neighbors.send_model(
                         nei, self.round, encoded_model, contributors, weight

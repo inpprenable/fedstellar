@@ -37,5 +37,5 @@ scikit-learn==1.2.2
 scikit-image==0.21.0
 datasets==2.10.1
 timm==0.6.13
-gunicorn==20.1.0
+gunicorn==21.2.0
 notebook==7.0.4

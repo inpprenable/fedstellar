@@ -93,14 +93,17 @@ by listing the version of the Fedstellar with the following command line::
     python app/main.py --version
 
 
-Building the fedstellar docker image (CPU version)
+Building the fedstellar participant
 ====================================
+
+Docker image (CPU version)
+-------------------------
 You can build the docker image using the following command line in the root directory::
 
-    docker build -t fedstellar .
+    docker build -t fedstellar -f Dockerfile-cpu .
 
-Building the fedstellar docker image (GPU version)
-====================================
+Docker image (GPU version)
+-------------------------
 You can build the docker image using the following command line in the root directory::
 
     docker build -t fedstellar-gpu -f Dockerfile-gpu .
@@ -119,40 +122,50 @@ Running Fedstellar
 ==================
 To run Fedstellar, you can use the following command line::
 
-    python app/main.py --webserver [PARAMS]
+    python app/main.py [PARAMS]
+
+The first time you run the platform, the fedstellar-frontend docker image will be built. This process can take a few minutes.
     
 You can show the PARAMS using::
 
     python app/main.py --help
 
-For a correct execution of the platform, it is necessary to indicate the python path (absolute path)::
+The frontend will be available at http://127.0.0.1:5000 (by default)
 
-    python app/main.py --webserver --python /Users/enrique/fedstellar-venv/bin/python
+To change the default port of the frontend, you can use the following command line::
 
-or::
+    python app/main.py --webport [PORT]
+To change the default port of the statistics endpoint, you can use the following command line::
 
-    python app/main.py --webserver --python C:/Users/enrique/fedstellar-venv/Scripts/python
+    python app/main.py --statsport [PORT]
 
-The webserver will be available at http://127.0.0.1:5000 (by default)
-
-To change the default port, you can use the following command line::
-
-    python app/main.py --webserver --port 8080 --python /Users/enrique/fedstellar-venv/bin/python
-
-Fedstellar Webserver
+Fedstellar Frontend
 ==================
-You can login with the following credentials:
+You can login with the following credentials::
 
 - User: admin
 - Password: admin
 
-If not working the default credentials, send an email to enriquetomas@um.es to get the credentials.
+If not working the default credentials, send an email to `Enrique Tomás Martínez Beltrán <https://www.enriquetomasmb.com/>`_ to get the credentials.
+
+
+Stop Fedstellar
+==================
+To stop Fedstellar, you can use the following command line::
+
+    python app/main.py --stop
+
+Be careful, this command will stop all the containers related to Fedstellar: frontend, controller, and participants.
 
 
 Possible issues during the installation or execution
 ====================================================
 
-If webserver is not working, check the logs in app/logs/server.log
+If frontend is not working, check the logs in app/logs/server.log
+
+If any of the following errors appear, take a look at the docker logs of the fedstellar-frontend container::
+
+docker logs fedstellar-frontend
 
 ===================================
 
@@ -180,10 +193,9 @@ Solution: Start the docker daemon
 
 ===================================
 
-If webserver is not working, kill all process related to the webserver
+If frontend is not working, restart docker daemon
 
-    ps aux | grep python
-    kill -9 PID
+    sudo systemctl restart docker
 
 ===================================
 

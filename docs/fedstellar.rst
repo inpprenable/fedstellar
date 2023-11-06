@@ -9,10 +9,10 @@ Subpackages
 
    fedstellar.attacks
    fedstellar.config
+   fedstellar.frontend
    fedstellar.learning
    fedstellar.proto
    fedstellar.utils
-   fedstellar.webserver
 
 Submodules
 ----------

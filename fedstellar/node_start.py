@@ -162,12 +162,11 @@ def main():
         node.connect(addr)
         time.sleep(2)
 
-    start_node = config.participant["device_args"]["start"]
-
     print("Node started, grace time for network start-up (10s)")
-    time.sleep(10)
+    time.sleep(5)
 
-    if start_node:
+    if config.participant["device_args"]["start"]:
+        time.sleep(10)
         node.set_start_learning(rounds=rounds, epochs=epochs)  # rounds=10, epochs=5
 
 
