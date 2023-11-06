@@ -696,6 +696,8 @@ class Node(BaseNode):
             if wait_time > 0:
                 time.sleep(wait_time)
 
+            logging.info(f"({self.addr}) Round {self.round} of {self.totalrounds} started.")
+            
             # Train
             self.learner.set_epochs(epochs)
             self.learner.create_trainer()
@@ -795,6 +797,7 @@ class Node(BaseNode):
                 
         elif self.config.participant["device_args"]["role"] == Role.SERVER:
             logging.info("[NODE.__train_step] Role.SERVER process...")
+            logging.info(f"({self.addr}) Model hash start: {self.learner.get_hash_model()}")
             # No train, evaluate, aggregate the models and send model to the trainer node
             if self.round is not None:
                 # Set Models To Aggregate
@@ -823,9 +826,12 @@ class Node(BaseNode):
                 
         elif self.config.participant["device_args"]["role"] == Role.TRAINER:
             logging.info("[NODE.__train_step] Role.TRAINER process...")
+            logging.info(f"({self.addr}) Model hash start: {self.learner.get_hash_model()}")
             if self.round is not None:
                 # Set Models To Aggregate
                 self.aggregator.set_nodes_to_aggregate(self.__train_set)
+                logging.info(f"({self.addr}) Waiting aggregation | Assign __waiting_aggregated_model = True")
+                self.aggregator.set_waiting_aggregated_model(self.__train_set)
 
             # Evaluate
             if self.round is not None:
@@ -834,6 +840,7 @@ class Node(BaseNode):
             # Train
             if self.round is not None:
                 self.__train()
+                logging.info(f"({self.addr}) Model hash after local training: {self.learner.get_hash_model()}")
 
             # Aggregate Model
             if self.round is not None:
@@ -842,20 +849,26 @@ class Node(BaseNode):
                     [self.addr],
                     self.learner.get_num_samples()[0],
                     source=self.addr,
-                    round=self.round
+                    round=self.round,
+                    local=True
                 )
+                
                 # send model added msg ---->> redundant (a node always owns its model)
                 self._neighbors.broadcast_msg(
                     self._neighbors.build_msg(
-                        LearningNodeMessages.MODELS_AGGREGATED, models_added
-                    )
+                       LearningNodeMessages.MODELS_AGGREGATED, models_added
+                   )
                 )
-                self.__gossip_model_aggregation()
-                self.aggregator.set_waiting_aggregated_model(self.__train_set)
+                                
+                logging.info(f"({self.addr}) Gossiping (difusion) my current model parameters.")
+                self.__gossip_model_difusion()  # TODO: Check this function, not doing "aggregation"
+
 
         elif self.config.participant["device_args"]["role"] == Role.IDLE:
             # If the received model has the __train_set as contributors, then the node overwrites its model with the received one
             logging.info("[NODE.__train_step] Role.IDLE process...")
+            # Set Models To Aggregate
+            self.aggregator.set_nodes_to_aggregate(self.__train_set)
             logging.info(f"({self.addr}) Waiting aggregation.")
             self.aggregator.set_waiting_aggregated_model(self.__train_set)
 
@@ -1226,7 +1239,7 @@ class Node(BaseNode):
                 # Send Partial Aggregation
                 if model is not None:
                     logging.info(
-                        f"({self.addr}) Gossip | Gossiping model (partial aggregation) to {nei} with contributors: {contributors} and weight: {weight}")
+                        f"({self.addr}) Gossip | Gossiping model to {nei} with contributors: {contributors} and weight: {weight}")
                     encoded_model = self.learner.encode_parameters(params=model)
                     self._neighbors.send_model(
                         nei, self.round, encoded_model, contributors, weight

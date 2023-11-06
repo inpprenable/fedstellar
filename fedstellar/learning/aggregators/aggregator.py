@@ -65,7 +65,6 @@ class Aggregator:
         Indicates that the node is waiting for an aggregation. It won't participate in aggregation process.
         The model only will receive a model, and then it will be used as an aggregated model.
         """
-        self.set_nodes_to_aggregate(nodes)
         self.__waiting_aggregated_model = True
 
     def clear(self):
@@ -116,7 +115,7 @@ class Aggregator:
         # Get a list of weights added
         return self.__models
 
-    def add_model(self, model, contributors, weight, source=None, round=None):
+    def add_model(self, model, contributors, weight, source=None, round=None, local=False):
         """
         Add a model. The first model to be added starts the `run` method (timeout).
 
@@ -147,20 +146,28 @@ class Aggregator:
                 f"({self.node_name}) add_model (aggregator) | Received a model from a previous round."
             )
             logging.info(f"({self.node_name}) add_model (aggregator) | Releasing __agg_lock.")
-            self.__agg_lock.release()
+            if self.__agg_lock.locked():
+                self.__agg_lock.release()
             return None
 
         # Diffusion / Aggregation
-        if self.__waiting_aggregated_model and self.__models == {}:
+        if self.__waiting_aggregated_model and not local:
+            logging.info(
+                    f"({self.node_name}) add_model (aggregator) | __waiting_aggregated_model (True)")
             if set(contributors) == set(self.__train_set):
                 logging.info(
-                    f"({self.node_name}) add_model (aggregator) | __waiting_aggregated_model (True) | Received an aggregated model because all contributors are in the train set (me too). Overwriting my model with the aggregated model.")
+                    f"({self.node_name}) add_model (aggregator) | __waiting_aggregated_model (True) | Ignoring add_model functionality...")
+                logging.info(
+                    f"({self.node_name}) add_model (aggregator) | __waiting_aggregated_model (True) | Received an aggregated model because all contributors are in the train set (me too). Overwriting __models with the aggregated model.")
                 self.__models = {}
                 self.__models = {" ".join(nodes): (model, 1)}
                 self.__waiting_aggregated_model = False
                 logging.info(f"({self.node_name}) add_model (aggregator) | Releasing __finish_aggregation_lock.")
                 self.__finish_aggregation_lock.release()
                 return contributors
+            else:
+                logging.info(
+                    f"({self.node_name}) add_model (aggregator) | __waiting_aggregated_model (True) | Ignoring add_model functionality...")
 
         else:
             logging.info(
@@ -343,6 +350,9 @@ class Aggregator:
 
         # If awaiting an aggregated model, return it
         if self.__waiting_aggregated_model:
+            logging.info(
+                f"({self.node_name}) wait_and_get_aggregation | __waiting_aggregated_model (True)"
+            )
             if len(self.__models) == 1:
                 logging.info(
                     f"({self.node_name}) wait_and_get_aggregation | Received an aggregated model. Overwriting my model with the aggregated model."

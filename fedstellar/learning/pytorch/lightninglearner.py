@@ -7,6 +7,7 @@ import logging
 import pickle
 from collections import OrderedDict
 import traceback
+import hashlib
 
 import torch
 from lightning import Trainer
@@ -94,6 +95,14 @@ class LightningLearner(NodeLearner):
 
     def get_parameters(self):
         return self.model.state_dict()
+    
+    def get_hash_model(self):
+        '''
+        Returns:
+            str: SHA256 hash of model parameters
+        '''
+        return hashlib.sha256(self.encode_parameters()).hexdigest()
+        
 
     def set_epochs(self, epochs):
         self.epochs = epochs
