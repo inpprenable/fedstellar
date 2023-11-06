@@ -162,10 +162,16 @@ class Controller:
             time.sleep(1)
 
     def run_frontend(self):
-        if not os.path.exists("/var/run/docker.sock"):
-            raise Exception(
-                "/var/run/docker.sock not found, please check if Docker is running and Docker Compose is installed."
-            )
+        if sys.platform == "win32":
+            if not os.path.exists("//./pipe/docker_engine"):
+                raise Exception(
+                    "Docker is not running, please check if Docker is running and Docker Compose is installed."
+                )
+        else:
+            if not os.path.exists("/var/run/docker.sock"):
+                raise Exception(
+                    "/var/run/docker.sock not found, please check if Docker is running and Docker Compose is installed."
+                )
 
         docker_compose_template = textwrap.dedent(
             """
@@ -183,7 +189,7 @@ class Controller:
                 restart: unless-stopped
                 volumes:
                     - {path}:/fedstellar
-                    - /var/run/docker.sock:/var/run/docker.sock
+                    - {docker_socket}:/var/run/docker.sock
                     - ./config/fedstellar:/etc/nginx/sites-available/default
                     - ./start_services.sh:/start_services.sh
                 environment:
@@ -228,6 +234,7 @@ class Controller:
             ip="192.168.100.100",
             frontend_port=self.frontend_port,
             statistics_port=self.statistics_port,
+            docker_socket="//./pipe/docker_engine" if sys.platform == "win32" else "/var/run/docker.sock",
         )
         docker_compose_file = docker_compose_template.format(services)
         docker_compose_file += network_template.format(
