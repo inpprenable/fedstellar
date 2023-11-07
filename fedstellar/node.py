@@ -75,7 +75,6 @@ class Node(BaseNode):
             experiment_name,
             model,
             data,
-            hostdemo=None,
             host="127.0.0.1",
             port=None,
             config=Config,
@@ -86,7 +85,7 @@ class Node(BaseNode):
             noise_type='gaussian',
     ):
         # Super init
-        BaseNode.__init__(self, experiment_name, hostdemo, host, port, encrypt, config)
+        BaseNode.__init__(self, experiment_name, host, port, encrypt, config)
 
         self.idx = idx
         logging.info("[NODE] My idx is {}".format(self.idx))
@@ -139,16 +138,13 @@ class Node(BaseNode):
         self.__trusted_nei = []
         self.__is_malicious = False
 
-        # with reputation mechansim
-        # Todo: change to initial function
         self.with_reputation = self.config.participant['defense_args']["with_reputation"]
-
         self.is_dynamic_topology = self.config.participant['defense_args']["is_dynamic_topology"]
         self.is_dynamic_aggregation = self.config.participant['defense_args']["is_dynamic_aggregation"]
 
-        logging.info(f"[NODE] with_reputation {self.with_reputation}")
-        logging.info(f"[NODE] is_dynamic_topology {self.is_dynamic_topology}")
-        logging.info(f"[NODE] is_dynamic_aggregation {self.is_dynamic_aggregation}")
+        logging.info(f"[NODE] with_reputation={self.with_reputation}")
+        logging.info(f"[NODE] is_dynamic_topology={self.is_dynamic_topology}")
+        logging.info(f"[NODE] is_dynamic_aggregation={self.is_dynamic_aggregation}")
 
         # Learner and learner logger
         # log_model="all" to log model
@@ -156,24 +152,19 @@ class Node(BaseNode):
         if self.config.participant['tracking_args']['enable_remote_tracking']:
             logging.info("[NODE] Tracking W&B enabled")
             logging.getLogger("wandb").setLevel(logging.ERROR)
-            if self.hostdemo:
-                wandblogger = FedstellarWBLogger(project="platform-enrique", group=self.experiment_name,
+            fedstellarlogger = FedstellarWBLogger(project="platform-enrique", group=self.experiment_name,
                                                  name=f"participant_{self.idx}")
-            else:
-                wandblogger = FedstellarWBLogger(project="platform-enrique", group=self.experiment_name,
-                                                 name=f"participant_{self.idx}")
-            wandblogger.watch(model, log="all")
-            self.learner = learner(model, data, config=self.config, logger=wandblogger)
+            fedstellarlogger.watch(model, log="all")
         else:
             if self.config.participant['tracking_args']['local_tracking'] == 'csv':
                 logging.info("[NODE] Tracking CSV enabled")
-                csvlogger = CSVLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}")
-                self.learner = learner(model, data, config=self.config, logger=csvlogger)
+                fedstellarlogger = CSVLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}")
             elif self.config.participant['tracking_args']['local_tracking'] == 'web':
                 logging.info("[NODE] Tracking Web enabled")
-                tensorboardlogger = FedstellarLogger(f"{self.log_dir}", name="metrics",
+                fedstellarlogger = FedstellarLogger(f"{self.log_dir}", name="metrics",
                                                      version=f"participant_{self.idx}", log_graph=True)
-                self.learner = learner(model, data, config=self.config, logger=tensorboardlogger)
+        
+        self.learner = learner(model, data, config=self.config, logger=fedstellarlogger)
 
         logging.info("[NODE] Role: " + str(self.config.participant["device_args"]["role"]))
         if self.config.participant["adversarial_args"]["attacks"] != "No Attack":
@@ -224,13 +215,13 @@ class Node(BaseNode):
         # Disrupt the connection with the malicious nodes
         malicious_nodes = list(set(malicious_nodes) & set(self.get_neighbors()))
         # logging.info(f"({self.addr}) Received reputation from {msg.source} with malicious nodes {malicious_nodes}")
-        logging.info(f"Disrupting connection with malicious nodes at round {self.learner.get_round()}")
+        logging.info(f"Disrupting connection with malicious nodes at round {self.round}")
         logging.info(f"({self.addr}) Removing {malicious_nodes} from {self.get_neighbors()}")
-        logging.info(f"get neighbors before aggregation at round {self.learner.get_round()}: {self.get_neighbors()}")
+        logging.info(f"get neighbors before aggregation at round {self.round}: {self.get_neighbors()}")
         for malicious_node in malicious_nodes:
             if (self.get_name() != malicious_node) and (malicious_node not in self.__trusted_nei):
                 self._neighbors.remove(malicious_node)
-        logging.info(f"get neighbors after aggregation at round {self.learner.get_round()}: {self.get_neighbors()}")
+        logging.info(f"get neighbors after aggregation at round {self.round}: {self.get_neighbors()}")
 
         self.__connect_with_benign(malicious_nodes)
 
@@ -246,17 +237,17 @@ class Node(BaseNode):
 
         benign_nodes = [i for i in self.__train_set if i not in malicious_nodes]
         logging.info(
-            f"({self.addr})__reputation_callback benign_nodes at round {self.learner.get_round()}: {benign_nodes}")
+            f"({self.addr})__reputation_callback benign_nodes at round {self.round}: {benign_nodes}")
         if len(self.get_neighbors()) <= lower_threshold:
             for node in benign_nodes:
                 if len(self.get_neighbors()) <= higher_threshold and self.get_name() != node:
                     connected = self.connect(node)
                     if connected:
                         logging.info(
-                            f"({self.addr}) Connect new connection with at round {self.learner.get_round()}: {connected}")
+                            f"({self.addr}) Connect new connection with at round {self.round}: {connected}")
 
     def __reputation_callback(self, msg):
-        # receive malicious nodes information from neighbors
+        # Receive malicious nodes information from neighbors (broadcast REPUTATION message)
         malicious_nodes = msg.args  # List of malicious nodes
         if self.with_reputation:
             if len(malicious_nodes) > 0 and not self.__is_malicious:
@@ -264,10 +255,10 @@ class Node(BaseNode):
                     self.__disrupt_connection_using_reputation(malicious_nodes)
 
                 if self.is_dynamic_aggregation and self.aggregator != self.target_aggregation:
-                    self.__dynamic_aggergator(self.aggregator.get_aggregated_models_weights(), malicious_nodes)
+                    self.__dynamic_aggregator(self.aggregator.get_aggregated_models_weights(), malicious_nodes)
 
-    def __dynamic_aggergator(self, aggregated_models_weights, malicious_nodes):
-        logging.info(f"malicious detected at round {self.learner.get_round()}, change aggergation protocol!")
+    def __dynamic_aggregator(self, aggregated_models_weights, malicious_nodes):
+        logging.info(f"malicious detected at round {self.round}, change aggergation protocol!")
         if self.aggregator != self.target_aggregation:
             logging.info(f"get_aggregated_models current aggregator is: {self.aggregator}")
             # do some threading
@@ -1073,23 +1064,23 @@ class Node(BaseNode):
         # logging.info(f'reputation_calculation untrusted_nodes {untrusted_nodes}')
         selfName = self.get_name()
         # selfName = ''
-        logging.info(f'reputation_calculation untrusted_nodes at round {self.learner.get_round()}: {untrusted_nodes}')
+        logging.info(f'reputation_calculation untrusted_nodes at round {self.round}: {untrusted_nodes}')
         for untrusted_node in untrusted_nodes:
-            logging.info(f'reputation_calculation untrusted_node at round {self.learner.get_round()}: {untrusted_node}')
-            logging.info(f'reputation_calculation selfName at round {self.learner.get_round()}: {selfName}')
-            if untrusted_node != selfName:
+            logging.info(f'reputation_calculation untrusted_node at round {self.round}: {untrusted_node}')
+            logging.info(f'reputation_calculation self.get_name() at round {self.round}: {self.get_name()}')
+            if untrusted_node != self.get_name():
                 untrusted_model = current_models[untrusted_node]
                 cossim = cosine_similarity(local_model, untrusted_model)
                 logging.info(
-                    f'reputation_calculation cossim at round {self.learner.get_round()}: {untrusted_node}: {cossim}')
+                    f'reputation_calculation cossim at round {self.round}: {untrusted_node}: {cossim}')
                 self.learner.logger.log_metrics({f"Reputation/cossim_{untrusted_node}": cossim},
-                                                step=self.learner.get_round())
+                                                step=self.round)
 
                 avg_loss = self.learner.validate_neighbour_model(untrusted_model)
                 logging.info(
-                    f'reputation_calculation avg_loss at round {self.learner.get_round()} {untrusted_node}: {avg_loss}')
+                    f'reputation_calculation avg_loss at round {self.round} {untrusted_node}: {avg_loss}')
                 self.learner.logger.log_metrics({f"Reputation/avg_loss_{untrusted_node}": avg_loss},
-                                                step=self.learner.get_round())
+                                                step=self.round)
                 reputation_score[untrusted_node] = (cossim, avg_loss)
 
                 if cossim < cossim_threshold or avg_loss > loss_threshold:
@@ -1100,7 +1091,7 @@ class Node(BaseNode):
         return malicious_nodes, reputation_score
 
     def send_reputation(self, malicious_nodes):
-        logging.info(f"({self.addr}) Broadcasting reputation message...")
+        logging.info(f"({self.addr}) Broadcasting reputation message to the rest of the topology: REPUTATION {malicious_nodes}")
         self._neighbors.broadcast_msg(
             self._neighbors.build_msg(
                 LearningNodeMessages.REPUTATION, malicious_nodes
@@ -1118,10 +1109,10 @@ class Node(BaseNode):
             if self.with_reputation:
                 malicious_nodes = []
                 # logging.info(f"({self.addr}) Stored models: {self.aggregator.get_aggregated_models_weights()}")
-                if self.learner.get_round() > 2:
+                if self.round > 2:
                     malicious_nodes, _ = self.reputation_calculation(self.aggregator.get_aggregated_models_weights())
                     logging.info(
-                        f"({self.addr}) Malicious nodes  at round {self.learner.get_round()}: {malicious_nodes}, excluding them from the aggregation...")
+                        f"({self.addr}) Malicious nodes at round {self.round}: {malicious_nodes}, excluding them from the aggregation...")
                     if len(malicious_nodes) > 0:
                         self.send_reputation(malicious_nodes)
                         # disrupt the connection with malicious nodes
@@ -1129,12 +1120,13 @@ class Node(BaseNode):
                             self.__disrupt_connection_using_reputation(malicious_nodes)
 
                         if self.is_dynamic_aggregation and self.aggregator != self.target_aggregation:
-                            self.__dynamic_aggergator(self.aggregator.get_aggregated_models_weights(), malicious_nodes)
+                            self.__dynamic_aggregator(self.aggregator.get_aggregated_models_weights(), malicious_nodes)
 
                 # Exclude malicious nodes from the aggregation
-                # Introduce the malicious nodes in the list of aggregated models. Then remove the duplicates
+                # Introduce the malicious nodes in the list of aggregated models. This is done to avoid the malicious nodes to be included in the aggregation
                 models_aggregated = self.__models_aggregated[node]
                 models_aggregated = list(set(list(models_aggregated) + malicious_nodes))
+                logging.info(f"({self.addr}) Aggregated models at round {self.round}: {models_aggregated}")
                 return models_aggregated
             else:
                 return self.__models_aggregated[node]
@@ -1257,7 +1249,6 @@ class MaliciousNode(Node):
                  experiment_name,
                  model,
                  data,
-                 hostdemo=None,
                  host="127.0.0.1",
                  port=None,
                  config=Config,
@@ -1268,7 +1259,7 @@ class MaliciousNode(Node):
                  noise_type='gaussian'):
         """Node that instead of training, performs an attack on the weights during the aggregation.
         """
-        super().__init__(idx, experiment_name, model, data, hostdemo, host, port, config, learner, encrypt)
+        super().__init__(idx, experiment_name, model, data, host, port, config, learner, encrypt)
 
         # Create attack object
         self.attack = create_attack(config.participant["adversarial_args"]["attacks"])
@@ -1278,7 +1269,7 @@ class MaliciousNode(Node):
         self.aggregator = create_malicious_aggregator(self.aggregator, self.attack)
 
     def _Node__train(self):  # Required to override Node.__train method
-        if self.learner.get_round() == 0:
+        if self.round == 0:
             t0 = time.time()
             logging.info(f"({self.addr}) Training...")
             self.learner.fit()

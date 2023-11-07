@@ -133,10 +133,11 @@ def datetimeformat(value, format="%B %d, %Y %H:%M"):
 def fedstellar_home():
     # Get alerts and news from API
     import requests
-
+    # Use custom headers
+    headers = {"User-Agent": "Fedstellar Frontend"}
     url = "https://federatedlearning.inf.um.es/alerts/alerts"
     try:
-        response = requests.get(url)
+        response = requests.get(url, headers=headers)
         alerts = response.json()
     except requests.exceptions.RequestException as e:
         print(e)

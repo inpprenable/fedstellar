@@ -40,10 +40,9 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
     #     Node Init     #
     #####################
 
-    def __init__(self, experiment_name, hostdemo=None, host="127.0.0.1", port=None, encrypt=False, config=None):
+    def __init__(self, experiment_name, host="127.0.0.1", port=None, encrypt=False, config=None):
         self.experiment_name = experiment_name
         # Node Attributes
-        self.hostdemo = hostdemo
         self.host = socket.gethostbyname(host)
         self.port = port
         self.encrypt = encrypt
@@ -82,7 +81,7 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
         self.log_dir = os.path.join(config.participant['tracking_args']["log_dir"], self.experiment_name)
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
-        self.log_filename = f"{self.log_dir}/participant_{config.participant['device_args']['idx']}" if self.hostdemo else f"{self.log_dir}/participant_{config.participant['device_args']['idx']}"
+        self.log_filename = f"{self.log_dir}/participant_{config.participant['device_args']['idx']}"
         os.makedirs(os.path.dirname(self.log_filename), exist_ok=True)
         console_handler, file_handler, file_handler_only_debug, exp_errors_file_handler = self.setup_logging(self.log_filename)
 
@@ -109,19 +108,12 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
         """
         return str(self.get_addr()[0]) + ":" + str(self.get_addr()[1])
 
-    def get_name_demo(self):
-        """
-        Returns:
-            str: The name of the node.
-        """
-        return str(self.hostdemo) + ":" + str(self.get_addr()[1])
-
     def setup_logging(self, log_dir):
         CYAN = "\x1b[0;36m"
         RESET = "\x1b[0m"
         info_file_format = f"%(asctime)s - %(message)s"
         debug_file_format = f"%(asctime)s - %(message)s\n[in %(pathname)s:%(lineno)d]"
-        log_console_format = f"{CYAN}[%(levelname)s] - %(asctime)s - {self.get_name_demo()}{RESET}\n%(message)s" if self.hostdemo else f"{CYAN}[%(levelname)s] - %(asctime)s - {self.get_name()}{RESET}\n%(message)s"
+        log_console_format = f"{CYAN}[%(levelname)s] - %(asctime)s - {self.get_name()}{RESET}\n%(message)s"
 
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO if self.config.participant["device_args"]["logging"] else logging.CRITICAL)
