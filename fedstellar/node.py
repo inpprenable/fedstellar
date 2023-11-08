@@ -1056,15 +1056,13 @@ class Node(BaseNode):
             submodel = aggregated_models_weights[subnodes][0]
             for node in sublist:
                 current_models[node] = submodel
-        # logging.info(f'reputation_calculation current_models {current_models}')
+                
         malicious_nodes = []
         reputation_score = {}
         local_model = self.learner.get_parameters()
         untrusted_nodes = list(current_models.keys())
-        # logging.info(f'reputation_calculation untrusted_nodes {untrusted_nodes}')
-        selfName = self.get_name()
-        # selfName = ''
         logging.info(f'reputation_calculation untrusted_nodes at round {self.round}: {untrusted_nodes}')
+        
         for untrusted_node in untrusted_nodes:
             logging.info(f'reputation_calculation untrusted_node at round {self.round}: {untrusted_node}')
             logging.info(f'reputation_calculation self.get_name() at round {self.round}: {self.get_name()}')

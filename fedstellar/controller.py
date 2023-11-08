@@ -706,6 +706,7 @@ class Controller:
                     "-f",
                     f"{self.config_dir}/docker-compose.yml",
                     "up",
+                    "--build",
                     "-d",
                 ]
             )
