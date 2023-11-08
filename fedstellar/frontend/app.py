@@ -434,25 +434,14 @@ def fedstellar_scenario_monitoring(scenario_name):
                 nodes_status = []
                 nodes_offline = []
                 for i, node in enumerate(nodes_list):
-                    with open(
-                        os.path.join(
-                            app.config["config_dir"],
-                            scenario_name,
-                            f"participant_{node[1]}.json",
-                        )
-                    ) as f:
-                        nodes_config.append(json.load(f))
+                    nodes_config.append((node[2], node[3], node[4])) # IP, Port, Role
                     if datetime.datetime.now() - datetime.datetime.strptime(
                         node[8], "%Y-%m-%d %H:%M:%S.%f"
-                    ) > datetime.timedelta(seconds=25):
+                    ) > datetime.timedelta(seconds=10):
                         nodes_status.append(False)
                         nodes_offline.append(node[2] + ":" + str(node[3]))
                     else:
                         nodes_status.append(True)
-                # print("------------------------------BEFORE--------------------------------------------")
-                # print(nodes_list)
-                # print(nodes_config)
-                # print("--------------------------------------------------------------------------------")
                 nodes_table = zip(
                     [x[0] for x in nodes_list],  # UID
                     [x[1] for x in nodes_list],  # IDX
@@ -469,10 +458,6 @@ def fedstellar_scenario_monitoring(scenario_name):
                     nodes_status,  # Status
                 )
 
-                # print("-----------------------------AFTER----------------------------------------------")
-                # print(nodes_list)
-                # print(nodes_config)
-                # print("--------------------------------------------------------------------------------")
                 if os.path.exists(
                     os.path.join(
                         app.config["config_dir"], scenario_name, "topology.png"
@@ -596,15 +581,15 @@ def fedstellar_update_node(scenario_name):
             config = request.get_json()
             timestamp = datetime.datetime.now()
             # Update file in the local directory
-            with open(
-                os.path.join(
-                    app.config["config_dir"],
-                    scenario_name,
-                    f'participant_{config["device_args"]["idx"]}.json',
-                ),
-                "w",
-            ) as f:
-                json.dump(config, f, sort_keys=False, indent=2)
+            # with open(
+            #     os.path.join(
+            #         app.config["config_dir"],
+            #         scenario_name,
+            #         f'participant_{config["device_args"]["idx"]}.json',
+            #     ),
+            #     "w",
+            # ) as f:
+            #     json.dump(config, f, sort_keys=False, indent=2)
 
             # Update the node in database
             update_node_record(
@@ -626,6 +611,7 @@ def fedstellar_update_node(scenario_name):
             socketio.emit(
                 "node_update",
                 {
+                    "scenario_name": scenario_name,
                     "uid": config["device_args"]["uid"],
                     "idx": config["device_args"]["idx"],
                     "ip": config["network_args"]["ip"],
@@ -636,6 +622,7 @@ def fedstellar_update_node(scenario_name):
                     "longitude": config["geo_args"]["longitude"],
                     "timestamp": str(timestamp),
                     "federation": config["scenario_args"]["federation"],
+                    "round": config["federation_args"]["round"],
                     "name": config["scenario_args"]["name"],
                 },
             )
@@ -1078,9 +1065,6 @@ def fedstellar_scenario_deployment_run():
                 with open(participant_file) as f:
                     participant_config = json.load(f)
                 participant_config["network_args"]["ip"] = node_config["ip"]
-                participant_config["network_args"]["ipdemo"] = node_config[
-                    "ipdemo"
-                ]  # legacy code
                 participant_config["network_args"]["port"] = int(node_config["port"])
                 participant_config["device_args"]["idx"] = node_config["id"]
                 participant_config["device_args"]["start"] = node_config["start"]

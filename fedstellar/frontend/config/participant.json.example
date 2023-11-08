@@ -32,7 +32,6 @@
   },
   "network_args": {
     "ip": "",
-    "ipdemo": "",
     "port": 0,
     "neighbors": "",
     "interface": "eth0",

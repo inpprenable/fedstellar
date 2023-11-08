@@ -147,7 +147,7 @@ class Controller:
             for i in self.config.participants:
                 logging.info(
                     "[Mender.module] Device {} | IP: {}".format(
-                        i["device_args"]["idx"], i["network_args"]["ipdemo"]
+                        i["device_args"]["idx"], i["network_args"]["ip"]
                     )
                 )
                 logging.info("[Mender.module] \tCreating artifacts...")
@@ -443,6 +443,7 @@ class Controller:
 
         # Update participants configuration
         is_start_node = False
+        config_participants = []
         for i in range(self.n_nodes):
             with open(f"{self.config_dir}/participant_" + str(i) + ".json") as f:
                 participant_config = json.load(f)
@@ -476,12 +477,14 @@ class Controller:
                     raise ValueError("Only one node can be start node")
             with open(f"{self.config_dir}/participant_" + str(i) + ".json", "w") as f:
                 json.dump(participant_config, f, sort_keys=False, indent=2)
+            
+            config_participants.append((participant_config["network_args"]["ip"], participant_config["network_args"]["port"], participant_config["device_args"]["role"]))
         if not is_start_node:
             raise ValueError("No start node found")
         self.config.set_participants_config(participant_files)
 
         # Add role to the topology (visualization purposes)
-        self.topologymanager.update_nodes(self.config.participants)
+        self.topologymanager.update_nodes(config_participants)
         self.topologymanager.draw_graph(
             path=f"{self.log_dir}/{self.scenario_name}/topology.png", plot=False
         )
@@ -552,7 +555,6 @@ class Controller:
                     node["network_args"]["ip"],
                     node["network_args"]["port"],
                     "undefined",
-                    node["network_args"]["ipdemo"],
                 )
             )
 

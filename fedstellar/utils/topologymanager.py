@@ -59,6 +59,8 @@ class TopologyManager:
         labels = {}
         color_map = []
         server = False
+        print("draw_graph")
+        print(self.nodes)
         for k in range(self.n_nodes):
             if str(self.nodes[k][2]) == Role.AGGREGATOR:
                 color_map.append("orange")
@@ -71,10 +73,7 @@ class TopologyManager:
                 color_map.append("purple")
             else:
                 color_map.append("red")
-            if self.nodes[k][3] is not None and self.nodes[k][3] != "127.0.0.1":
-                labels[k] = f"P{k}\n" + str(self.nodes[k][3]) + ":" + str(self.nodes[k][1])
-            else:
-                labels[k] = f"P{k}\n" + str(self.nodes[k][0]) + ":" + str(self.nodes[k][1])
+            labels[k] = f"P{k}\n" + str(self.nodes[k][0]) + ":" + str(self.nodes[k][1])
         # nx.draw_networkx_nodes(g, pos_shadow, node_color='k', alpha=0.5)
         nx.draw_networkx_nodes(g, pos, node_color=color_map, linewidths=2)
         nx.draw_networkx_labels(g, pos, labels, font_size=10, font_weight='bold')
@@ -176,10 +175,7 @@ class TopologyManager:
         self.nodes = nodes
 
     def update_nodes(self, config_participants):
-        nodes = []
-        for i, node in enumerate(config_participants):
-            nodes.append((node["network_args"]["ip"], node["network_args"]["port"], node["device_args"]["role"], node["network_args"]["ipdemo"]))
-        self.nodes = nodes
+        self.nodes = config_participants
 
     def get_node(self, node_idx):
         return self.nodes[node_idx]
@@ -199,7 +195,6 @@ class TopologyManager:
         neighbors_index = []
         neighbors_data = []
         for i in range(self.n_nodes):
-            print(node_idx, i)
             if self.topology[node_idx][i] == 1:
                 neighbors_index.append(i)
                 neighbors_data.append(self.nodes[i])
@@ -350,6 +345,5 @@ class TopologyManager:
                         }
                     )
                     # matrix[nodes.index(node['network_args']['ip'] + ':' + str(node['network_args']['port']))][nodes.index(neighbour)] = 1
-        print(json_data)
         with open(path, "w") as f:
             json.dump(json_data, f, sort_keys=False, indent=2)
