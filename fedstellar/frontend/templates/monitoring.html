@@ -243,7 +243,7 @@
 
 <script>
     var map = L.map('map').setView([44.194021, 0.397141], 4);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; <a href=\"https://enriquetomasmb.com\">enriquetomasmb.com</a>' }).addTo(map);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '&copy; <a href=\"https://enriquetomasmb.com\">enriquetomasmb.com</a>' }).addTo(map);
 
     //{{ markers | safe }}
 
@@ -322,12 +322,123 @@
         return Math.random() * (max - min + 1) + min;
     }
 
-    var initizalization = false;
-
     let gData = {
         nodes: [],
         links: []
     };
+
+</script>
+<script>
+    // Participants mobility in the map
+    var updateQueue = []; // Queue to store updates
+
+    var droneMarkers = {};
+    var lineLayer = L.layerGroup().addTo(map); // Layer to store all lines
+    var droneLines = {};
+
+    var droneIcon = L.icon({
+        iconUrl: '/static/img/drone.svg',
+        iconSize: [38, 38], // Icon size
+        iconAnchor: [19, 19], // Icon point that will correspond to the marker coordinate
+        popupAnchor: [0, -19] // Where the popup will be displayed in relation to the icon
+    });
+
+
+    function findMarkerByIP(ip) {
+        for (var id in droneMarkers) {
+            if (droneMarkers[id].ip === ip) {
+                return droneMarkers[id];
+            }
+        }
+        return null;
+    }
+
+    function updateNeighborLines(droneId, droneLatLng, neighborsIPs) {
+        if (!droneLines[droneId]) {
+            droneLines[droneId] = [];
+        } else {
+            droneLines[droneId].forEach(function (line) {
+                lineLayer.removeLayer(line);
+            });
+
+            droneLines[droneId] = [];
+        }
+
+        console.log("Updating neighbor lines");
+        console.log(droneLines);
+        console.log(neighborsIPs);
+
+        neighborsIPs.forEach(function (neighborIP) {
+            var neighborMarker = findMarkerByIP(neighborIP);
+            if (neighborMarker) {
+                var neighborLatLng = neighborMarker.getLatLng();
+                var line = L.polyline([droneLatLng, neighborLatLng], { color: 'blue' }).addTo(lineLayer);
+                droneLines[droneId].push(line);
+            }
+        });
+    }
+
+    function updateAllRelatedLines(droneId) {
+        console.log("Updating all related lines");
+        for (var id in droneMarkers) {
+            if (id !== droneId) {
+                var neighborIPs = droneMarkers[id].neighbors;
+                if (neighborIPs.includes(droneMarkers[droneId].ip)) {
+                    console.log("Updating neighbor lines of drone " + id);
+                    updateNeighborLines(id, droneMarkers[id].getLatLng(), neighborIPs);
+                }
+            }
+        }
+    }
+
+    function updateDronePosition(uid, ip, lat, lng, neighborIPs) {
+        var droneId = uid;
+        var newLatLng = new L.LatLng(lat, lng);
+        var popupContent = `ID: ${uid}<br>IP: ${ip}<br>Coordinates:<br>${lat}, ${lng}`;
+
+        if (!droneMarkers[droneId]) {
+            var marker = new L.Marker.movingMarker([[lat, lng], [lat, lng]], [1000], { icon: droneIcon, autostart: true, loop: false })
+                .addTo(map)
+                .bindPopup(popupContent);
+            marker.ip = ip;
+            marker.neighbors = neighborIPs;
+            droneMarkers[droneId] = marker
+        } else {
+            // If present, it moves the marker with a smooth animation.
+            console.log("Moving drone marker");
+            //var oldLatLng = droneMarkers[droneId].getLatLng();
+            //var duration = oldLatLng.distanceTo(newLatLng) * 1;
+            droneMarkers[droneId].moveTo(newLatLng, 5);
+            droneMarkers[droneId].getPopup().setContent(popupContent);
+            droneMarkers[droneId].neighbors = neighborIPs
+        }
+    }
+
+    // Function for processing queue updates
+    function processQueue() {
+        while (updateQueue.length > 0) {
+            console.log("Processing queue");
+            var data = updateQueue.shift(); // Obtain and remove the oldest update
+            processUpdate(data); // Process the update
+        }
+    }
+
+    setInterval(processQueue, 100);
+
+    function processUpdate(data) {
+        var newLatLng = new L.LatLng(data.latitude, data.longitude);
+        neighborsIPs = data.neighbors.split(" ");
+
+        updateDronePosition(data.uid, data.ip, data.latitude, data.longitude, neighborsIPs);
+
+        setTimeout(function () {
+            updateNeighborLines(data.uid, newLatLng, neighborsIPs);
+            updateAllRelatedLines(data.uid);
+        }, 30);
+    }
+
+</script>
+<script>
 
     // Get all divs with id "node-vars" and update them with value returned by async GET request
     var scenario_name = document.getElementById('scenario_name').innerHTML;
@@ -372,76 +483,53 @@
                             break;
                         }
                     }
-                    if (!initizalization || Graph.graphData().nodes.length < data['nodes_table'].length) {
-                        var markerExists = false;
+                    console.log("Updating drone position");
+                    data_json = {
+                        uid: node[0],
+                        ip: node[2] + ":" + node[3],
+                        latitude: node[6],
+                        longitude: node[7],
+                        neighbors: node[5],
+                    };
+                    updateQueue.push(data_json);
 
-                        map.eachLayer(function (layer) {
-                            if (layer instanceof L.Marker) {
-                                if (layer.options.title === node[0] && layer._latlng.lat === node[6] && layer._latlng.lng === node[7]) {
-                                    markerExists = true;
-                                } else if (layer.options.title === node[0] && (layer._latlng.lat !== node[6] || layer._latlng.lng !== node[7])) {
-                                    map.removeLayer(layer);
-                                }
-                            } else if (layer instanceof L.Polyline) {
-                                map.removeLayer(layer);
-                            }
-                        });
-                        if (!markerExists) {
-                            var marker = L.marker([node[6], node[7]], { title: node[2] + ':' + node[3] }).addTo(map)
-                            marker.bindPopup('UID: ' + node[0] + '<br>IP:' + node[2] + ':' + node[3] + '<br>CLUSTER: Spain-Switzerland');
-                        }
-                    }
-                });
-
-                data['nodes_table'].forEach(function (node) {
-                    var marker = L.marker([node[6], node[7]], { title: node[2] + ':' + node[3] })
-                    var neighborhood = data['nodes_table'].filter(n => n[5].includes(node[2] + ":" + node[3]));
-                    neighborhood.forEach(function (n) {
-                        var marker_nei = L.marker([n[6], n[7]], { title: n[2] + ':' + n[3] })
-                        // L.polyline([marker.getLatLng(), marker_nei.getLatLng()], { color: 'red', opacity: 0.2, smoothFactor: 1 }).addTo(map);
-                    });
                 });
 
                 // Add data to the Graph topology
+
                 // Check if there are new nodes to add to the graph
-                if (!initizalization || Graph.graphData().nodes.length < data['nodes_table'].length) {
-                    gData = {
-                        // if data['nodes_table'][i][0] is not in nodes_offline, then add the node to the graph
-                        nodes: data['nodes_table'].map(node => ({
-                            id: node[1],
-                            ip: node[2],
-                            port: node[3],
-                            ipport: node[2] + ":" + node[3],
-                            role: node[4],
-                            color: offlineNodes.has(node[2] + ":" + node[3]) ? 'grey' :
-                                (node[4] === "trainer" ? '#0173B2'
-                                    : (node[4] === "aggregator" ? 'rgba(255,136,0,0.6)'
-                                        : (node[4] === "evaluator" ? '#F44336' : undefined))),
-                        })),
-                        links: data['nodes_table'].map(node => {
-                            var links = [];
-                            if (node[5] !== "") {
-                                var neighbors = node[5].split(" ");
-                                neighbors.forEach(function (neighbor) {
-                                    links.push({
-                                        source: node[2] + ":" + node[3],
-                                        target: neighbor,
-                                        value: offlineNodes.has(node[2] + ":" + node[3]) || offlineNodes.has(neighbor) ? 0 : randomFloatFromInterval(1.0, 1.3),
-                                    });
+                gData = {
+                    // if data['nodes_table'][i][0] is not in nodes_offline, then add the node to the graph
+                    nodes: data['nodes_table'].map(node => ({
+                        id: node[1],
+                        ip: node[2],
+                        port: node[3],
+                        ipport: node[2] + ":" + node[3],
+                        role: node[4],
+                        color: offlineNodes.has(node[2] + ":" + node[3]) ? 'grey' :
+                            (node[4] === "trainer" ? '#0173B2'
+                                : (node[4] === "aggregator" ? 'rgba(255,136,0,0.6)'
+                                    : (node[4] === "evaluator" ? '#F44336' : undefined))),
+                    })),
+                    links: data['nodes_table'].map(node => {
+                        var links = [];
+                        if (node[5] !== "") {
+                            var neighbors = node[5].split(" ");
+                            neighbors.forEach(function (neighbor) {
+                                links.push({
+                                    source: node[2] + ":" + node[3],
+                                    target: neighbor,
+                                    value: offlineNodes.has(node[2] + ":" + node[3]) || offlineNodes.has(neighbor) ? 0 : randomFloatFromInterval(1.0, 1.3),
                                 });
-                            }
-                            return links;
-                        }).flat()
-                    };
+                            });
+                        }
+                        return links;
+                    }).flat()
+                };
 
-                    // cross-link node objects
-                    console.log(gData);
-                    updateGraph(gData);
-                }
+                console.log(gData);
+                updateGraph(gData);
 
-                if (!initizalization) {
-                    initizalization = true;
-                }
 
             });
         })
@@ -481,37 +569,10 @@
                     });
                 });
             });
-        
-        // Update the map
-        // Remove the old marker
-        map.eachLayer(function (layer) {
-            if (layer instanceof L.Marker) {
-                if (layer.options.title === nodeData.ip + ':' + nodeData.port) {
-                    map.removeLayer(layer);
-                }
-            }
-        });
-        // Add the new marker if it is not already in the map
-        var marker = L.marker([nodeData.latitude, nodeData.longitude], { title:  nodeData.ip + ':' + nodeData.port }).addTo(map)
-        marker.bindPopup('UID: ' + nodeData.uid + '<br>IP:' + nodeData.ip + ':' + nodeData.port + '<br>CLUSTER: Spain-Switzerland');
-        
-        // Add the new marker and its neighborhood to the map
-        //var marker = L.marker([nodeData.latitude, nodeData.longitude], { title:  nodeData.ip + ':' + nodeData.port })
-        //console.log("Marker11");
-        //console.log(marker);
-        //var neighborhood = nodeData.neighbors.split(" ");
-        //neighborhood.forEach(function (n) {
-            // Create a polyline between the node and its neighbors (other markers)
-        //    map.eachLayer(function (layer) {
-        //        if (layer instanceof L.Marker) {
-        //            console.log(layer);
-        //            if (layer.options.title === n) {
-        //                var marker_nei = L.marker([layer._latlng.lat, layer._latlng.lng], { title: n })
-        //                L.polyline([marker.getLatLng(), marker_nei.getLatLng()], { color: 'red', opacity: 0.2, smoothFactor: 1 }).addTo(map);
-        //            }
-         //       }
-        //    });
-        //});
+
+        console.log("Updating drone position via WebSocket");
+        updateQueue.push(nodeData);
+        console.log(droneMarkers);
 
     }
 
@@ -535,15 +596,19 @@
     }
 
     socket.on('node_update', function (data) {
-        console.log("Received node_update from WebSocket");
+        console.log("--> [!] Received node_update from WebSocket");
         console.log(data);
 
-        console.log("gData before updating the node");
-        console.log(gData);
+        // Increase randomlly the latitude and longitude of the node
+        data.latitude = data.latitude + randomFloatFromInterval(2, 10);
+        data.longitude = data.longitude + randomFloatFromInterval(2, 12);
+
+        //console.log("gData before updating the node");
+        //console.log(gData);
 
         // Update the table and the map
         updateNode(data);
-        
+
         // Update the graph
         // Add the new node to the gData and update the graph (if the node is not already in the graph)
         var nodeExists = false;
@@ -581,8 +646,8 @@
             }
             gData.links.push(links);
             // Update the graph
-            console.log("gData after adding the new node");
-            console.log(gData);
+            //console.log("gData after adding the new node");
+            //console.log(gData);
             updateGraph(gData);
         } else {
             console.log("Node already exists in the graph")
@@ -591,13 +656,9 @@
         // Detect if the data.node has different neighbors in the graph, then remove the links that are not in the new neighbors
         console.log("Detecting if the node has different neighbors");
         var node = gData.nodes.filter(n => n.ipport === data.ip + ":" + data.port)[0];
-        console.log("Node in the graph using event received from WebSocket");
-        console.log(node);
         var neighbors = data.neighbors.split(" ");
-        console.log("Neighbors in the event received from WebSocket");
-        console.log(neighbors);
-        console.log("gData.links");
-        console.log(gData.links);
+        //console.log("gData.links");
+        //console.log(gData.links);
         var linksToRemove = [];
         // Identify the links to remove, the new neighbors are in neighbors. If a link is not in neighbors, then remove it
         // Compare both source and target because the links are bidirectional
@@ -624,7 +685,7 @@
             }
         }
         // Update the graph
-        console.log(gData);
+        //console.log(gData);
         updateGraph(gData);
 
 
