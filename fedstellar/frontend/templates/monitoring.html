@@ -242,7 +242,19 @@
 {% endif %}
 
 <script>
-    var map = L.map('map').setView([44.194021, 0.397141], 4);
+    var map = L.map('map', {
+        center: [44.194021, 12.397141],
+        zoom: 5,
+        minZoom: 2,
+        maxZoom: 18,
+        maxBounds: [
+            [-90, -180],
+            [90, 180]
+        ],
+        maxBoundsViscosity: 1.0,
+        zoomControl: true,
+        worldCopyJump: false,
+    });
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '&copy; <a href=\"https://enriquetomasmb.com\">enriquetomasmb.com</a>' }).addTo(map);
 
     //{{ markers | safe }}
@@ -373,6 +385,10 @@
             if (neighborMarker) {
                 var neighborLatLng = neighborMarker.getLatLng();
                 var line = L.polyline([droneLatLng, neighborLatLng], { color: 'blue' }).addTo(lineLayer);
+                line.bindPopup(`Distance: ${droneLatLng.distanceTo(neighborLatLng).toFixed(2)} m`);
+                line.on('mouseover', function (e) {
+                    this.openPopup();
+                });
                 droneLines[droneId].push(line);
             }
         });
@@ -400,6 +416,9 @@
             var marker = new L.Marker.movingMarker([[lat, lng], [lat, lng]], [1000], { icon: droneIcon, autostart: true, loop: false })
                 .addTo(map)
                 .bindPopup(popupContent);
+            marker.on('mouseover', function (e) {
+                this.openPopup();
+            });
             marker.ip = ip;
             marker.neighbors = neighborIPs;
             droneMarkers[droneId] = marker
