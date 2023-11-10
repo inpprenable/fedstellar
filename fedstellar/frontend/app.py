@@ -624,6 +624,7 @@ def fedstellar_update_node(scenario_name):
                     "federation": config["scenario_args"]["federation"],
                     "round": config["federation_args"]["round"],
                     "name": config["scenario_args"]["name"],
+                    "status": True,
                 },
             )
 

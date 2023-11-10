@@ -207,40 +207,6 @@
     });
 </script>
 
-{% if False %}
-<script>
-    // If dropdown is open, get logscontainer and get the logs every 5 seconds
-    // If not, not get the logs
-    setInterval(function () {
-        var dropdowns = document.querySelectorAll(".dropdown-content");
-        dropdowns.forEach(function (dropdown) {
-            if (dropdown.style.display === "table-row") {
-                var logscontainer = dropdown.querySelector("#logscontainer");
-                var participant_id = logscontainer.getAttribute("data-id");
-                var scenario = logscontainer.getAttribute("data-scenario");
-                fetch('/scenario/' + scenario + '/node/' + participant_id + '/infolog/10')
-                    .then(function (response) {
-                        if (!response.ok) {
-                            console.log("Error");
-                            return;
-                        }
-                        // Examine the text in the response (is not a json file)
-                        response.text().then(function (data) {
-                            // Change \n to <br>
-                            data = data.replace(/\n/g, "<br>");
-                            // Change ANSI color to HTML color
-                            data = data.replace(/\x1b\[36m/g, "<span class='ansi36'>");
-                            data = data.replace(/\x1b\[0m/g, "</span>");
-                            // Change the text
-                            logscontainer.innerHTML = data;
-                        });
-                    });
-            }
-        });
-    }, 2000);
-</script>
-{% endif %}
-
 <script>
     var map = L.map('map', {
         center: [44.194021, 12.397141],
@@ -355,6 +321,12 @@
         popupAnchor: [0, -19] // Where the popup will be displayed in relation to the icon
     });
 
+    var droneIconOffline = L.icon({
+        iconUrl: '/static/img/drone_offline.svg',
+        iconSize: [38, 38], // Icon size
+        iconAnchor: [19, 19], // Icon point that will correspond to the marker coordinate
+        popupAnchor: [0, -19] // Where the popup will be displayed in relation to the icon
+    });
 
     function findMarkerByIP(ip) {
         for (var id in droneMarkers) {
@@ -384,7 +356,11 @@
             var neighborMarker = findMarkerByIP(neighborIP);
             if (neighborMarker) {
                 var neighborLatLng = neighborMarker.getLatLng();
-                var line = L.polyline([droneLatLng, neighborLatLng], { color: 'blue' }).addTo(lineLayer);
+                if (offlineNodes.has(droneMarkers[droneId].ip) || offlineNodes.has(neighborIP)) {
+                    var line = L.polyline([droneLatLng, neighborLatLng], { color: 'grey' }).addTo(lineLayer);
+                } else {
+                    var line = L.polyline([droneLatLng, neighborLatLng], { color: 'blue' }).addTo(lineLayer);
+                }
                 line.bindPopup(`Distance: ${droneLatLng.distanceTo(neighborLatLng).toFixed(2)} m`);
                 line.on('mouseover', function (e) {
                     this.openPopup();
@@ -411,11 +387,18 @@
         var droneId = uid;
         var newLatLng = new L.LatLng(lat, lng);
         var popupContent = `ID: ${uid}<br>IP: ${ip}<br>Coordinates:<br>${lat}, ${lng}`;
-
+        console.log("Offline nodes");
+        console.log(offlineNodes);
         if (!droneMarkers[droneId]) {
-            var marker = new L.Marker.movingMarker([[lat, lng], [lat, lng]], [1000], { icon: droneIcon, autostart: true, loop: false })
-                .addTo(map)
-                .bindPopup(popupContent);
+            if (offlineNodes.has(ip)) {
+                var marker = new L.Marker.movingMarker([[lat, lng], [lat, lng]], [1000], { icon: droneIconOffline, autostart: true, loop: false })
+                    .addTo(map)
+                    .bindPopup(popupContent);
+            } else {
+                var marker = new L.Marker.movingMarker([[lat, lng], [lat, lng]], [1000], { icon: droneIcon, autostart: true, loop: false })
+                    .addTo(map)
+                    .bindPopup(popupContent);
+            }
             marker.on('mouseover', function (e) {
                 this.openPopup();
             });
@@ -461,13 +444,13 @@
 
     // Get all divs with id "node-vars" and update them with value returned by async GET request
     var scenario_name = document.getElementById('scenario_name').innerHTML;
-    var node_row = document.querySelectorAll("#node-vars");
 
     // Get the table
     fetch('/api/scenario/' + scenario_name + '/monitoring')
         .then(function (response) {
             if (!response.ok) {
                 showAlert("danger", "Error: " + response.status + " " + response.statusText);
+                console.log("Error: " + response.status);
                 return;
             }
             // Examine the json in the response
@@ -476,9 +459,9 @@
                 var markers = Array();
                 var markers_neighborhood = Array();
                 var latlngs = Array();
-                var nodes_offline = Array();
 
                 data['nodes_table'].forEach(function (node) {
+                    var node_row = document.querySelectorAll("#node-" + node[0]);
                     for (var i = 0; i < node_row.length; i++) {
                         var uid_row = node_row[i].querySelector("#uid").innerHTML.trim();
                         if (uid_row === node[0]) {
@@ -495,8 +478,9 @@
                             if (node[12]) {
                                 node_row[i].querySelector("#status").innerHTML = '<span class="label label-success">Online</span>';
                             } else {
-                                nodes_offline.push(node[2] + ":" + node[3]);
                                 offlineNodes.add(node[2] + ":" + node[3]);
+                                console.log("Offline nodes");
+                                console.log(offlineNodes);
                                 node_row[i].querySelector("#status").innerHTML = '<span class="label label-danger">Offline</span>';
                             }
                             break;
@@ -509,6 +493,7 @@
                         latitude: node[6],
                         longitude: node[7],
                         neighbors: node[5],
+                        status: node[12],
                     };
                     updateQueue.push(data_json);
 
