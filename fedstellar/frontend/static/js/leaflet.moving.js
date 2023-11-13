@@ -20,6 +20,17 @@ L.Marker.MovingMarker = L.Marker.extend({
         autostart: false,
         loop: false,
     },
+    
+    setIcon: function(icon) {
+        // Call the original setIcon method on L.Marker
+        L.Marker.prototype.setIcon.call(this, icon);
+        if (this.isRunning()) {
+            this._stopAnimation();
+            this._updatePosition();
+            this._runAnimation();
+        }
+        return this;
+    },
 
     initialize: function (latlngs, durations, options) {
         L.Marker.prototype.initialize.call(this, latlngs[0], options);
