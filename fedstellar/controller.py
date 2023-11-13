@@ -74,6 +74,7 @@ class Controller:
         self.log_dir = args.logs
         self.model_dir = args.models
         self.env_path = args.env
+        self.debug = args.debug if hasattr(args, "debug") else False
         self.matrix = args.matrix if hasattr(args, "matrix") else None
         self.root_path = (
             args.root_path
@@ -192,6 +193,7 @@ class Controller:
                     - /var/run/docker.sock:/var/run/docker.sock
                     - ./config/fedstellar:/etc/nginx/sites-available/default
                 environment:
+                    - FEDSTELLAR_DEBUG={debug}
                     - SERVER_LOG=/fedstellar/app/logs/server.log
                     - FEDSTELLAR_LOGS_DIR=/fedstellar/app/logs/
                     - FEDSTELLAR_CONFIG_DIR=/fedstellar/app/config/
@@ -228,6 +230,7 @@ class Controller:
         # Generate the Docker Compose file dynamically
         services = ""
         services += frontend_template.format(
+            debug=self.debug,
             path=self.root_path,
             gw="192.168.100.1",
             ip="192.168.100.100",
@@ -462,11 +465,13 @@ class Controller:
                     + str(self.scenario_name)
                 ).encode()
             ).hexdigest()
-            (
-                participant_config["geo_args"]["latitude"],
-                participant_config["geo_args"]["longitude"],
-            ) = TopologyManager.get_coordinates(random_geo=True)
-
+            if participant_config["mobility_args"]["random_geo"]:
+                (
+                    participant_config["mobility_args"]["latitude"],
+                    participant_config["mobility_args"]["longitude"],
+                ) = TopologyManager.get_coordinates(random_geo=True)
+            # If not, use the given coordinates in the frontend
+            
             participant_config["tracking_args"]["log_dir"] = self.log_dir
             participant_config["tracking_args"]["config_dir"] = self.config_dir
             participant_config["tracking_args"]["model_dir"] = self.model_dir

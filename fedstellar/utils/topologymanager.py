@@ -151,23 +151,15 @@ class TopologyManager:
     def get_coordinates(random_geo=True):
         if random_geo:
             if random.randint(0, 1) == 0:
-                # Spain bounds
-                min_latitude = 36.0
-                max_latitude = 43.0
-                min_longitude = -9.0
-                max_longitude = 4.0
-
-                latitude = random.uniform(min_latitude, max_latitude)
-                longitude = random.uniform(min_longitude, max_longitude)
+                # España
+                bounds = (36.0, 43.0, -9.0, 3.3)  # min_lat, max_lat, min_lon, max_lon
             else:
-                # Switzerland bounds
-                min_latitude = 45.8
-                max_latitude = 47.8
-                min_longitude = 5.9
-                max_longitude = 10.5
+                # Suiza
+                bounds = (45.8, 47.8, 5.9, 10.5)  # min_lat, max_lat, min_lon, max_lon
 
-                latitude = random.uniform(min_latitude, max_latitude)
-                longitude = random.uniform(min_longitude, max_longitude)
+            min_latitude, max_latitude, min_longitude, max_longitude = bounds
+            latitude = random.uniform(min_latitude, max_latitude)
+            longitude = random.uniform(min_longitude, max_longitude)
 
             return latitude, longitude
 

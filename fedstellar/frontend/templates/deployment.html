@@ -316,17 +316,11 @@
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="reputationSystem" id="without-reputation-btn"
                             checked>
-                        <label class="form-check-label" for="without-reputation-btn">Without Reputation</label>
-                        <!-- <small id="withoutReputationHelp" class="form-text text-muted">
-                        <i id="withoutReputationIcon" class="fa fa-info-circle"></i> -->
-                        <!-- </small> -->
+                        <label class="form-check-label" for="without-reputation-btn">Disable Reputation</label>
                     </div>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="reputationSystem" id="with-reputation-btn">
-                        <label class="form-check-label" for="with-reputation-btn">With Reputation</label>
-                        <!-- <small id="withReputationHelp" class="form-text text-muted">
-                        <i id="withReputationIcon" class="fa fa-info-circle"></i> -->
-                        <!-- </small> -->
+                        <label class="form-check-label" for="with-reputation-btn">Enable Reputation</label>
                     </div>
                     <div id="mtd-strategy" style="display: none; margin-left: 10px">
                         <div class="form-check form-check-inline">
@@ -354,7 +348,58 @@
                 </div>
             </div>
         </div>
-
+        <div class="row">
+            <!-- Mobility -->
+            <div class="col-md-4 no-padding">
+                <div class="form-group">
+                    <h4 class="step-number">Mobility <i class="fa fa-car"></i></h4>
+                    <h5>Select the default location for the participants</h5>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="locationRadioOptions" id="random-geo-btn"
+                            checked>
+                        <label class="form-check-label" for="random-geo-btn">Random location</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="locationRadioOptions"
+                            id="custom-location-btn">
+                        <label class="form-check-label" for="custom-location-btn">Custom location</label>
+                    </div>
+                    <div id="mobility-custom-location" style="display: none; margin-left: 20px">
+                        <h5>Latitude and longitude</h5>
+                        <input type="number" class="form-control" id="latitude" placeholder="Latitude" min="-90"
+                            max="90" value="38.023522" step="0.001" style="display: inline; width: 49%">
+                        <input type="number" class="form-control" id="longitude" placeholder="Longitude" min="-180"
+                            max="180" value="-1.174389" step="0.001" style="display: inline; width: 49%">
+                        <button id="select-location-map" type="button" class="btn btn-dark"
+                            style="margin-top: 10px">Open map</button>
+                        <div id="map-container" style="display: none; margin-top: 10px">
+                            <div id="map" style="width: 100%; height: 300px"></div>
+                        </div>
+                    </div>
+                    <h5>Mobility configuration</h5>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="mobility" id="without-mobility-btn" checked>
+                        <label class="form-check-label" for="without-mobility-btn">Disable Mobility</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="mobility" id="with-mobility-btn">
+                        <label class="form-check-label" for="with-mobility-btn">Enable Mobility</label>
+                    </div>
+                    <div id="mobility-options" style="display: none; margin-left: 10px">
+                        <h5>Scheme of mobility</h5>
+                        <select class="form-control" id="schemeMobilitySelect" name="schemeMobility"
+                            style="display: inline; width: 80%">
+                            <option selected>Circle</option>
+                            <option>Random</option>
+                        </select>
+                        <h5>Radius of mobility (m)</h5>
+                        <input type="number" class="form-control" id="radiusMobility"
+                            placeholder="Radius of mobility (m)" min="0" value="1000"
+                            style="display: inline; width: 80%">
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </form>
 
@@ -687,6 +732,12 @@
                     "is_dynamic_topology": document.getElementById("dynamic-topology-btn").checked ? true : false,
                     "is_dynamic_aggregation": document.getElementById("dynamic-aggregation-btn").checked ? true : false,
                     "target_aggregation": document.getElementById("dynamic-aggregation-btn").checked ? document.getElementById("targetAggregationSelect").value : false,
+                    "random_geo": document.getElementById("random-geo-btn").checked ? true : false,
+                    "latitude": document.getElementById("latitude").value,
+                    "longitude": document.getElementById("longitude").value,
+                    "with_mobility": document.getElementById("with-mobility-btn").checked ? true : false,
+                    "scheme_mobility": document.getElementById("schemeMobilitySelect").value,
+                    "radius_mobility": document.getElementById("radiusMobility").value,
                 };
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", "/scenario/deployment/run", true);
@@ -720,6 +771,143 @@
 
 </script>
 
+<!-- This script contains functions for displaying a map and adding markers and circles to it. It also handles the display of a custom location and the configuration of mobility options. -->
+<script>
+
+    // Custom location
+
+    customLocationDiv = document.getElementById("mobility-custom-location")
+    randomLocationBtn = document.getElementById("random-geo-btn");
+    randomLocationBtn.addEventListener("click", function () {
+        customLocationDiv.style.display = "none";
+    });
+
+    customLocationBtn = document.getElementById("custom-location-btn");
+    customLocationBtn.addEventListener("click", function () {
+        customLocationDiv.style.display = "block";
+    });
+
+    var map;
+
+    function initMap() {
+        map = L.map('map').setView([38.023522, -1.174389], 13);
+
+        // When map is displayed
+
+        L.marker([38.023522, -1.174389]).addTo(map)
+            .bindPopup('Default location')
+            .openPopup();
+
+        if (document.getElementById("with-mobility-btn").checked) {
+            // Add new circle
+            L.circle([38.023522, -1.174389], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.4,
+                radius: document.getElementById("radiusMobility").value
+            }).addTo(map);
+        }
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href=\"https://enriquetomasmb.com\">enriquetomasmb.com</a>',
+            maxZoom: 18,
+        }).addTo(map);
+
+        // When map is clicked
+
+        map.on('click', function (e) {
+            // Remove previous marker
+            map.eachLayer(function (layer) {
+                if (layer instanceof L.Marker) {
+                    map.removeLayer(layer);
+                }
+                if (layer instanceof L.Circle) {
+                    map.removeLayer(layer);
+                }
+            });
+            // Add new marker
+            L.marker([e.latlng.lat, e.latlng.lng]).addTo(map)
+                .bindPopup('Default location')
+                .openPopup();
+            // Update latitude and longitude
+            document.getElementById("latitude").value = e.latlng.lat;
+            document.getElementById("longitude").value = e.latlng.lng;
+
+            if (document.getElementById("with-mobility-btn").checked) {
+                // Add new circle
+                L.circle([e.latlng.lat, e.latlng.lng], {
+                    color: 'red',
+                    fillColor: '#f03',
+                    fillOpacity: 0.4,
+                    radius: document.getElementById("radiusMobility").value
+                }).addTo(map);
+            }
+        });
+
+        // When radius of mobility is changed
+
+        // Adjust radius of the circle (radius of mobility)
+        document.getElementById("radiusMobility").addEventListener("change", function () {
+            // Remove previous circle
+            map.eachLayer(function (layer) {
+                if (layer instanceof L.Circle) {
+                    map.removeLayer(layer);
+                }
+            });
+            // Add new circle
+            L.circle([document.getElementById("latitude").value, document.getElementById("longitude").value], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.4,
+                radius: document.getElementById("radiusMobility").value
+            }).addTo(map);
+        });
+
+
+    }
+
+    selectLocationMapBtn = document.getElementById("select-location-map");
+    selectLocationMapBtn.addEventListener("click", function () {
+        if (document.getElementById("map-container").style.display === "none") {
+            document.getElementById("map-container").style.display = "block";
+            initMap();
+        } else {
+            document.getElementById("map-container").style.display = "none";
+        }
+    });
+
+    // Mobility configuration
+
+    mobilityOptionsDiv = document.getElementById("mobility-options")
+    withoutMobilityBtn = document.getElementById("without-mobility-btn");
+    withoutMobilityBtn.addEventListener("click", function () {
+        mobilityOptionsDiv.style.display = "none";
+        if (document.getElementById("map-container").style.display === "block") {
+            // If map is displayed, remove circle
+            map.eachLayer(function (layer) {
+                if (layer instanceof L.Circle) {
+                    map.removeLayer(layer);
+                }
+            });
+        }
+    });
+
+    withMobilityBtn = document.getElementById("with-mobility-btn");
+    withMobilityBtn.addEventListener("click", function () {
+        mobilityOptionsDiv.style.display = "block";
+        if (document.getElementById("map-container").style.display === "block") {
+            // If map is displayed, add a circle
+            L.circle([document.getElementById("latitude").value, document.getElementById("longitude").value], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.4,
+                radius: document.getElementById("radiusMobility").value
+            }).addTo(map);
+        }
+    });
+
+</script>
+
 <script>
     // Generate defense with reputation system configs
     // When click on "with-reputation-btn" check input, dife "mtd-strategy"
@@ -746,12 +934,6 @@
             targetAggregation.style.display = "none";
         }
     });
-
-
-    // targetAggregationSelect.addEventListener("change", function () {
-    //     targetAggregation.style.display = "none";
-    // });
-
 
 </script>
 

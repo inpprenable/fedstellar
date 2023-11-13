@@ -242,7 +242,7 @@
         .height(700)
         .backgroundColor('#ffffff')
         .nodeId('ipport')
-        .nodeLabel(node => `<p style="color: black">ID: ${node.id} | IP: ${node.ipport} | Role: ${node.role}</p>`)
+        .nodeLabel(node => `<p style="color: black"><strong>[ID]</strong> ${node.id}<br><strong>[IP]</strong> ${node.ipport}<br><strong>[ROLE]</strong> ${node.role}</p>`)
         .onNodeClick(node => {
             const distance = 40;
             const distRatio = 1 + distance / Math.hypot(node.x, node.y, node.z);
@@ -386,7 +386,7 @@
     function updateDronePosition(uid, ip, lat, lng, neighborIPs) {
         var droneId = uid;
         var newLatLng = new L.LatLng(lat, lng);
-        var popupContent = `ID: ${uid}<br>IP: ${ip}<br>Coordinates:<br>${lat}, ${lng}`;
+        var popupContent = `<p><strong>UID:</strong> ${uid}<br><strong>IP:</strong> ${ip}<br><strong>Neighbors:</strong> ${neighborIPs}<br><strong>Latitude:</strong> ${lat}<br><strong>Longitude:</strong> ${lng}</p>`;
         console.log("Offline nodes");
         console.log(offlineNodes);
         if (!droneMarkers[droneId]) {
@@ -604,8 +604,8 @@
         console.log(data);
 
         // Increase randomlly the latitude and longitude of the node
-        data.latitude = data.latitude + randomFloatFromInterval(2, 10);
-        data.longitude = data.longitude + randomFloatFromInterval(2, 12);
+        // data.latitude = data.latitude + randomFloatFromInterval(2, 10);
+        // data.longitude = data.longitude + randomFloatFromInterval(2, 12);
 
         //console.log("gData before updating the node");
         //console.log(gData);

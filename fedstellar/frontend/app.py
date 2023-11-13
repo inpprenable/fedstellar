@@ -79,6 +79,7 @@ app.config["log_dir"] = os.environ.get("FEDSTELLAR_LOGS_DIR")
 app.config["config_dir"] = os.environ.get("FEDSTELLAR_CONFIG_DIR")
 app.config["model_dir"] = os.environ.get("FEDSTELLAR_MODELS_DIR")
 app.config["root_host_path"] = os.environ.get("FEDSTELLAR_ROOT_HOST")
+app.config["DEBUG"] = os.environ.get("FEDSTELLAR_DEBUG")
 socketio = SocketIO(
     app,
     async_mode=async_mode,
@@ -599,8 +600,8 @@ def fedstellar_update_node(scenario_name):
                 str(config["network_args"]["port"]),
                 str(config["device_args"]["role"]),
                 str(config["network_args"]["neighbors"]),
-                str(config["geo_args"]["latitude"]),
-                str(config["geo_args"]["longitude"]),
+                str(config["mobility_args"]["latitude"]),
+                str(config["mobility_args"]["longitude"]),
                 str(timestamp),
                 str(config["scenario_args"]["federation"]),
                 str(config["federation_args"]["round"]),
@@ -618,8 +619,8 @@ def fedstellar_update_node(scenario_name):
                     "port": str(config["network_args"]["port"]),
                     "role": config["device_args"]["role"],
                     "neighbors": config["network_args"]["neighbors"],
-                    "latitude": config["geo_args"]["latitude"],
-                    "longitude": config["geo_args"]["longitude"],
+                    "latitude": config["mobility_args"]["latitude"],
+                    "longitude": config["mobility_args"]["longitude"],
                     "timestamp": str(timestamp),
                     "federation": config["scenario_args"]["federation"],
                     "round": config["federation_args"]["round"],
@@ -1031,7 +1032,7 @@ def fedstellar_scenario_deployment_run():
                 "with_reputation": data["with_reputation"],
                 "is_dynamic_topology": data["is_dynamic_topology"],
                 "is_dynamic_aggregation": data["is_dynamic_aggregation"],
-                "target_aggregation": data["target_aggregation"],
+                "target_aggregation": data["target_aggregation"]
             }
             # Save args in a file
             scenario_path = os.path.join(app.config["config_dir"], scenario_name)
@@ -1107,6 +1108,25 @@ def fedstellar_scenario_deployment_run():
                 ]
                 participant_config["defense_args"]["target_aggregation"] = data[
                     "target_aggregation"
+                ]
+                
+                participant_config["mobility_args"]["random_geo"] = data[
+                    "random_geo"
+                ]
+                participant_config["mobility_args"]["latitude"] = data[
+                    "latitude"
+                ]
+                participant_config["mobility_args"]["longitude"] = data[
+                    "longitude"
+                ]
+                participant_config["mobility_args"]["with_mobility"] = data[
+                    "with_mobility"
+                ]
+                participant_config["mobility_args"]["scheme_mobility"] = data[
+                    "scheme_mobility"
+                ]
+                participant_config["mobility_args"]["radius_mobility"] = data[
+                    "radius_mobility"
                 ]
 
                 with open(participant_file, "w") as f:

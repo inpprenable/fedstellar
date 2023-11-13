@@ -477,8 +477,44 @@ class Node(BaseNode):
     def __start_reporter(self):
         while True:
             time.sleep(5)
+            self.__change_geo_location()
             self.__report_status_to_controller()
             self.__report_resources()
+            
+    def __change_geo_location(self):
+        mobility = self.config.participant["mobility_args"]["with_mobility"]
+        if mobility:
+            latitude = float(self.config.participant["mobility_args"]["latitude"])
+            longitude = float(self.config.participant["mobility_args"]["longitude"])
+            scheme_mobility = self.config.participant["mobility_args"]["scheme_mobility"]
+            radius_mobility = float(self.config.participant["mobility_args"]["radius_mobility"])
+            
+            # Change latitude and longitude based on the scheme and radius.
+            # The scheme can be "random" or "circle"
+            # Radius is the radius of the circle in meters
+            radius_in_degrees = radius_mobility / 111000
+            
+            if scheme_mobility.lower() == "random":
+                latitude = latitude + random.uniform(-radius_in_degrees, radius_in_degrees)
+                longitude = longitude + random.uniform(-radius_in_degrees, radius_in_degrees)
+            elif scheme_mobility.lower() == "circle":
+                radius = random.uniform(0, radius_in_degrees)
+                angle = random.uniform(0, 2 * math.pi)
+                latitude = latitude + radius * math.cos(angle)
+                longitude = longitude + radius * math.sin(angle)
+            else:
+                logging.error(f"({self.addr}) Mobility scheme not supported")
+                return
+            
+            # Check if the new latitude and longitude are valid
+            if latitude < -90 or latitude > 90 or longitude < -180 or longitude > 180:
+                logging.error(f"({self.addr}) New geo location not valid")
+                return
+            
+            # Update the geo location
+            self.config.participant["mobility_args"]["latitude"] = latitude
+            self.config.participant["mobility_args"]["longitude"] = longitude
+            logging.info(f"({self.addr}) New geo location: {latitude}, {longitude}")
 
     def __report_status_to_controller(self):
         """

@@ -23,10 +23,6 @@
     "strategy": "ddp",
     "logging": false
   },
-  "geo_args": {
-    "latitude": "46.762520",
-    "longitude": "7.600490"
-  },
   "federation_args": {
     "round": 0
   },
@@ -40,6 +36,14 @@
     "delay": "100ms",
     "delay-distro": 0
   },
+  "mobility_args": {
+    "random_geo": true,
+    "latitude": "",
+    "longitude": "",
+    "with_mobility": false,
+    "scheme_mobility": "circle",
+    "radius_mobility": 1000
+  },  
   "data_args": {
     "dataset": "MNIST"
   },

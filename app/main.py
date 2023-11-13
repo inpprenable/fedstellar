@@ -67,6 +67,14 @@ argparser.add_argument(
     help=".env file path",
 )
 argparser.add_argument(
+    "-d",
+    "--debug",
+    dest="debug",
+    action="store_true",
+    default=False,
+    help="Debug mode",
+)
+argparser.add_argument(
     "-v",
     "--version",
     action="version",
