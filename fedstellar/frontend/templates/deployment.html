@@ -370,8 +370,10 @@
                             max="90" value="38.023522" step="0.001" style="display: inline; width: 49%">
                         <input type="number" class="form-control" id="longitude" placeholder="Longitude" min="-180"
                             max="180" value="-1.174389" step="0.001" style="display: inline; width: 49%">
-                        <button id="select-location-map" type="button" class="btn btn-dark"
-                            style="margin-top: 10px">Open map</button>
+                        <button id="open-map-btn" type="button" class="btn btn-dark" style="margin-top: 10px">Open
+                            map</button>
+                        <button id="current-location-btn" type="button" class="btn btn-dark"
+                            style="margin-top: 10px">Get current location</button>
                         <div id="map-container" style="display: none; margin-top: 10px">
                             <div id="map" style="width: 100%; height: 300px"></div>
                         </div>
@@ -787,6 +789,16 @@
         customLocationDiv.style.display = "block";
     });
 
+    // Current location
+    currentLocationBtn = document.getElementById("current-location-btn");
+    currentLocationBtn.addEventListener("click", function () {
+        // Obtain latitude and longitude of current location of the user
+        navigator.geolocation.getCurrentPosition(function (position) {
+            document.getElementById("latitude").value = position.coords.latitude;
+            document.getElementById("longitude").value = position.coords.longitude;
+        });
+    });
+
     var map;
 
     function initMap() {
@@ -827,7 +839,6 @@
             });
             // Add new marker
             L.marker([e.latlng.lat, e.latlng.lng]).addTo(map)
-                .bindPopup('Default location')
                 .openPopup();
             // Update latitude and longitude
             document.getElementById("latitude").value = e.latlng.lat;
@@ -866,7 +877,7 @@
 
     }
 
-    selectLocationMapBtn = document.getElementById("select-location-map");
+    selectLocationMapBtn = document.getElementById("open-map-btn");
     selectLocationMapBtn.addEventListener("click", function () {
         if (document.getElementById("map-container").style.display === "none") {
             document.getElementById("map-container").style.display = "block";
