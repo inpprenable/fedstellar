@@ -79,6 +79,7 @@ app.config["log_dir"] = os.environ.get("FEDSTELLAR_LOGS_DIR")
 app.config["config_dir"] = os.environ.get("FEDSTELLAR_CONFIG_DIR")
 app.config["model_dir"] = os.environ.get("FEDSTELLAR_MODELS_DIR")
 app.config["root_host_path"] = os.environ.get("FEDSTELLAR_ROOT_HOST")
+app.config["DEBUG"] = os.environ.get("FEDSTELLAR_DEBUG")
 socketio = SocketIO(
     app,
     async_mode=async_mode,
@@ -133,10 +134,11 @@ def datetimeformat(value, format="%B %d, %Y %H:%M"):
 def fedstellar_home():
     # Get alerts and news from API
     import requests
-
+    # Use custom headers
+    headers = {"User-Agent": "Fedstellar Frontend"}
     url = "https://federatedlearning.inf.um.es/alerts/alerts"
     try:
-        response = requests.get(url)
+        response = requests.get(url, headers=headers)
         alerts = response.json()
     except requests.exceptions.RequestException as e:
         print(e)
@@ -433,25 +435,14 @@ def fedstellar_scenario_monitoring(scenario_name):
                 nodes_status = []
                 nodes_offline = []
                 for i, node in enumerate(nodes_list):
-                    with open(
-                        os.path.join(
-                            app.config["config_dir"],
-                            scenario_name,
-                            f"participant_{node[1]}.json",
-                        )
-                    ) as f:
-                        nodes_config.append(json.load(f))
+                    nodes_config.append((node[2], node[3], node[4])) # IP, Port, Role
                     if datetime.datetime.now() - datetime.datetime.strptime(
                         node[8], "%Y-%m-%d %H:%M:%S.%f"
-                    ) > datetime.timedelta(seconds=25):
+                    ) > datetime.timedelta(seconds=10):
                         nodes_status.append(False)
                         nodes_offline.append(node[2] + ":" + str(node[3]))
                     else:
                         nodes_status.append(True)
-                # print("------------------------------BEFORE--------------------------------------------")
-                # print(nodes_list)
-                # print(nodes_config)
-                # print("--------------------------------------------------------------------------------")
                 nodes_table = zip(
                     [x[0] for x in nodes_list],  # UID
                     [x[1] for x in nodes_list],  # IDX
@@ -468,10 +459,6 @@ def fedstellar_scenario_monitoring(scenario_name):
                     nodes_status,  # Status
                 )
 
-                # print("-----------------------------AFTER----------------------------------------------")
-                # print(nodes_list)
-                # print(nodes_config)
-                # print("--------------------------------------------------------------------------------")
                 if os.path.exists(
                     os.path.join(
                         app.config["config_dir"], scenario_name, "topology.png"
@@ -595,15 +582,15 @@ def fedstellar_update_node(scenario_name):
             config = request.get_json()
             timestamp = datetime.datetime.now()
             # Update file in the local directory
-            with open(
-                os.path.join(
-                    app.config["config_dir"],
-                    scenario_name,
-                    f'participant_{config["device_args"]["idx"]}.json',
-                ),
-                "w",
-            ) as f:
-                json.dump(config, f, sort_keys=False, indent=2)
+            # with open(
+            #     os.path.join(
+            #         app.config["config_dir"],
+            #         scenario_name,
+            #         f'participant_{config["device_args"]["idx"]}.json',
+            #     ),
+            #     "w",
+            # ) as f:
+            #     json.dump(config, f, sort_keys=False, indent=2)
 
             # Update the node in database
             update_node_record(
@@ -613,8 +600,8 @@ def fedstellar_update_node(scenario_name):
                 str(config["network_args"]["port"]),
                 str(config["device_args"]["role"]),
                 str(config["network_args"]["neighbors"]),
-                str(config["geo_args"]["latitude"]),
-                str(config["geo_args"]["longitude"]),
+                str(config["mobility_args"]["latitude"]),
+                str(config["mobility_args"]["longitude"]),
                 str(timestamp),
                 str(config["scenario_args"]["federation"]),
                 str(config["federation_args"]["round"]),
@@ -625,17 +612,20 @@ def fedstellar_update_node(scenario_name):
             socketio.emit(
                 "node_update",
                 {
+                    "scenario_name": scenario_name,
                     "uid": config["device_args"]["uid"],
                     "idx": config["device_args"]["idx"],
                     "ip": config["network_args"]["ip"],
                     "port": str(config["network_args"]["port"]),
                     "role": config["device_args"]["role"],
                     "neighbors": config["network_args"]["neighbors"],
-                    "latitude": config["geo_args"]["latitude"],
-                    "longitude": config["geo_args"]["longitude"],
+                    "latitude": config["mobility_args"]["latitude"],
+                    "longitude": config["mobility_args"]["longitude"],
                     "timestamp": str(timestamp),
                     "federation": config["scenario_args"]["federation"],
+                    "round": config["federation_args"]["round"],
                     "name": config["scenario_args"]["name"],
+                    "status": True,
                 },
             )
 
@@ -1042,7 +1032,7 @@ def fedstellar_scenario_deployment_run():
                 "with_reputation": data["with_reputation"],
                 "is_dynamic_topology": data["is_dynamic_topology"],
                 "is_dynamic_aggregation": data["is_dynamic_aggregation"],
-                "target_aggregation": data["target_aggregation"],
+                "target_aggregation": data["target_aggregation"]
             }
             # Save args in a file
             scenario_path = os.path.join(app.config["config_dir"], scenario_name)
@@ -1077,9 +1067,6 @@ def fedstellar_scenario_deployment_run():
                 with open(participant_file) as f:
                     participant_config = json.load(f)
                 participant_config["network_args"]["ip"] = node_config["ip"]
-                participant_config["network_args"]["ipdemo"] = node_config[
-                    "ipdemo"
-                ]  # legacy code
                 participant_config["network_args"]["port"] = int(node_config["port"])
                 participant_config["device_args"]["idx"] = node_config["id"]
                 participant_config["device_args"]["start"] = node_config["start"]
@@ -1121,6 +1108,25 @@ def fedstellar_scenario_deployment_run():
                 ]
                 participant_config["defense_args"]["target_aggregation"] = data[
                     "target_aggregation"
+                ]
+                
+                participant_config["mobility_args"]["random_geo"] = data[
+                    "random_geo"
+                ]
+                participant_config["mobility_args"]["latitude"] = data[
+                    "latitude"
+                ]
+                participant_config["mobility_args"]["longitude"] = data[
+                    "longitude"
+                ]
+                participant_config["mobility_args"]["with_mobility"] = data[
+                    "with_mobility"
+                ]
+                participant_config["mobility_args"]["scheme_mobility"] = data[
+                    "scheme_mobility"
+                ]
+                participant_config["mobility_args"]["radius_mobility"] = data[
+                    "radius_mobility"
                 ]
 
                 with open(participant_file, "w") as f:

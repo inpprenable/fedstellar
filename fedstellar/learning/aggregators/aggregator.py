@@ -111,8 +111,6 @@ class Aggregator:
         return models_added
 
     def get_aggregated_models_weights(self):
-        # TBD
-        # Get a list of weights added
         return self.__models
 
     def add_model(self, model, contributors, weight, source=None, round=None, local=False):

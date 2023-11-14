@@ -37,7 +37,6 @@ def main():
     experiment_name = config.participant["scenario_args"]["name"]
     model_name = config.participant["model_args"]["model"]
     idx = config.participant["device_args"]["idx"]
-    hostdemo = config.participant["network_args"]["ipdemo"]
     host = config.participant["network_args"]["ip"]
     port = config.participant["network_args"]["port"]
     neighbors = config.participant["network_args"]["neighbors"].split()
@@ -142,7 +141,6 @@ def main():
         experiment_name=experiment_name,
         model=model,
         data=dataset,
-        hostdemo=hostdemo,
         host=host,
         port=port,
         config=config,

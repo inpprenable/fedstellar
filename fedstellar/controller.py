@@ -74,6 +74,7 @@ class Controller:
         self.log_dir = args.logs
         self.model_dir = args.models
         self.env_path = args.env
+        self.debug = args.debug if hasattr(args, "debug") else False
         self.matrix = args.matrix if hasattr(args, "matrix") else None
         self.root_path = (
             args.root_path
@@ -147,7 +148,7 @@ class Controller:
             for i in self.config.participants:
                 logging.info(
                     "[Mender.module] Device {} | IP: {}".format(
-                        i["device_args"]["idx"], i["network_args"]["ipdemo"]
+                        i["device_args"]["idx"], i["network_args"]["ip"]
                     )
                 )
                 logging.info("[Mender.module] \tCreating artifacts...")
@@ -192,6 +193,7 @@ class Controller:
                     - /var/run/docker.sock:/var/run/docker.sock
                     - ./config/fedstellar:/etc/nginx/sites-available/default
                 environment:
+                    - FEDSTELLAR_DEBUG={debug}
                     - SERVER_LOG=/fedstellar/app/logs/server.log
                     - FEDSTELLAR_LOGS_DIR=/fedstellar/app/logs/
                     - FEDSTELLAR_CONFIG_DIR=/fedstellar/app/config/
@@ -228,6 +230,7 @@ class Controller:
         # Generate the Docker Compose file dynamically
         services = ""
         services += frontend_template.format(
+            debug=self.debug,
             path=self.root_path,
             gw="192.168.100.1",
             ip="192.168.100.100",
@@ -443,6 +446,7 @@ class Controller:
 
         # Update participants configuration
         is_start_node = False
+        config_participants = []
         for i in range(self.n_nodes):
             with open(f"{self.config_dir}/participant_" + str(i) + ".json") as f:
                 participant_config = json.load(f)
@@ -461,11 +465,13 @@ class Controller:
                     + str(self.scenario_name)
                 ).encode()
             ).hexdigest()
-            (
-                participant_config["geo_args"]["latitude"],
-                participant_config["geo_args"]["longitude"],
-            ) = TopologyManager.get_coordinates(random_geo=True)
-
+            if participant_config["mobility_args"]["random_geo"]:
+                (
+                    participant_config["mobility_args"]["latitude"],
+                    participant_config["mobility_args"]["longitude"],
+                ) = TopologyManager.get_coordinates(random_geo=True)
+            # If not, use the given coordinates in the frontend
+            
             participant_config["tracking_args"]["log_dir"] = self.log_dir
             participant_config["tracking_args"]["config_dir"] = self.config_dir
             participant_config["tracking_args"]["model_dir"] = self.model_dir
@@ -476,12 +482,14 @@ class Controller:
                     raise ValueError("Only one node can be start node")
             with open(f"{self.config_dir}/participant_" + str(i) + ".json", "w") as f:
                 json.dump(participant_config, f, sort_keys=False, indent=2)
+            
+            config_participants.append((participant_config["network_args"]["ip"], participant_config["network_args"]["port"], participant_config["device_args"]["role"]))
         if not is_start_node:
             raise ValueError("No start node found")
         self.config.set_participants_config(participant_files)
 
         # Add role to the topology (visualization purposes)
-        self.topologymanager.update_nodes(self.config.participants)
+        self.topologymanager.update_nodes(config_participants)
         self.topologymanager.draw_graph(
             path=f"{self.log_dir}/{self.scenario_name}/topology.png", plot=False
         )
@@ -552,7 +560,6 @@ class Controller:
                     node["network_args"]["ip"],
                     node["network_args"]["port"],
                     "undefined",
-                    node["network_args"]["ipdemo"],
                 )
             )
 
@@ -706,6 +713,7 @@ class Controller:
                     "-f",
                     f"{self.config_dir}/docker-compose.yml",
                     "up",
+                    "--build",
                     "-d",
                 ]
             )

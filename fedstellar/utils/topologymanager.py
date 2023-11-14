@@ -59,6 +59,8 @@ class TopologyManager:
         labels = {}
         color_map = []
         server = False
+        print("draw_graph")
+        print(self.nodes)
         for k in range(self.n_nodes):
             if str(self.nodes[k][2]) == Role.AGGREGATOR:
                 color_map.append("orange")
@@ -71,10 +73,7 @@ class TopologyManager:
                 color_map.append("purple")
             else:
                 color_map.append("red")
-            if self.nodes[k][3] is not None and self.nodes[k][3] != "127.0.0.1":
-                labels[k] = f"P{k}\n" + str(self.nodes[k][3]) + ":" + str(self.nodes[k][1])
-            else:
-                labels[k] = f"P{k}\n" + str(self.nodes[k][0]) + ":" + str(self.nodes[k][1])
+            labels[k] = f"P{k}\n" + str(self.nodes[k][0]) + ":" + str(self.nodes[k][1])
         # nx.draw_networkx_nodes(g, pos_shadow, node_color='k', alpha=0.5)
         nx.draw_networkx_nodes(g, pos, node_color=color_map, linewidths=2)
         nx.draw_networkx_labels(g, pos, labels, font_size=10, font_weight='bold')
@@ -152,23 +151,15 @@ class TopologyManager:
     def get_coordinates(random_geo=True):
         if random_geo:
             if random.randint(0, 1) == 0:
-                # Spain bounds
-                min_latitude = 36.0
-                max_latitude = 43.0
-                min_longitude = -9.0
-                max_longitude = 4.0
-
-                latitude = random.uniform(min_latitude, max_latitude)
-                longitude = random.uniform(min_longitude, max_longitude)
+                # España
+                bounds = (36.0, 43.0, -9.0, 3.3)  # min_lat, max_lat, min_lon, max_lon
             else:
-                # Switzerland bounds
-                min_latitude = 45.8
-                max_latitude = 47.8
-                min_longitude = 5.9
-                max_longitude = 10.5
+                # Suiza
+                bounds = (45.8, 47.8, 5.9, 10.5)  # min_lat, max_lat, min_lon, max_lon
 
-                latitude = random.uniform(min_latitude, max_latitude)
-                longitude = random.uniform(min_longitude, max_longitude)
+            min_latitude, max_latitude, min_longitude, max_longitude = bounds
+            latitude = random.uniform(min_latitude, max_latitude)
+            longitude = random.uniform(min_longitude, max_longitude)
 
             return latitude, longitude
 
@@ -176,10 +167,7 @@ class TopologyManager:
         self.nodes = nodes
 
     def update_nodes(self, config_participants):
-        nodes = []
-        for i, node in enumerate(config_participants):
-            nodes.append((node["network_args"]["ip"], node["network_args"]["port"], node["device_args"]["role"], node["network_args"]["ipdemo"]))
-        self.nodes = nodes
+        self.nodes = config_participants
 
     def get_node(self, node_idx):
         return self.nodes[node_idx]
@@ -199,7 +187,6 @@ class TopologyManager:
         neighbors_index = []
         neighbors_data = []
         for i in range(self.n_nodes):
-            print(node_idx, i)
             if self.topology[node_idx][i] == 1:
                 neighbors_index.append(i)
                 neighbors_data.append(self.nodes[i])
@@ -350,6 +337,5 @@ class TopologyManager:
                         }
                     )
                     # matrix[nodes.index(node['network_args']['ip'] + ':' + str(node['network_args']['port']))][nodes.index(neighbour)] = 1
-        print(json_data)
         with open(path, "w") as f:
             json.dump(json_data, f, sort_keys=False, indent=2)
