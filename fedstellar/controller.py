@@ -192,10 +192,15 @@ class Controller:
                     dockerfile: Dockerfile-grafana
                 restart: unless-stopped
                 volumes:
-                    - {grafana_path}/grafana.ini:/etc/grafana/grafana.ini
                     - {grafana_path}/grafana.db:/var/lib/grafana/grafana.db
                 environment:
                     - GF_SECURITY_ADMIN_PASSWORD=admin
+                    - GF_USERS_ALLOW_SIGN_UP=false
+                    - GF_SERVER_HTTP_PORT=3000
+                    - GF_SERVER_PROTOCOL=http
+                    - GF_SERVER_DOMAIN=localhost:{grafana_port}
+                    - GF_SERVER_ROOT_URL=http://localhost:{grafana_port}/waf/
+                    - GF_SERVER_SERVE_FROM_SUB_PATH=false
                 ports:
                     - {grafana_port}:3000
                 ipc: host
