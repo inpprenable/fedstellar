@@ -199,7 +199,7 @@ class Controller:
                     - GF_SERVER_HTTP_PORT=3000
                     - GF_SERVER_PROTOCOL=http
                     - GF_SERVER_DOMAIN=localhost:{grafana_port}
-                    - GF_SERVER_ROOT_URL=http://localhost:{grafana_port}/waf/
+                    - GF_SERVER_ROOT_URL=http://localhost:{grafana_port}/grafana/
                     - GF_SERVER_SERVE_FROM_SUB_PATH=false
                 ports:
                     - {grafana_port}:3000
