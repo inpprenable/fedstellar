@@ -67,13 +67,17 @@ class Controller:
         self.start_date_scenario = None
         self.federation = args.federation if hasattr(args, "federation") else None
         self.topology = args.topology if hasattr(args, "topology") else None
-        self.frontend_port = args.webport if hasattr(args, "webport") else 5000
-        self.statistics_port = args.statsport if hasattr(args, "statsport") else 5100
+        self.waf_port = args.wafport if hasattr(args, "wafport") else 6000
+        self.frontend_port = args.webport if hasattr(args, "webport") else 6060
+        self.grafana_port = args.grafanaport if hasattr(args, "grafanaport") else 6040
+        self.loki_port = args.lokiport if hasattr(args, "lokiport") else 6010
+        self.statistics_port = args.statsport if hasattr(args, "statsport") else 6065
         self.simulation = args.simulation
         self.config_dir = args.config
         self.log_dir = args.logs
         self.model_dir = args.models
         self.env_path = args.env
+        self.waf = args.waf if hasattr(args, "waf") else False
         self.debug = args.debug if hasattr(args, "debug") else False
         self.matrix = args.matrix if hasattr(args, "matrix") else None
         self.root_path = (
@@ -123,6 +127,9 @@ class Controller:
         os.environ["FEDSTELLAR_MODELS_DIR"] = self.model_dir
         os.environ["FEDSTELLAR_STATISTICS_PORT"] = str(self.statistics_port)
 
+        if self.waf:
+            self.run_waf()
+        
         self.run_frontend()
 
         if self.mender:
@@ -158,9 +165,191 @@ class Controller:
                 time.sleep(5)
             sys.exit(0)
 
+        logging.info("Fedstellar Frontend is running at port {}".format(self.frontend_port))
+        if self.waf:
+            logging.info("Fedstellar WAF is running at port {}".format(self.waf_port))
+            logging.info("Grafana Dashboard is running at port {}".format(self.grafana_port))
+        
         logging.info("Press Ctrl+C for exit from Fedstellar (global exit)")
         while True:
             time.sleep(1)
+
+    def run_waf(self):       
+        docker_compose_template = textwrap.dedent(
+            """
+            services:
+            {}
+        """
+        )
+        
+        grafana_template = textwrap.dedent(
+            """
+            grafana:
+                container_name: fedstellar-waf-grafana
+                image: fedstellar-waf-grafana
+                build:
+                    context: .
+                    dockerfile: Dockerfile-grafana
+                restart: unless-stopped
+                volumes:
+                    - {grafana_path}/grafana.ini:/etc/grafana/grafana.ini
+                    - {grafana_path}/grafana.db:/var/lib/grafana/grafana.db
+                environment:
+                    - GF_SECURITY_ADMIN_PASSWORD=admin
+                ports:
+                    - {grafana_port}:3000
+                ipc: host
+                privileged: true
+                networks:
+                    fedstellar-net-base:
+                        ipv4_address: {ip}
+        """
+        )
+        
+        loki_template = textwrap.dedent(
+            """
+            loki:
+                container_name: fedstellar-waf-loki
+                image: fedstellar-waf-loki
+                build:
+                    context: .
+                    dockerfile: Dockerfile-loki
+                restart: unless-stopped
+                volumes:
+                    - ./loki-config.yml:/mnt/config/loki-config.yml
+                ports:
+                    - {loki_port}:3100
+                user: "0:0"
+                command: 
+                    - '-config.file=/mnt/config/loki-config.yml'
+                networks:
+                    fedstellar-net-base:
+                        ipv4_address: {ip}
+        """
+        )
+        
+        promtail_template = textwrap.dedent(
+            """
+            promtail:
+                container_name: fedstellar-waf-promtail
+                image: fedstellar-waf-promtail
+                build:
+                    context: .
+                    dockerfile: Dockerfile-promtail
+                restart: unless-stopped
+                volumes:
+                    - {log_path}/waf/nginx:/var/log/nginx
+                    - ./promtail-config.yml:/etc/promtail/config.yml
+                command: 
+                    - '-config.file=/etc/promtail/config.yml'
+                networks:
+                    fedstellar-net-base:
+                        ipv4_address: {ip}
+        """
+        )
+        
+        waf_template = textwrap.dedent(
+            """
+            fedstellar-waf:
+                container_name: fedstellar-waf
+                image: fedstellar-waf
+                build: 
+                    context: .
+                    dockerfile: Dockerfile-waf
+                restart: unless-stopped
+                volumes:
+                    - {log_path}/waf/nginx:/var/log/nginx
+                extra_hosts:
+                    - "host.docker.internal:host-gateway"
+                ipc: host
+                privileged: true
+                ports:
+                    - {waf_port}:80
+                networks:
+                    fedstellar-net-base:
+                        ipv4_address: {ip}
+        """
+        )
+
+        waf_template = textwrap.indent(waf_template, " " * 4)
+        grafana_template = textwrap.indent(grafana_template, " " * 4)
+        loki_template = textwrap.indent(loki_template, " " * 4)
+        promtail_template = textwrap.indent(promtail_template, " " * 4)
+        
+        network_template = textwrap.dedent(
+            """
+            networks:
+                fedstellar-net-base:
+                    name: fedstellar-net-base
+                    driver: bridge
+                    ipam:
+                        config:
+                            - subnet: {}
+                              gateway: {}
+        """
+        )
+        
+        # Generate the Docker Compose file dynamically
+        services = ""
+        services += waf_template.format(
+            path=self.root_path,
+            log_path=os.environ["FEDSTELLAR_LOGS_DIR"],
+            waf_port=self.waf_port,
+            gw="192.168.100.1",
+            ip="192.168.100.200"
+        )
+        
+        services += grafana_template.format(
+            log_path=os.environ["FEDSTELLAR_LOGS_DIR"],
+            grafana_path=os.path.join(os.environ['FEDSTELLAR_ROOT'], 'fedstellar', 'waf', 'grafana'),
+            grafana_port=self.grafana_port,
+            loki_port=self.loki_port,  
+            ip="192.168.100.201"  
+        )
+        
+        services += loki_template.format(
+            log_path=os.environ["FEDSTELLAR_LOGS_DIR"],
+            loki_path=os.path.join(os.environ['FEDSTELLAR_ROOT'], 'fedstellar', 'waf', 'loki'),
+            loki_port=self.loki_port,  
+            ip="192.168.100.202"  
+        )
+        
+        services += promtail_template.format(
+            log_path=os.environ["FEDSTELLAR_LOGS_DIR"], 
+            ip="192.168.100.203" 
+        )
+        
+        docker_compose_file = docker_compose_template.format(services)
+        docker_compose_file += network_template.format(
+            "192.168.100.1/24", "192.168.100.1"
+        )
+        
+        # Write the Docker Compose file in waf directory
+        with open(
+            f"{os.path.join(os.environ['FEDSTELLAR_ROOT'], 'fedstellar', 'waf', 'docker-compose.yml')}",
+            "w",
+        ) as f:
+            f.write(docker_compose_file)
+            
+        # Start the Docker Compose file, catch error if any
+        try:
+            subprocess.check_call(
+                [
+                    "docker",
+                    "compose",
+                    "-f",
+                    f"{os.path.join(os.environ['FEDSTELLAR_ROOT'], 'fedstellar', 'waf', 'docker-compose.yml')}",
+                    "up",
+                    "--build",
+                    "-d",
+                ]
+            )
+        except subprocess.CalledProcessError as e:
+            logging.error(
+                "Docker Compose failed to start, please check if Docker is running and Docker Compose is installed."
+            )
+            logging.error(e)
+            raise e
 
     def run_frontend(self):
         if sys.platform == "win32":
@@ -226,6 +415,14 @@ class Controller:
                               gateway: {}
         """
         )
+        
+        network_template_external = textwrap.dedent(
+            """
+            networks:
+                fedstellar-net-base:
+                    external: true
+        """
+        )
 
         # Generate the Docker Compose file dynamically
         services = ""
@@ -238,9 +435,14 @@ class Controller:
             statistics_port=self.statistics_port,
         )
         docker_compose_file = docker_compose_template.format(services)
-        docker_compose_file += network_template.format(
-            "192.168.100.1/24", "192.168.100.1"
-        )
+
+        if self.waf:
+            # If WAF is enabled, we need to use the same network
+            docker_compose_file += network_template_external
+        else:
+            docker_compose_file += network_template.format(
+                "192.168.100.1/24", "192.168.100.1"
+            )
         # Write the Docker Compose file in config directory
         with open(
             f"{os.path.join(os.environ['FEDSTELLAR_ROOT'], 'fedstellar', 'frontend', 'docker-compose.yml')}",
@@ -274,7 +476,7 @@ class Controller:
             try:
                 # kill all the docker containers which contain the word "fedstellar"
                 commands = [
-                    """'docker kill $(docker ps -q --filter ancestor=fedstellar-frontend) | Out-Null""",
+                    """docker kill $(docker ps -q --filter ancestor=fedstellar-frontend) | Out-Null""",
                     """docker rm $(docker ps -a -q --filter ancestor=fedstellar-frontend) | Out-Null""",
                 ]
 
@@ -306,7 +508,7 @@ class Controller:
             try:
                 # kill all the docker containers which contain the word "fedstellar"
                 commands = [
-                    """'docker kill $(docker ps -q --filter ancestor=fedstellar-statistics) | Out-Null""",
+                    """docker kill $(docker ps -q --filter ancestor=fedstellar-statistics) | Out-Null""",
                     """docker rm $(docker ps -a -q --filter ancestor=fedstellar-statistics) | Out-Null""",
                 ]
 
@@ -368,7 +570,7 @@ class Controller:
             try:
                 # kill all the docker containers which contain the word "fedstellar"
                 commands = [
-                    """'docker kill $(docker ps -q --filter ancestor=fedstellar) | Out-Null""",
+                    """docker kill $(docker ps -q --filter ancestor=fedstellar) | Out-Null""",
                     """docker rm $(docker ps -a -q --filter ancestor=fedstellar) | Out-Null""",
                     """docker kill $(docker ps -q --filter ancestor=fedstellar-gpu) | Out-Null""",
                     """docker rm $(docker ps -a -q --filter ancestor=fedstellar-gpu) | Out-Null""",
@@ -401,10 +603,43 @@ class Controller:
                 raise Exception("Error while killing docker containers: {}".format(e))
 
     @staticmethod
+    def stop_waf():
+        if sys.platform == "win32":
+            try:
+                # kill all the docker containers which contain the word "fedstellar"
+                commands = [
+                    """docker-compose -p waf down | Out-Null""",
+                    """docker-compose -p waf rm | Out-Null""",
+                ]
+
+                for command in commands:
+                    time.sleep(1)
+                    exit_code = os.system(f'powershell.exe -Command "{command}"')
+                    # logging.info(f"Windows Command '{command}' executed with exit code: {exit_code}")
+
+            except Exception as e:
+                raise Exception("Error while killing docker containers: {}".format(e))
+        else:
+            try:
+                commands = [
+                    """docker-compose -p waf down > /dev/null 2>&1""",
+                    """docker-compose -p waf rm > /dev/null 2>&1""",
+                ]
+
+                for command in commands:
+                    time.sleep(1)
+                    exit_code = os.system(command)
+                    # logging.info(f"Linux Command '{command}' executed with exit code: {exit_code}")
+
+            except Exception as e:
+                raise Exception("Error while killing docker containers: {}".format(e))
+
+    @staticmethod
     def stop():
         logging.info("Closing Fedstellar (exiting from components)... Please wait")
         Controller.stop_participants()
         Controller.stop_frontend()
+        Controller.stop_waf()
         Controller.stop_statistics()
         Controller.stop_network()
         sys.exit(0)

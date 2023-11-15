@@ -13,6 +13,35 @@ argparser = argparse.ArgumentParser(
 )
 
 argparser.add_argument(
+    "--grafanaport",
+    dest="grafanaport",
+    default=6040,
+    help="Grafana port (default: 6040)",
+) 
+
+argparser.add_argument(
+    "--lokiport",
+    dest="lokiport",
+    default=6010,
+    help="Loki port (default: 6010)",
+) 
+
+argparser.add_argument(
+     "--waf",
+     dest="waf",
+     action="store_true",
+     default=False,
+     help="Run WAF",
+ )
+
+argparser.add_argument(
+    "--wafport",
+    dest="wafport",
+    default=6050,
+    help="WAF port (default: 6050)",
+)   
+
+argparser.add_argument(
     "-wp",
     "--webport",
     dest="webport",

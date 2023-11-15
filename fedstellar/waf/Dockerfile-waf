@@ -1,0 +1,6 @@
+FROM owasp/modsecurity-crs:3.3.5-nginx-202308071108
+
+ENV TZ=Europe/Madrid
+
+# Aplica la configuración de nginx
+COPY nginx_default.conf /etc/nginx/templates/conf.d/default.conf.template
