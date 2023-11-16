@@ -183,6 +183,15 @@ Solution: Start the docker daemon
 
     sudo dockerd
 
+Solution: Enable the following option in Docker Desktop
+
+Settings -> Advanced -> Allow the default Docker socket to be used
+    
+    .. image:: _static/docker-required-options.png
+        :align: center
+        :alt: Docker required options
+
+
 ===================================
 
 Error: Cannot connect to the Docker daemon at tcp://X.X.X.X:2375. Is the docker daemon running?

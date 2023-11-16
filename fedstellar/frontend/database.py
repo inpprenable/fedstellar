@@ -196,7 +196,6 @@ def match_user_id_with_image_uid(image_uid):
     command = "SELECT owner FROM images WHERE uid = '" + image_uid + "';"
     _c.execute(command)
     result = _c.fetchone()[0]
-    print(result)
 
     _conn.commit()
     _conn.close()
@@ -250,6 +249,43 @@ def list_nodes_by_scenario_name(scenario_name):
     return result
 
 
+def get_location_neighbours(node_uid, scenario_name):
+    # Get the location of the neighbours of the node with node_uid in the scenario with scenario_name (you can check the neighbours and then get its location from the database)
+    _conn = sqlite3.connect(node_db_file_location)
+    _c = _conn.cursor()
+    
+    command = "SELECT neighbors FROM nodes WHERE uid = '" + node_uid + "' AND scenario = '" + scenario_name + "';"
+    _c.execute(command)
+    try:
+        result = _c.fetchone()[0]
+    except:
+        return []
+            
+    _conn.commit()
+    _conn.close()
+    
+    result = result.split(" ")  # Example: ['192.168.50.1:4200', '192.156.23.1:4201']
+    
+    _conn = sqlite3.connect(node_db_file_location)
+    _c = _conn.cursor()
+    
+    command = "SELECT ip, port, latitude, longitude FROM nodes WHERE scenario = '" + scenario_name + "' AND ("
+    for node in result:
+        command += "ip = '" + node.split(":")[0] + "' AND port = '" + node.split(":")[1] + "' OR "
+    command = command[:-4] + ");"
+    _c.execute(command)
+    result = _c.fetchall()
+    
+    _conn.commit()
+    _conn.close()
+        
+    neighbours = {}
+    for node in result:
+        neighbours[node[0] + ":" + node[1]] = [node[2], node[3]]
+        
+    return neighbours
+
+
 def update_node_record(node_uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, federation_round, scenario):
     # Check if the node record with node_uid and scenario already exists in the database
     # If it does, update the record
@@ -260,8 +296,7 @@ def update_node_record(node_uid, idx, ip, port, role, neighbors, latitude, longi
     command = "SELECT * FROM nodes WHERE uid = '" + node_uid + "' AND scenario = '" + scenario + "';"
     _c.execute(command)
     result = _c.fetchone()
-    print("Update Node Record Result:")
-    print(result)
+
     if result is None:
         # Create a new record
         _c.execute("INSERT INTO nodes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (node_uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, federation_round, scenario))

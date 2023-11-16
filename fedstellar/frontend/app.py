@@ -48,6 +48,7 @@ from fedstellar.frontend.database import (
     scenario_set_status_to_finished,
     get_all_scenarios_check_completed,
     check_scenario_with_role,
+    get_location_neighbours
 )
 from fedstellar.frontend.database import (
     read_note_from_db,
@@ -83,8 +84,8 @@ app.config["DEBUG"] = os.environ.get("FEDSTELLAR_DEBUG")
 socketio = SocketIO(
     app,
     async_mode=async_mode,
-    logger=True,
-    engineio_logger=True,
+    logger=False,
+    engineio_logger=False,
     cors_allowed_origins="*",
 )
 
@@ -581,7 +582,7 @@ def fedstellar_update_node(scenario_name):
         if request.is_json:
             config = request.get_json()
             timestamp = datetime.datetime.now()
-            # Update file in the local directory
+            # Update file in the local directory (not needed, reduce overhead)
             # with open(
             #     os.path.join(
             #         app.config["config_dir"],
@@ -607,6 +608,53 @@ def fedstellar_update_node(scenario_name):
                 str(config["federation_args"]["round"]),
                 str(config["scenario_args"]["name"]),
             )
+            
+            from geopy import distance
+            
+            neigbours_location = get_location_neighbours(str(config["device_args"]["uid"]), str(config["scenario_args"]["name"]))  # {neighbour: [latitude, longitude]}
+            
+            if neigbours_location:
+                for neighbour in neigbours_location:
+                    neigbours_location[neighbour].append(distance.distance((config["mobility_args"]["latitude"], config["mobility_args"]["longitude"]), (neigbours_location[neighbour][0], neigbours_location[neighbour][1])).m)
+                    
+            with open(
+                os.path.join(
+                    app.config["log_dir"],
+                    scenario_name,
+                    f'participant_{config["device_args"]["idx"]}_mobility.csv',
+                ),
+                "a+",
+            ) as f:
+                if os.stat(
+                    os.path.join(
+                        app.config["log_dir"],
+                        scenario_name,
+                        f'participant_{config["device_args"]["idx"]}_mobility.csv',
+                    )
+                ).st_size == 0:
+                    f.write("timestamp,latitude,longitude,neigbor,distance\n")
+                    
+            with open(
+                os.path.join(
+                    app.config["log_dir"],
+                    scenario_name,
+                    f'participant_{config["device_args"]["idx"]}_mobility.csv',
+                ),
+                "a+",
+            ) as f:
+                f.write(
+                    f"{timestamp},{config['mobility_args']['latitude']},{config['mobility_args']['longitude']},None,None\n"
+                )
+                for neighbour in config["network_args"]["neighbors"].split(" "):
+                    if neighbour != "":
+                        try:
+                            f.write(
+                                f"{timestamp},{neigbours_location[neighbour][0]},{neigbours_location[neighbour][1]},{neighbour},{neigbours_location[neighbour][2]}\n"
+                            )
+                        except:
+                            f.write(
+                                f"{timestamp},None,None,{neighbour},None\n"
+                            )
 
             # Send notification to each connected users
             socketio.emit(
@@ -645,30 +693,30 @@ def fedstellar_update_node(scenario_name):
 #
 #         return make_response("Logs received successfully", 200)
 
+# Removed because security issues
+# @app.route("/logs", methods=["GET"])
+# def fedstellar_logs():
+#     if "user" in session.keys():
+#         logs = os.path.join(app.config["log_dir"], f"server.log")
+#         if os.path.exists(logs):
+#             return send_file(logs, mimetype="text/plain")
+#         else:
+#             abort(404)
+#     else:
+#         return abort(401)
 
-@app.route("/logs", methods=["GET"])
-def fedstellar_logs():
-    if "user" in session.keys():
-        logs = os.path.join(app.config["log_dir"], f"server.log")
-        if os.path.exists(logs):
-            return send_file(logs, mimetype="text/plain")
-        else:
-            abort(404)
-    else:
-        return abort(401)
-
-
-@app.route("/logs/erase", methods=["GET"])
-def fedstellar_logs_erase():
-    if "user" in session.keys():
-        logs = os.path.join(app.config["log_dir"], f"server.log")
-        if os.path.exists(logs):
-            # Overwrite the file with "Fedstellar Core Logs" string
-            with open(logs, "w") as f:
-                f.write("Fedstellar Core Logs")
-            return redirect(url_for("fedstellar_logs"))
-        else:
-            abort(404)
+# Removed because security issues
+# @app.route("/logs/erase", methods=["GET"])
+# def fedstellar_logs_erase():
+#     if "user" in session.keys():
+#         logs = os.path.join(app.config["log_dir"], f"server.log")
+#         if os.path.exists(logs):
+#             # Overwrite the file with "Fedstellar Core Logs" string
+#             with open(logs, "w") as f:
+#                 f.write("Fedstellar Core Logs")
+#             return redirect(url_for("fedstellar_logs"))
+#         else:
+#             abort(404)
 
 
 @app.route("/scenario/<scenario_name>/node/<id>/infolog", methods=["GET"])
