@@ -25,9 +25,16 @@ L.Marker.MovingMarker = L.Marker.extend({
         // Call the original setIcon method on L.Marker
         L.Marker.prototype.setIcon.call(this, icon);
         if (this.isRunning()) {
-            this._stopAnimation();
-            this._updatePosition();
-            this._runAnimation();
+            try {
+                // If the marker is running, restart the animation
+                this._stopAnimation();
+                this._updatePosition();
+                this._runAnimation();
+            }
+            catch(err) {
+                // Do nothing
+            }
+
         }
         return this;
     },

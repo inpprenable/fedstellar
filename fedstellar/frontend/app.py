@@ -48,7 +48,7 @@ from fedstellar.frontend.database import (
     scenario_set_status_to_finished,
     get_all_scenarios_check_completed,
     check_scenario_with_role,
-    get_location_neighbours
+    get_location_neighbours,
 )
 from fedstellar.frontend.database import (
     read_note_from_db,
@@ -94,7 +94,6 @@ socketio = SocketIO(
 def signal_handler(signal, frame):
     print("You pressed Ctrl+C [frontend]!")
     scenario_set_all_status_to_finished()
-    # remove_all_nodes()
     sys.exit(0)
 
 
@@ -135,6 +134,7 @@ def datetimeformat(value, format="%B %d, %Y %H:%M"):
 def fedstellar_home():
     # Get alerts and news from API
     import requests
+
     # Use custom headers
     headers = {"User-Agent": "Fedstellar Frontend"}
     url = "https://federatedlearning.inf.um.es/alerts/alerts"
@@ -436,7 +436,7 @@ def fedstellar_scenario_monitoring(scenario_name):
                 nodes_status = []
                 nodes_offline = []
                 for i, node in enumerate(nodes_list):
-                    nodes_config.append((node[2], node[3], node[4])) # IP, Port, Role
+                    nodes_config.append((node[2], node[3], node[4]))  # IP, Port, Role
                     if datetime.datetime.now() - datetime.datetime.strptime(
                         node[8], "%Y-%m-%d %H:%M:%S.%f"
                     ) > datetime.timedelta(seconds=10):
@@ -608,32 +608,28 @@ def fedstellar_update_node(scenario_name):
                 str(config["federation_args"]["round"]),
                 str(config["scenario_args"]["name"]),
             )
-            
+
             from geopy import distance
-            
-            neigbours_location = get_location_neighbours(str(config["device_args"]["uid"]), str(config["scenario_args"]["name"]))  # {neighbour: [latitude, longitude]}
-            
+
+            neigbours_location = get_location_neighbours(
+                str(config["device_args"]["uid"]), str(config["scenario_args"]["name"])
+            )  # {neighbour: [latitude, longitude]}
+
             if neigbours_location:
                 for neighbour in neigbours_location:
-                    neigbours_location[neighbour].append(distance.distance((config["mobility_args"]["latitude"], config["mobility_args"]["longitude"]), (neigbours_location[neighbour][0], neigbours_location[neighbour][1])).m)
-                    
-            with open(
-                os.path.join(
-                    app.config["log_dir"],
-                    scenario_name,
-                    f'participant_{config["device_args"]["idx"]}_mobility.csv',
-                ),
-                "a+",
-            ) as f:
-                if os.stat(
-                    os.path.join(
-                        app.config["log_dir"],
-                        scenario_name,
-                        f'participant_{config["device_args"]["idx"]}_mobility.csv',
+                    neigbours_location[neighbour].append(
+                        distance.distance(
+                            (
+                                config["mobility_args"]["latitude"],
+                                config["mobility_args"]["longitude"],
+                            ),
+                            (
+                                neigbours_location[neighbour][0],
+                                neigbours_location[neighbour][1],
+                            ),
+                        ).m
                     )
-                ).st_size == 0:
-                    f.write("timestamp,latitude,longitude,neigbor,distance\n")
-                    
+
             with open(
                 os.path.join(
                     app.config["log_dir"],
@@ -642,6 +638,18 @@ def fedstellar_update_node(scenario_name):
                 ),
                 "a+",
             ) as f:
+                if (
+                    os.stat(
+                        os.path.join(
+                            app.config["log_dir"],
+                            scenario_name,
+                            f'participant_{config["device_args"]["idx"]}_mobility.csv',
+                        )
+                    ).st_size
+                    == 0
+                ):
+                    f.write("timestamp,latitude,longitude,neigbor,distance\n")
+
                 f.write(
                     f"{timestamp},{config['mobility_args']['latitude']},{config['mobility_args']['longitude']},None,None\n"
                 )
@@ -652,9 +660,7 @@ def fedstellar_update_node(scenario_name):
                                 f"{timestamp},{neigbours_location[neighbour][0]},{neigbours_location[neighbour][1]},{neighbour},{neigbours_location[neighbour][2]}\n"
                             )
                         except:
-                            f.write(
-                                f"{timestamp},None,None,{neighbour},None\n"
-                            )
+                            f.write(f"{timestamp},None,None,{neighbour},None\n")
 
             # Send notification to each connected users
             socketio.emit(
@@ -674,6 +680,7 @@ def fedstellar_update_node(scenario_name):
                     "round": config["federation_args"]["round"],
                     "name": config["scenario_args"]["name"],
                     "status": True,
+                    "neigbours_location": neigbours_location,
                 },
             )
 
@@ -1080,7 +1087,7 @@ def fedstellar_scenario_deployment_run():
                 "with_reputation": data["with_reputation"],
                 "is_dynamic_topology": data["is_dynamic_topology"],
                 "is_dynamic_aggregation": data["is_dynamic_aggregation"],
-                "target_aggregation": data["target_aggregation"]
+                "target_aggregation": data["target_aggregation"],
             }
             # Save args in a file
             scenario_path = os.path.join(app.config["config_dir"], scenario_name)
@@ -1157,16 +1164,10 @@ def fedstellar_scenario_deployment_run():
                 participant_config["defense_args"]["target_aggregation"] = data[
                     "target_aggregation"
                 ]
-                
-                participant_config["mobility_args"]["random_geo"] = data[
-                    "random_geo"
-                ]
-                participant_config["mobility_args"]["latitude"] = data[
-                    "latitude"
-                ]
-                participant_config["mobility_args"]["longitude"] = data[
-                    "longitude"
-                ]
+
+                participant_config["mobility_args"]["random_geo"] = data["random_geo"]
+                participant_config["mobility_args"]["latitude"] = data["latitude"]
+                participant_config["mobility_args"]["longitude"] = data["longitude"]
                 participant_config["mobility_args"]["with_mobility"] = data[
                     "with_mobility"
                 ]

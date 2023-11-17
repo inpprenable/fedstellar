@@ -378,7 +378,12 @@
                 } else {
                     var line = L.polyline([droneLatLng, neighborLatLng], { color: 'blue' }).addTo(lineLayer);
                 }
-                line.bindPopup(`Distance: ${droneLatLng.distanceTo(neighborLatLng).toFixed(2)} m`);
+                try {
+                    distance = droneMarkers[droneId].neigbours_location[neighborIP][2];
+                    line.bindPopup(`Distance: ${distance} m`);
+                } catch (err) {
+                    line.bindPopup(`Distance: Calculating...`);
+                }
                 line.on('mouseover', function (e) {
                     this.openPopup();
                 });
@@ -400,7 +405,7 @@
         }
     }
 
-    function updateDronePosition(uid, ip, lat, lng, neighborIPs) {
+    function updateDronePosition(uid, ip, lat, lng, neighborIPs, neighborsLocations) {
         var droneId = uid;
         var newLatLng = new L.LatLng(lat, lng);
         var popupContent = `<p><strong>UID:</strong> ${uid}<br><strong>IP:</strong> ${ip}<br><strong>Neighbors:</strong> ${neighborIPs}<br><strong>Latitude:</strong> ${lat}<br><strong>Longitude:</strong> ${lng}</p>`;
@@ -423,6 +428,7 @@
             });
             marker.ip = ip;
             marker.neighbors = neighborIPs;
+            marker.neigbours_location = neighborsLocations;
             droneMarkers[droneId] = marker
         } else {
             // Change the icon if the node is offline
@@ -438,6 +444,7 @@
             droneMarkers[droneId].moveTo(newLatLng, 5);
             droneMarkers[droneId].getPopup().setContent(popupContent);
             droneMarkers[droneId].neighbors = neighborIPs
+            droneMarkers[droneId].neigbours_location = neighborsLocations
         }
     }
 
@@ -456,7 +463,7 @@
         var newLatLng = new L.LatLng(data.latitude, data.longitude);
         neighborsIPs = data.neighbors.split(" ");
 
-        updateDronePosition(data.uid, data.ip, data.latitude, data.longitude, neighborsIPs);
+        updateDronePosition(data.uid, data.ip, data.latitude, data.longitude, neighborsIPs, data.neigbours_location);
 
         setTimeout(function () {
             updateNeighborLines(data.uid, newLatLng, neighborsIPs);
