@@ -539,6 +539,13 @@ class Node(BaseNode):
         if response.status_code != 200:
             logging.error(f'Error received from controller: {response.status_code}')
             logging.error(response.text)
+        
+        try:
+            self._neighbors.set_neighbors_location(response.json()["neigbours_location"])
+        except:
+            logging.error(f'Error parsing neighbors location from controller response: {response.text}')
+            
+        # logging.info(f'({self.addr}) Neighbors location: {self._neighbors.get_neighbors_location()}')
 
     def __report_resources(self):
         """

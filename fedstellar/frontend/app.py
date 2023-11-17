@@ -48,7 +48,7 @@ from fedstellar.frontend.database import (
     scenario_set_status_to_finished,
     get_all_scenarios_check_completed,
     check_scenario_with_role,
-    get_location_neighbours,
+    get_location_neighbors,
 )
 from fedstellar.frontend.database import (
     read_note_from_db,
@@ -611,7 +611,7 @@ def fedstellar_update_node(scenario_name):
 
             from geopy import distance
 
-            neigbours_location = get_location_neighbours(
+            neigbours_location = get_location_neighbors(
                 str(config["device_args"]["uid"]), str(config["scenario_args"]["name"])
             )  # {neighbour: [latitude, longitude]}
 
@@ -661,11 +661,8 @@ def fedstellar_update_node(scenario_name):
                             )
                         except:
                             f.write(f"{timestamp},None,None,{neighbour},None\n")
-
-            # Send notification to each connected users
-            socketio.emit(
-                "node_update",
-                {
+                            
+            node_update = {
                     "scenario_name": scenario_name,
                     "uid": config["device_args"]["uid"],
                     "idx": config["device_args"]["idx"],
@@ -681,10 +678,12 @@ def fedstellar_update_node(scenario_name):
                     "name": config["scenario_args"]["name"],
                     "status": True,
                     "neigbours_location": neigbours_location,
-                },
-            )
+            }
 
-            return make_response("Node updated successfully", 200)
+            # Send notification to each connected users
+            socketio.emit("node_update", node_update)
+
+            return make_response(jsonify(node_update), 200)
         else:
             return abort(400)
 

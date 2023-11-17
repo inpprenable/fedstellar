@@ -354,7 +354,9 @@
         return null;
     }
 
-    function updateNeighborLines(droneId, droneLatLng, neighborsIPs) {
+    function updateNeighborLines(droneId, droneLatLng, neighborsIPs, condition) {
+        // console.log("Updating neighbor lines of drone " + droneMarkers[droneId].ip);
+        //console.log("Neighbors IPs: " + neighborsIPs);
         if (!droneLines[droneId]) {
             droneLines[droneId] = [];
         } else {
@@ -379,7 +381,12 @@
                     var line = L.polyline([droneLatLng, neighborLatLng], { color: 'blue' }).addTo(lineLayer);
                 }
                 try {
-                    distance = droneMarkers[droneId].neigbours_location[neighborIP][2];
+                    // If condition is true, then the distance is calculated from the drone to the neighbor. Otherwise, the distance is calculated from the neighbor to the drone (this is because the distance is the same in both directions, avoiding concurrency problems)
+                    if (condition) {
+                        var distance = droneMarkers[droneId].neigbours_location[neighborIP][2];
+                    } else {
+                        var distance = neighborMarker.neigbours_location[droneMarkers[droneId].ip][2];
+                    }
                     line.bindPopup(`Distance: ${distance} m`);
                 } catch (err) {
                     line.bindPopup(`Distance: Calculating...`);
@@ -399,7 +406,7 @@
                 var neighborIPs = droneMarkers[id].neighbors;
                 if (neighborIPs.includes(droneMarkers[droneId].ip)) {
                     // console.log("Updating neighbor lines of drone " + id);
-                    updateNeighborLines(id, droneMarkers[id].getLatLng(), neighborIPs);
+                    updateNeighborLines(id, droneMarkers[id].getLatLng(), neighborIPs, false);
                 }
             }
         }
@@ -466,9 +473,9 @@
         updateDronePosition(data.uid, data.ip, data.latitude, data.longitude, neighborsIPs, data.neigbours_location);
 
         setTimeout(function () {
-            updateNeighborLines(data.uid, newLatLng, neighborsIPs);
+            updateNeighborLines(data.uid, newLatLng, neighborsIPs, true);
             updateAllRelatedLines(data.uid);
-        }, 30);
+        }, 20);
     }
 
 </script>

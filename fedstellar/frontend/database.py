@@ -249,8 +249,8 @@ def list_nodes_by_scenario_name(scenario_name):
     return result
 
 
-def get_location_neighbours(node_uid, scenario_name):
-    # Get the location of the neighbours of the node with node_uid in the scenario with scenario_name (you can check the neighbours and then get its location from the database)
+def get_location_neighbors(node_uid, scenario_name):
+    # Get the location of the neighbors of the node with node_uid in the scenario with scenario_name (you can check the neighbors and then get its location from the database)
     _conn = sqlite3.connect(node_db_file_location)
     _c = _conn.cursor()
     
@@ -279,11 +279,11 @@ def get_location_neighbours(node_uid, scenario_name):
     _conn.commit()
     _conn.close()
         
-    neighbours = {}
+    neighbors = {}
     for node in result:
-        neighbours[node[0] + ":" + node[1]] = [node[2], node[3]]
+        neighbors[node[0] + ":" + node[1]] = [node[2], node[3]]
         
-    return neighbours
+    return neighbors
 
 
 def update_node_record(node_uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, federation_round, scenario):

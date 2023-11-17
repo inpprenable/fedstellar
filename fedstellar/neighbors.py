@@ -32,6 +32,7 @@ class Neighbors:
         self.__self_addr = self_addr
         self.__config = config
         self.__neighbors = {}  # private to avoid concurrency issues
+        self.__neighbors_location = {}  # private to avoid concurrency issues
         self.__nei_lock = threading.Lock()
 
         # Heartbeat
@@ -545,3 +546,9 @@ class Neighbors:
 
     def __str__(self):
         return str(self.__neighbors.keys())
+    
+    def get_neighbors_location(self):
+        return self.__neighbors_location
+    
+    def set_neighbors_location(self, neighbors_location):
+        self.__neighbors_location = neighbors_location
