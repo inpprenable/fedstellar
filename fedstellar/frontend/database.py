@@ -1,6 +1,9 @@
 import datetime
 import hashlib
 import sqlite3
+import datetime
+import hashlib
+import sqlite3
 
 user_db_file_location = "database_file/users.db"
 note_db_file_location = "database_file/notes.db"
@@ -14,77 +17,60 @@ scenario_db_file_location = "database_file/scenarios.db"
 
 
 def list_users(all_info=False):
-    _conn = sqlite3.connect(user_db_file_location)
-    _c = _conn.cursor()
-    result = _c.execute("SELECT * FROM users")
-    result = result.fetchall()
+    with sqlite3.connect(user_db_file_location) as conn:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        c.execute("SELECT * FROM users")
+        result = c.fetchall()
 
     if not all_info:
-        result = [user[0] for user in result]
-
-    _conn.close()
+        result = [user['user'] for user in result]
 
     return result
 
 
 def get_user_info(user):
-    _conn = sqlite3.connect(user_db_file_location)
-    _c = _conn.cursor()
+    with sqlite3.connect(user_db_file_location) as conn:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
 
-    command = f"SELECT * FROM users WHERE user = '{user}'"
-    _c.execute(command)
-    result = _c.fetchone()
-
-    _conn.commit()
-    _conn.close()
+        command = "SELECT * FROM users WHERE user = ?"
+        c.execute(command, (user,))
+        result = c.fetchone()
 
     return result
 
 
 def verify(user, password):
-    _conn = sqlite3.connect(user_db_file_location)
-    _c = _conn.cursor()
+    with sqlite3.connect(user_db_file_location) as conn:
+        c = conn.cursor()
 
-    _c.execute("SELECT password FROM users WHERE user = '" + user + "';")
-    result = _c.fetchone()[0] == hashlib.sha256(password.encode()).hexdigest()
+        c.execute("SELECT password FROM users WHERE user = ?", (user,))
+        result = c.fetchone()
+        if result:
+            return result[0] == hashlib.sha256(password.encode()).hexdigest()
 
-    _conn.close()
-
-    return result
+    return False
 
 
 def delete_user_from_db(user):
-    _conn = sqlite3.connect(user_db_file_location)
-    _c = _conn.cursor()
-    _c.execute("DELETE FROM users WHERE user = '" + user + "';")
-    _conn.commit()
-    _conn.close()
+    with sqlite3.connect(user_db_file_location) as conn:
+        c = conn.cursor()
+        c.execute("DELETE FROM users WHERE user = ?", (user,))
 
-    # when we delete a user FROM database USERS, we also need to delete all his or her notes data FROM database NOTES
-    _conn = sqlite3.connect(note_db_file_location)
-    _c = _conn.cursor()
-    _c.execute("DELETE FROM notes WHERE user = '" + user + "';")
-    _conn.commit()
-    _conn.close()
+    with sqlite3.connect(note_db_file_location) as conn:
+        c = conn.cursor()
+        c.execute("DELETE FROM notes WHERE user = ?", (user,))
 
-    # when we delete a user FROM database USERS, we also need to 
-    # [1] delete all his or her images FROM image pool (done in app.py)
-    # [2] delete all his or her images records FROM database IMAGES
-    _conn = sqlite3.connect(image_db_file_location)
-    _c = _conn.cursor()
-    _c.execute("DELETE FROM images WHERE owner = '" + user + "';")
-    _conn.commit()
-    _conn.close()
+    with sqlite3.connect(image_db_file_location) as conn:
+        c = conn.cursor()
+        c.execute("DELETE FROM images WHERE owner = ?", (user,))
 
 
 def add_user(user, password, role):
-    _conn = sqlite3.connect(user_db_file_location)
-    _c = _conn.cursor()
-
-    _c.execute("INSERT INTO users values(?, ?, ?)", (user.upper(), hashlib.sha256(password.encode()).hexdigest(), role))
-
-    _conn.commit()
-    _conn.close()
+    with sqlite3.connect(user_db_file_location) as conn:
+        c = conn.cursor()
+        c.execute("INSERT INTO users VALUES (?, ?, ?)", (user.upper(), hashlib.sha256(password.encode()).hexdigest(), role))
 
 
 """
@@ -92,55 +78,43 @@ def add_user(user, password, role):
 """
 
 
-def read_note_from_db(id):
-    _conn = sqlite3.connect(note_db_file_location)
-    _c = _conn.cursor()
+def read_note_from_db(user):
+    with sqlite3.connect(note_db_file_location) as conn:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
 
-    command = "SELECT note_id, timestamp, note FROM notes WHERE user = '" + id.upper() + "';"
-    _c.execute(command)
-    result = _c.fetchall()
-
-    _conn.commit()
-    _conn.close()
+        command = "SELECT note_id, timestamp, note FROM notes WHERE user = ?"
+        c.execute(command, (user.upper(),))
+        result = c.fetchall()
 
     return result
 
 
 def match_user_id_with_note_id(note_id):
-    # Given the note id, confirm if the current user is the owner of the note which is being operated.
-    _conn = sqlite3.connect(note_db_file_location)
-    _c = _conn.cursor()
+    with sqlite3.connect(note_db_file_location) as conn:
+        c = conn.cursor()
 
-    command = "SELECT user FROM notes WHERE note_id = '" + note_id + "';"
-    _c.execute(command)
-    result = _c.fetchone()[0]
-
-    _conn.commit()
-    _conn.close()
+        command = "SELECT user FROM notes WHERE note_id = ?"
+        c.execute(command, (note_id,))
+        result = c.fetchone()[0]
 
     return result
 
 
-def write_note_into_db(id, note_to_write):
-    _conn = sqlite3.connect(note_db_file_location)
-    _c = _conn.cursor()
+def write_note_into_db(user, note_to_write):
+    with sqlite3.connect(note_db_file_location) as conn:
+        c = conn.cursor()
 
-    current_timestamp = str(datetime.datetime.now())
-    _c.execute("INSERT INTO notes values(?, ?, ?, ?)", (id.upper(), current_timestamp, note_to_write, hashlib.sha1((id.upper() + current_timestamp).encode()).hexdigest()))
-
-    _conn.commit()
-    _conn.close()
+        current_timestamp = str(datetime.datetime.now())
+        c.execute("INSERT INTO notes VALUES (?, ?, ?, ?)", (user.upper(), current_timestamp, note_to_write, hashlib.sha1((user.upper() + current_timestamp).encode()).hexdigest()))
 
 
 def delete_note_from_db(note_id):
-    _conn = sqlite3.connect(note_db_file_location)
-    _c = _conn.cursor()
+    with sqlite3.connect(note_db_file_location) as conn:
+        c = conn.cursor()
 
-    command = "DELETE FROM notes WHERE note_id = '" + note_id + "';"
-    _c.execute(command)
-
-    _conn.commit()
-    _conn.close()
+        command = "DELETE FROM notes WHERE note_id = ?"
+        c.execute(command, (note_id,))
 
 
 """
@@ -149,69 +123,70 @@ def delete_note_from_db(note_id):
 
 
 def image_upload_record(uid, owner, image_name, timestamp):
-    _conn = sqlite3.connect(image_db_file_location)
-    _c = _conn.cursor()
-
-    _c.execute("INSERT INTO images VALUES (?, ?, ?, ?)", (uid, owner, image_name, timestamp))
-
-    _conn.commit()
-    _conn.close()
+    try:
+        with sqlite3.connect(image_db_file_location) as conn:
+            c = conn.cursor()
+            c.execute("INSERT INTO images VALUES (?, ?, ?, ?)", (uid, owner, image_name, timestamp))
+            conn.commit()
+    except sqlite3.Error as e:
+        print(f"Error occurred while uploading image record: {e}")
 
 
 # get uid and name from imagen where uid = image_uid
 # store the uid and name in a tuple
 def get_image_file_name(image_uid):
-    _conn = sqlite3.connect(image_db_file_location)
-    _c = _conn.cursor()
+    with sqlite3.connect(image_db_file_location) as conn:
+        c = conn.cursor()
 
-    command = "SELECT uid, name FROM images WHERE uid = '" + image_uid + "';"
-    _c.execute(command)
-    result = _c.fetchone()
+        command = "SELECT uid, name FROM images WHERE uid = ?"
+        c.execute(command, (image_uid,))
+        result = c.fetchone()
 
-    _conn.commit()
-    _conn.close()
-
-    return result[0] + "-" + result[1]
+    if result:
+        return result[0] + "-" + result[1]
+    else:
+        return None
 
 
 def list_images_for_user(owner):
-    _conn = sqlite3.connect(image_db_file_location)
-    _c = _conn.cursor()
+    try:
+        with sqlite3.connect(image_db_file_location) as conn:
+            c = conn.cursor()
 
-    command = "SELECT uid, timestamp, name FROM images WHERE owner = '{0}'".format(owner)
-    _c.execute(command)
-    result = _c.fetchall()
+            command = "SELECT uid, timestamp, name FROM images WHERE owner = ?"
+            c.execute(command, (owner,))
+            result = c.fetchall()
 
-    _conn.commit()
-    _conn.close()
-
-    return result
+        return result
+    except sqlite3.Error as e:
+        print(f"Error occurred while listing images for user: {e}")
+        return None
 
 
 def match_user_id_with_image_uid(image_uid):
-    # Given the note id, confirm if the current user is the owner of the note which is being operated.
-    _conn = sqlite3.connect(image_db_file_location)
-    _c = _conn.cursor()
-
-    command = "SELECT owner FROM images WHERE uid = '" + image_uid + "';"
-    _c.execute(command)
-    result = _c.fetchone()[0]
-
-    _conn.commit()
-    _conn.close()
-
-    return result
+    try:
+        with sqlite3.connect(image_db_file_location) as conn:
+            c = conn.cursor()
+            command = "SELECT owner FROM images WHERE uid = ?"
+            c.execute(command, (image_uid,))
+            result = c.fetchone()[0]
+        return result
+    except sqlite3.Error as e:
+        print(f"Error occurred while matching user id with image uid: {e}")
+        return None
 
 
 def delete_image_from_db(image_uid):
-    _conn = sqlite3.connect(image_db_file_location)
-    _c = _conn.cursor()
+    try:
+        with sqlite3.connect(image_db_file_location) as conn:
+            c = conn.cursor()
 
-    command = "DELETE FROM images WHERE uid = '" + image_uid + "';"
-    _c.execute(command)
+            command = "DELETE FROM images WHERE uid = ?;"
+            c.execute(command, (image_uid,))
 
-    _conn.commit()
-    _conn.close()
+            conn.commit()
+    except sqlite3.Error as e:
+        print(f"Error occurred while deleting image from database: {e}")
 
 
 """
@@ -219,71 +194,77 @@ def delete_image_from_db(image_uid):
 """
 
 
-def list_nodes(sort_by="idx"):
+def list_nodes(scenario_name=None, sort_by="idx"):
     # list all nodes in the database
-    _conn = sqlite3.connect(node_db_file_location)
-    _c = _conn.cursor()
-    # Get all nodes and decently sort them by idx
-    command = "SELECT * FROM nodes ORDER BY " + sort_by + ";"
-    _c.execute(command)
-    result = _c.fetchall()
+    try:
+        with sqlite3.connect(node_db_file_location) as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
 
-    _conn.commit()
-    _conn.close()
+            if scenario_name:
+                command = "SELECT * FROM nodes WHERE scenario = ? ORDER BY " + sort_by + ";"
+                c.execute(command, (scenario_name,))
+            else:
+                command = "SELECT * FROM nodes ORDER BY " + sort_by + ";"
+                c.execute(command)
 
-    return result
+            result = c.fetchall()
+
+        return result
+    except sqlite3.Error as e:
+        print(f"Error occurred while listing nodes: {e}")
+        return None
 
 
 def list_nodes_by_scenario_name(scenario_name):
-    # list all nodes in the database
-    _conn = sqlite3.connect(node_db_file_location)
-    _c = _conn.cursor()
-    # Get all nodes and decently sort them by idx
-    command = "SELECT * FROM nodes WHERE scenario = '" + scenario_name + "' ORDER BY idx;"
-    _c.execute(command)
-    result = _c.fetchall()
+    try:
+        with sqlite3.connect(node_db_file_location) as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
 
-    _conn.commit()
-    _conn.close()
+            command = "SELECT * FROM nodes WHERE scenario = ? ORDER BY idx;"
+            c.execute(command, (scenario_name,))
+            result = c.fetchall()
 
-    return result
+        return result
+    except sqlite3.Error as e:
+        print(f"Error occurred while listing nodes by scenario name: {e}")
+        return None
 
 
 def get_location_neighbors(node_uid, scenario_name):
-    # Get the location of the neighbors of the node with node_uid in the scenario with scenario_name (you can check the neighbors and then get its location from the database)
-    _conn = sqlite3.connect(node_db_file_location)
-    _c = _conn.cursor()
-    
-    command = "SELECT neighbors FROM nodes WHERE uid = '" + node_uid + "' AND scenario = '" + scenario_name + "';"
-    _c.execute(command)
     try:
-        result = _c.fetchone()[0]
-    except:
-        return []
+        with sqlite3.connect(node_db_file_location) as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+
+            # Obtener los vecinos del nodo
+            command = "SELECT neighbors FROM nodes WHERE uid = ? AND scenario = ?;"
+            c.execute(command, (node_uid, scenario_name))
+            result = c.fetchone()
+
+            if not result or not result["neighbors"]:
+                return []
+
+            neighbors_list = result["neighbors"].split(" ")
+
+            # Obtener la ubicación de los vecinos
+            ip_port_pairs = [(node.split(":")[0], node.split(":")[1]) for node in neighbors_list if ":" in node]
+            placeholders = ", ".join(["(?, ?)" for _ in ip_port_pairs])
+            command = f"SELECT ip, port, latitude, longitude FROM nodes WHERE scenario = ? AND (ip, port) IN ({placeholders});"
             
-    _conn.commit()
-    _conn.close()
-    
-    result = result.split(" ")  # Example: ['192.168.50.1:4200', '192.156.23.1:4201']
-    
-    _conn = sqlite3.connect(node_db_file_location)
-    _c = _conn.cursor()
-    
-    command = "SELECT ip, port, latitude, longitude FROM nodes WHERE scenario = '" + scenario_name + "' AND ("
-    for node in result:
-        command += "ip = '" + node.split(":")[0] + "' AND port = '" + node.split(":")[1] + "' OR "
-    command = command[:-4] + ");"
-    _c.execute(command)
-    result = _c.fetchall()
-    
-    _conn.commit()
-    _conn.close()
-        
-    neighbors = {}
-    for node in result:
-        neighbors[node[0] + ":" + node[1]] = [node[2], node[3]]
-        
-    return neighbors
+            params = [scenario_name] + [item for sublist in ip_port_pairs for item in sublist]
+            c.execute(command, params)
+            result = c.fetchall()
+
+            # Procesar los resultados
+            neighbors = {f"{node['ip']}:{node['port']}": [node["latitude"], node["longitude"]] for node in result}
+
+            return neighbors
+    except sqlite3.Error as e:
+        print(f"Error occurred while getting location neighbors: {e}")
+        return []
+
 
 
 def update_node_record(node_uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, federation_round, scenario):
@@ -293,8 +274,8 @@ def update_node_record(node_uid, idx, ip, port, role, neighbors, latitude, longi
     _conn = sqlite3.connect(node_db_file_location)
     _c = _conn.cursor()
 
-    command = "SELECT * FROM nodes WHERE uid = '" + node_uid + "' AND scenario = '" + scenario + "';"
-    _c.execute(command)
+    command = "SELECT * FROM nodes WHERE uid = ? AND scenario = ?;"
+    _c.execute(command, (node_uid, scenario))
     result = _c.fetchone()
 
     if result is None:
@@ -302,33 +283,27 @@ def update_node_record(node_uid, idx, ip, port, role, neighbors, latitude, longi
         _c.execute("INSERT INTO nodes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (node_uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, federation_round, scenario))
     else:
         # Update the record
-        command = "UPDATE nodes SET idx = '" + idx + "', ip = '" + ip + "', port = '" + port + "', role = '" + role + "', neighbors = '" + neighbors + "', latitude = '" + latitude + "', longitude = '" + longitude + "', timestamp = '" + timestamp + "', federation = '" + federation + "', round = '" + federation_round + "' WHERE uid = '" + node_uid + "' AND scenario = '" + scenario + "';"
-        _c.execute(command)
+        command = "UPDATE nodes SET idx = ?, ip = ?, port = ?, role = ?, neighbors = ?, latitude = ?, longitude = ?, timestamp = ?, federation = ?, round = ? WHERE uid = ? AND scenario = ?;"
+        _c.execute(command, (idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, federation_round, node_uid, scenario))
 
     _conn.commit()
     _conn.close()
 
 
 def remove_all_nodes():
-    _conn = sqlite3.connect(node_db_file_location)
-    _c = _conn.cursor()
-
-    command = "DELETE FROM nodes;"
-    _c.execute(command)
-
-    _conn.commit()
-    _conn.close()
+    with sqlite3.connect(node_db_file_location) as conn:
+        c = conn.cursor()
+        command = "DELETE FROM nodes;"
+        c.execute(command)
+        conn.commit()
 
 
 def remove_nodes_by_scenario_name(scenario_name):
-    _conn = sqlite3.connect(node_db_file_location)
-    _c = _conn.cursor()
-
-    command = "DELETE FROM nodes WHERE scenario = '" + scenario_name + "';"
-    _c.execute(command)
-
-    _conn.commit()
-    _conn.close()
+    with sqlite3.connect(node_db_file_location) as conn:
+        c = conn.cursor()
+        command = "DELETE FROM nodes WHERE scenario = ?;"
+        c.execute(command, (scenario_name,))
+        conn.commit()
 
 
 """
@@ -337,33 +312,29 @@ def remove_nodes_by_scenario_name(scenario_name):
 
 
 def get_all_scenarios(sort_by="start_time"):
-    _conn = sqlite3.connect(scenario_db_file_location)
-    _c = _conn.cursor()
-    command = "SELECT * FROM scenarios ORDER BY " + sort_by + ";"
-    _c.execute(command)
-    result = _c.fetchall()
-
-    _conn.commit()
-    _conn.close()
+    with sqlite3.connect(scenario_db_file_location) as conn:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        command = "SELECT * FROM scenarios ORDER BY ?;"
+        c.execute(command, (sort_by,))
+        result = c.fetchall()
 
     return result
 
 
-def get_all_scenarios_check_completed(sort_by="start_time"):
-    _conn = sqlite3.connect(scenario_db_file_location)
-    _c = _conn.cursor()
-    command = "SELECT * FROM scenarios ORDER BY " + sort_by + ";"
-    _c.execute(command)
-    result = _c.fetchall()
+def get_all_scenarios_and_check_completed(sort_by="start_time"):
+    with sqlite3.connect(scenario_db_file_location) as _conn:
+        _conn.row_factory = sqlite3.Row
+        _c = _conn.cursor()
+        command = "SELECT * FROM scenarios ORDER BY ?;"
+        _c.execute(command, (sort_by,))
+        result = _c.fetchall()
 
-    _conn.commit()
-    _conn.close()
-
-    for scenario in result:
-        if scenario[5] == "running":
-            if check_scenario_federation_completed(scenario[0]):
-                scenario_set_status_to_completed(scenario[0])
-                result = get_all_scenarios()
+        for scenario in result:
+            if scenario['status'] == "running":
+                if check_scenario_federation_completed(scenario['name']):
+                    scenario_set_status_to_completed(scenario['name'])
+                    result = get_all_scenarios()
 
     return result
 
@@ -372,8 +343,8 @@ def scenario_update_record(scenario_name, start_time, end_time, title, descripti
     _conn = sqlite3.connect(scenario_db_file_location)
     _c = _conn.cursor()
 
-    command = "SELECT * FROM scenarios WHERE name = '" + scenario_name + "';"
-    _c.execute(command)
+    command = "SELECT * FROM scenarios WHERE name = ?;"
+    _c.execute(command, (scenario_name,))
     result = _c.fetchone()
 
     if result is None:
@@ -381,20 +352,21 @@ def scenario_update_record(scenario_name, start_time, end_time, title, descripti
         _c.execute("INSERT INTO scenarios VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (scenario_name, start_time, end_time, title, description, status, network_subnet, rounds, role))
     else:
         # Update the record
-        command = "UPDATE scenarios SET start_time = '" + start_time + "', end_time = '" + end_time + "', title = '" + title + "', description = '" + description + "', status = '" + status + "', network_subnet = '" + network_subnet + "', rounds = '" + rounds + "', role = '" + role + "' WHERE name = '" + scenario_name + "';"
-        _c.execute(command)
+        command = "UPDATE scenarios SET start_time = ?, end_time = ?, title = ?, description = ?, status = ?, network_subnet = ?, rounds = ?, role = ? WHERE name = ?;"
+        _c.execute(command, (start_time, end_time, title, description, status, network_subnet, rounds, role, scenario_name))
 
     _conn.commit()
     _conn.close()
 
 
 def scenario_set_all_status_to_finished():
-    # Set all running scenario to finished and update the end_time to current time
+    # Set all running scenarios to finished and update the end_time to the current time
     _conn = sqlite3.connect(scenario_db_file_location)
     _c = _conn.cursor()
 
-    command = "UPDATE scenarios SET status = 'finished', end_time = '" + str(datetime.datetime.now()) + "' WHERE status = 'running';"
-    _c.execute(command)
+    command = "UPDATE scenarios SET status = 'finished', end_time = ? WHERE status = 'running';"
+    current_time = str(datetime.datetime.now())
+    _c.execute(command, (current_time,))
 
     _conn.commit()
     _conn.close()
@@ -404,8 +376,9 @@ def scenario_set_status_to_finished(scenario_name):
     _conn = sqlite3.connect(scenario_db_file_location)
     _c = _conn.cursor()
 
-    command = "UPDATE scenarios SET status = 'finished', end_time = '" + str(datetime.datetime.now()) + "' WHERE name = '" + scenario_name + "';"
-    _c.execute(command)
+    command = "UPDATE scenarios SET status = 'finished', end_time = ? WHERE name = ?;"
+    current_time = str(datetime.datetime.now())
+    _c.execute(command, (current_time, scenario_name))
 
     _conn.commit()
     _conn.close()
@@ -415,44 +388,39 @@ def scenario_set_status_to_completed(scenario_name):
     _conn = sqlite3.connect(scenario_db_file_location)
     _c = _conn.cursor()
 
-    command = "UPDATE scenarios SET status = 'completed' WHERE name = '" + scenario_name + "';"
-    _c.execute(command)
+    command = "UPDATE scenarios SET status = 'completed' WHERE name = ?;"
+    _c.execute(command, (scenario_name,))
 
     _conn.commit()
     _conn.close()
 
 
 def get_running_scenario():
-    _conn = sqlite3.connect(scenario_db_file_location)
-    _c = _conn.cursor()
-    # running or completed
-    command = "SELECT * FROM scenarios WHERE status = 'running' OR status = 'completed';"
-    _c.execute(command)
-    result = _c.fetchone()
-
-    _conn.commit()
-    _conn.close()
+    with sqlite3.connect(scenario_db_file_location) as conn:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        command = "SELECT * FROM scenarios WHERE status = ? OR status = ?;"
+        c.execute(command, ('running', 'completed'))
+        result = c.fetchone()
 
     return result
 
 
 def get_completed_scenario():
-    _conn = sqlite3.connect(scenario_db_file_location)
-    _c = _conn.cursor()
-    command = "SELECT * FROM scenarios WHERE status = 'completed';"
-    _c.execute(command)
-    result = _c.fetchone()
-
-    _conn.commit()
-    _conn.close()
+    with sqlite3.connect(scenario_db_file_location) as conn:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        command = "SELECT * FROM scenarios WHERE status = ?;"
+        c.execute(command, ('completed',))
+        result = c.fetchone()
 
     return result
 
 def get_scenario_by_name(scenario_name):
     _conn = sqlite3.connect(scenario_db_file_location)
     _c = _conn.cursor()
-    command = "SELECT * FROM scenarios WHERE name = '" + scenario_name + "';"
-    _c.execute(command)
+    command = "SELECT * FROM scenarios WHERE name = ?;"
+    _c.execute(command, (scenario_name,))
     result = _c.fetchone()
 
     _conn.commit()
@@ -465,53 +433,55 @@ def remove_scenario_by_name(scenario_name):
     _conn = sqlite3.connect(scenario_db_file_location)
     _c = _conn.cursor()
 
-    command = "DELETE FROM scenarios WHERE name = '" + scenario_name + "';"
-    _c.execute(command)
+    command = "DELETE FROM scenarios WHERE name = ?;"
+    _c.execute(command, (scenario_name,))
 
     _conn.commit()
     _conn.close()
 
 
 def check_scenario_federation_completed(scenario_name):
-    # Check if all nodes in the scenario have finished the federation comparing the round number with the total rounds
-    # Nodes has a column called round, which is the current round number of the node
-    # Scenario has a column called rounds, which is the total rounds of the scenario
-    # All nodes in the scenario have finished the federation if the round number of all nodes are equal to the total rounds of the scenario
-    _conn = sqlite3.connect(scenario_db_file_location)
-    _c = _conn.cursor()
+    try:
+        # Connect to the scenario database to get the total rounds for the scenario
+        with sqlite3.connect(scenario_db_file_location) as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
 
-    command = "SELECT * FROM scenarios WHERE name = '" + scenario_name + "';"
-    _c.execute(command)
-    scenario = _c.fetchone()
+            c.execute("SELECT rounds FROM scenarios WHERE name = ?;", (scenario_name,))
+            scenario = c.fetchone()
 
-    _conn.commit()
-    _conn.close()
+            if not scenario:
+                raise ValueError(f"Scenario '{scenario_name}' not found.")
 
-    _conn = sqlite3.connect(node_db_file_location)
-    _c = _conn.cursor()
+            total_rounds = scenario['rounds']
 
-    command = "SELECT * FROM nodes WHERE scenario = '" + scenario_name + "';"
-    _c.execute(command)
-    nodes = _c.fetchall()
+        # Connect to the node database to check the rounds for each node
+        with sqlite3.connect(node_db_file_location) as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
 
-    _conn.commit()
-    _conn.close()
+            c.execute("SELECT round FROM nodes WHERE scenario = ?;", (scenario_name,))
+            nodes = c.fetchall()
 
-    if len(nodes) == 0:
+            if len(nodes) == 0:
+                return False
+
+            # Check if all nodes have completed the total rounds
+            return all(node['round'] == total_rounds for node in nodes)
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
         return False
-
-    for node in nodes:
-        if node[10] != scenario[7]:
-            return False  # The round number of the node is not equal to the total rounds of the scenario
-
-    return True  # All nodes in the scenario have finished the federation
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return False
 
 
 def check_scenario_with_role(role, scenario_name):
     _conn = sqlite3.connect(scenario_db_file_location)
     _c = _conn.cursor()
-    command = "SELECT * FROM scenarios WHERE role = '" + role + "' AND name = '" + scenario_name + "';"
-    _c.execute(command)
+    command = "SELECT * FROM scenarios WHERE role = ? AND name = ?;"
+    _c.execute(command, (role, scenario_name))
     result = _c.fetchone()
 
     _conn.commit()
