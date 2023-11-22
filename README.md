@@ -86,9 +86,9 @@ If you use Fedstellar in a scientific publication, we would appreciate using the
 	title        = {{Decentralized Federated Learning: Fundamentals, State of the Art, Frameworks, Trends, and Challenges}},
 	author       = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and Quiles P{\'e}rez, Mario and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
 	year         = 2023,
-  	volume       = {In press},
-  	number       = {1-1},
-  	pages        = {1-1},
+  	volume       = {25},
+  	number       = {4},
+  	pages        = {2983-3013},
 	journal      = {IEEE Communications Surveys & Tutorials},
   	doi          = {10.1109/COMST.2023.3315746},
 	preprint	 = {https://arxiv.org/abs/2211.08413}
