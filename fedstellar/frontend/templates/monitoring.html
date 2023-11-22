@@ -116,6 +116,29 @@
     </table>
 </div>
 
+<!-- <h3>Deploy new node</h3>
+<p class="text-muted">This functionality enables you to deploy a new node with the neighbors of the selected nodes. The
+    new node will be deployed in the same federation as the selected nodes.</p>
+<div class="row">
+    <div class="col-md-4">
+        <div class="form-group">
+            <label for="selected-node">Select node(s)</label>
+            <select id="selected-node" class="form-control" multiple>
+                {% for uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, round, scenario, status in nodes %}
+                {% if role == "trainer" or role == "aggregator" %} 
+                <option value="{{ uid }}" data-id="{{ idx }}" data-ip="{{ ip }}" data-port="{{ port }}">{{ ip }}:{{ port }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-4">
+        <button id="deploy-node" class="btn btn-dark">Deploy node</button>
+    </div>
+</div> -->
+
 <h3>Map</h3>
 <p class="text-muted">This functionality enables you to visualize the nodes in a real-time map. Click on a node to see
     its details.</p>
@@ -222,6 +245,50 @@
         });
     });
 </script>
+
+<!-- <script>
+    // Deploy node
+    var deployNodeButton = document.getElementById("deploy-node");
+    deployNodeButton.addEventListener("click", function () {
+        // Get the selected nodes
+        var selectedNodes = document.getElementById("selected-node").selectedOptions;
+        var selectedNodes_list = [];
+        for (var i = 0; i < selectedNodes.length; i++) {
+            //selectedNodesIPs.push(selectedNodes[i].value);
+            selectedNodes_list[i] = {
+                uid : selectedNodes[i].value,
+                idx: selectedNodes[i].getAttribute("data-id"),
+                ip: selectedNodes[i].getAttribute("data-ip"),
+                port: selectedNodes[i].getAttribute("data-port")
+            };
+        }
+        console.log(selectedNodes_list);
+        // Send the selected nodes to the server
+        fetch('/api/scenario/' + scenario_name + '/node/deploy', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                selected_nodes: selectedNodes_list
+            })
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    showAlert("danger", "Error: " + response.status + " " + response.statusText);
+                    return;
+                }
+                // Examine the text in the response
+                response.json().then(function (data) {
+                    showAlert("success", data.message);
+                });
+            })
+            .catch(function (err) {
+                showAlert("danger", "Error: " + err);
+            });
+    });
+
+</script> -->
 
 <script>
     var map = L.map('map', {

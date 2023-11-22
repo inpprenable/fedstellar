@@ -46,7 +46,7 @@ from fedstellar.frontend.database import (
     remove_nodes_by_scenario_name,
     remove_scenario_by_name,
     scenario_set_status_to_finished,
-    get_all_scenarios_check_completed,
+    get_all_scenarios_and_check_completed,
     check_scenario_with_role,
     get_location_neighbors,
 )
@@ -386,7 +386,7 @@ def fedstellar_scenario():
     if "user" in session.keys() or request.path == "/api/scenario/":
         # Get the list of scenarios
         scenarios = (
-            get_all_scenarios_check_completed()
+            get_all_scenarios_and_check_completed()
         )  # Get all scenarios after checking if they are completed
         scenario_running = get_running_scenario()
         # Check if status of scenario_running is "completed"
@@ -688,41 +688,77 @@ def fedstellar_update_node(scenario_name):
             return abort(400)
 
 
-# @app.route("/scenario/<scenario_name>/node/<uid>/update/logs", methods=['POST'])  # unused
-# def fedstellar_update_node_logs(scenario_name, uid):
-#     if request.method == 'POST':
-#         # Get the logs from the request (is not json)
-#         logs = request.data.decode('utf-8')
-#         # Update log file
-#         with open(os.path.join(app.config['LOG_FOLDER_FRONTEND'], f'{uid}.log'), "a") as f:
-#             f.write(logs)
-#
-#         return make_response("Logs received successfully", 200)
-
-# Removed because security issues
-# @app.route("/logs", methods=["GET"])
-# def fedstellar_logs():
+# @app.route("/scenario/<scenario_name>/node/deploy", methods=["POST"])
+# def fedstellar_deploy_node(scenario_name):
 #     if "user" in session.keys():
-#         logs = os.path.join(app.config["log_dir"], f"server.log")
-#         if os.path.exists(logs):
-#             return send_file(logs, mimetype="text/plain")
-#         else:
-#             abort(404)
+#         if request.method == "POST":
+#             # Check if the post request is a json, if not, return 400
+#             if request.is_json:
+#                 config = request.get_json()
+#                 selected_nodes = config["selected_nodes"]
+                
+#                 # Select random selected_nodes from the list of nodes and get the path to the configuration file. Then, create a copy 
+                
+#                 config_random_node = os.path.join(
+#                     app.config["config_dir"],
+#                     scenario_name,
+#                     f"participant_{selected_nodes[0]['id']}.json",
+#                 )
+                
+#                 # Open the configuration file
+                
+                
+#                 # Generate a unique identifier for the node
+#                 uid = hashlib.sha1(
+#                     (
+#                         str(config["device_args"]["idx"])
+#                         + str(config["network_args"]["ip"])
+#                         + str(config["network_args"]["port"])
+#                     ).encode()
+#                 ).hexdigest()
+#                 # Update the node in database
+#                 update_node_record(
+#                     uid,
+#                     str(config["device_args"]["idx"]),
+#                     str(config["network_args"]["ip"]),
+#                     str(config["network_args"]["port"]),
+#                     str(config["device_args"]["role"]),
+#                     str(config["network_args"]["neighbors"]),
+#                     str(config["mobility_args"]["latitude"]),
+#                     str(config["mobility_args"]["longitude"]),
+#                     str(datetime.datetime.now()),
+#                     str(config["scenario_args"]["federation"]),
+#                     str(config["federation_args"]["round"]),
+#                     str(config["scenario_args"]["name"]),
+#                 )
+
+#                 # Send notification to each connected users
+#                 socketio.emit(
+#                     "node_deploy",
+#                     {
+#                         "scenario_name":
+#                         scenario_name,  # TODO: maybe change scenario name and save directly in config folder
+#                         "uid": uid,
+#                         "idx": config["device_args"]["idx"],
+#                         "ip": config["network_args"]["ip"],
+#                         "port": str(config["network_args"]["port"]),
+#                         "role": config["device_args"]["role"],
+#                         "neighbors": config["network_args"]["neighbors"],
+#                         "latitude": config["mobility_args"]["latitude"],
+#                         "longitude": config["mobility_args"]["longitude"],
+#                         "timestamp": str(datetime.datetime.now()),
+#                         "federation": config["scenario_args"]["federation"],
+#                         "round": config["federation_args"]["round"],
+#                         "name": config["scenario_args"]["name"],
+#                         "status": True,
+#                     },
+#                 )
+                
+#                 return make_response(jsonify({"uid": uid}), 200)
+#             else:
+#                 return abort(400)
 #     else:
-#         return abort(401)
-
-# Removed because security issues
-# @app.route("/logs/erase", methods=["GET"])
-# def fedstellar_logs_erase():
-#     if "user" in session.keys():
-#         logs = os.path.join(app.config["log_dir"], f"server.log")
-#         if os.path.exists(logs):
-#             # Overwrite the file with "Fedstellar Core Logs" string
-#             with open(logs, "w") as f:
-#                 f.write("Fedstellar Core Logs")
-#             return redirect(url_for("fedstellar_logs"))
-#         else:
-#             abort(404)
+#         return make_response("You are not authorized to access this page.", 401)
 
 
 @app.route("/scenario/<scenario_name>/node/<id>/infolog", methods=["GET"])
