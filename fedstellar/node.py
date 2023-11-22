@@ -10,7 +10,6 @@ from datetime import datetime
 
 from fedstellar.attacks.aggregation import create_attack
 from fedstellar.learning.aggregators.aggregator import create_malicious_aggregator
-from fedstellar.learning.aggregators.helper import cosine_similarity
 from fedstellar.learning.pytorch.remotelogger import FedstellarWBLogger
 from fedstellar.learning.pytorch.statisticsloggerv2 import FedstellarLogger
 from fedstellar.messages import LearningNodeMessages
@@ -41,6 +40,8 @@ from fedstellar.learning.aggregators.median import Median
 from fedstellar.learning.aggregators.trimmedmean import TrimmedMean
 from fedstellar.learning.exceptions import DecodingParamsError, ModelNotMatchingError
 from fedstellar.learning.pytorch.lightninglearner import LightningLearner
+
+from fedstellar.learning.aggregators.helper import cosine_metric, euclidean_metric, minkowski_metric, manhattan_metric, pearson_correlation_metric, jaccard_metric 
 
 
 class Node(BaseNode):
@@ -367,6 +368,21 @@ class Node(BaseNode):
                     logging.info(f"({self.addr}) add_model (gRPC) | Remote Service using gRPC (executed by {request.source})")
                     decoded_model = self.learner.decode_parameters(request.weights)
                     if self.learner.check_parameters(decoded_model):
+                        # Check model similarity between the model and the aggregated models. If the similarity is low enough, ignore the model. Use cossine similarity.
+                        logging.info(f"({self.addr}) add_model (gRPC) | Checking model similarity")
+                        cosine_value = cosine_metric(self.learner.get_parameters(), decoded_model, similarity=True)
+                        euclidean_value = euclidean_metric(self.learner.get_parameters(), decoded_model, similarity=True)
+                        minkowski_value = minkowski_metric(self.learner.get_parameters(), decoded_model, p=2, similarity=True)
+                        manhattan_value = manhattan_metric(self.learner.get_parameters(), decoded_model, similarity=True)
+                        pearson_correlation_value = pearson_correlation_metric(self.learner.get_parameters(), decoded_model, similarity=True)
+                        jaccard_value = jaccard_metric(self.learner.get_parameters(), decoded_model, similarity=True)
+                        
+                        # Write the metrics in a log file participant_{self.idx}_similarity.csv in log dir (with timestamp, round, cosine, euclidean, minkowski, manhattan, pearson_correlation, jaccard)
+                        with open(f"{self.log_dir}/participant_{self.idx}_similarity.csv", "a+") as f:
+                            if os.stat(f"{self.log_dir}/participant_{self.idx}_similarity.csv").st_size == 0:
+                                f.write("timestamp,source_ip,round,cosine,euclidean,minkowski,manhattan,pearson_correlation,jaccard\n")
+                            f.write(f"{datetime.now()}, {request.source}, {self.round}, {cosine_value}, {euclidean_value}, {minkowski_value}, {manhattan_value}, {pearson_correlation_value}, {jaccard_value}\n")
+                        
                         models_added = self.aggregator.add_model(
                             decoded_model, request.contributors, request.weight, source=request.source, round=request.round
                         )
@@ -1111,7 +1127,7 @@ class Node(BaseNode):
             logging.info(f'reputation_calculation self.get_name() at round {self.round}: {self.get_name()}')
             if untrusted_node != self.get_name():
                 untrusted_model = current_models[untrusted_node]
-                cossim = cosine_similarity(local_model, untrusted_model)
+                cossim = cosine_metric(local_model, untrusted_model, similarity=True)
                 logging.info(
                     f'reputation_calculation cossim at round {self.round}: {untrusted_node}: {cossim}')
                 self.learner.logger.log_metrics({f"Reputation/cossim_{untrusted_node}": cossim},
