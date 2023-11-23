@@ -1325,14 +1325,29 @@ class MaliciousNode(Node):
         self.fit_time = 0.0
         # Time it would wait additionally to the normal training time
         self.extra_time = 0.0
-        self.aggregator = create_malicious_aggregator(self.aggregator, self.attack)
+        
+        self.round_start_attack = 3
+        self.round_stop_attack = 6
+        
+        self.aggregator_bening = self.aggregator
 
-    def _Node__train(self):  # Required to override Node.__train method
-        if self.round == 0:
-            t0 = time.time()
-            logging.info(f"({self.addr}) Training...")
-            self.learner.fit()
-            self.fit_time = time.time() - t0 + self.extra_time
-        else:
-            logging.info(f"({self.addr}) Waiting {self.fit_time} seconds maliciously...")
-            time.sleep(max(self.fit_time, 0.0))
+    # def _Node__train(self):  # Required to override Node.__train method
+    #     if self.round == 0:
+    #         t0 = time.time()
+    #         logging.info(f"({self.addr}) Training...")
+    #         self.learner.fit()
+    #         self.fit_time = time.time() - t0 + self.extra_time
+    #     else:
+    #         logging.info(f"({self.addr}) Waiting {self.fit_time} seconds maliciously...")
+    #         time.sleep(max(self.fit_time, 0.0))
+        
+    def _Node__train_step(self):
+        if self.round in range(self.round_start_attack, self.round_stop_attack):
+            logging.info(f"({self.addr}) Changing aggregation function maliciously...")
+            self.aggregator = create_malicious_aggregator(self.aggregator, self.attack)
+        elif self.round == self.round_stop_attack: 
+            logging.info(f"({self.addr}) Changing aggregation function benignly...")
+            self.aggregator = self.aggregator_bening
+        
+        super()._Node__train_step()
+

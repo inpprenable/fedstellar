@@ -197,7 +197,7 @@ class Neighbors:
 
         """
 
-        logging.info(f"{self.__self_addr} Adding non direct connected neighbor {addr}")
+        logging.info(f"({self.__self_addr}) Adding non direct connected neighbor {addr}")
         self.__nei_lock.acquire()
         self.__neighbors[addr] = [None, None, time.time()]
         self.__nei_lock.release()
@@ -214,7 +214,7 @@ class Neighbors:
         Returns:
 
         """
-        logging.info(f"{self.__self_addr} Adding direct connected neighbor {addr}")
+        logging.info(f"({self.__self_addr}) Adding direct connected neighbor {addr}")
         try:
             # Create channel and stub
             channel = grpc.insecure_channel(addr)
@@ -228,7 +228,7 @@ class Neighbors:
                 )
                 if res.error:
                     logging.info(
-                        f"{self.__self_addr} Cannot add a neighbor: {res.error}"
+                        f"({self.__self_addr}) Cannot add a neighbor: {res.error}"
                     )
                     channel.close()
                     return False
@@ -240,7 +240,7 @@ class Neighbors:
             return True
 
         except Exception as e:
-            logging.info(f"{self.__self_addr} Crash while adding a neighbor: {e}")
+            logging.info(f"({self.__self_addr}) Crash while adding a neighbor: {e}")
             # Try to remove neighbor
             try:
                 self.remove(addr)
@@ -262,14 +262,14 @@ class Neighbors:
         """
         # Cannot add itself
         if addr == self.__self_addr:
-            logging.info(f"{self.__self_addr} Cannot add itself")
+            logging.info(f"({self.__self_addr}) Cannot add itself")
             return False
 
         # Cannot add duplicates
         self.__nei_lock.acquire()
         duplicated = addr in self.__neighbors.keys()
-        logging.info(f"{self.__self_addr} Detected {addr} duplicated") if duplicated else logging.info(
-            f"{self.__self_addr} Detected {addr} not duplicated")
+        logging.info(f"({self.__self_addr}) Detected {addr} duplicated") if duplicated else logging.info(
+            f"({self.__self_addr}) Detected {addr} not duplicated")
         self.__nei_lock.release()
         # Avoid adding if duplicated and not non_direct neighbor (otherwise, connect creating a channel)
         if duplicated:
@@ -279,16 +279,16 @@ class Neighbors:
                 # If so, upgrade to direct connected neighbor
                 if self.__neighbors[addr][1] is None:
                     logging.info(
-                        f"{self.__self_addr} Upgrading non direct connected neighbor {addr}"
+                        f"({self.__self_addr}) Upgrading non direct connected neighbor {addr}"
                     )
                     return self.direct_add_node(handshake_msg, addr)
                 else:  # Upcoming undirected connection
-                    logging.info(f"{self.__self_addr} Already direct connected neighbor {addr}")
+                    logging.info(f"({self.__self_addr}) Already direct connected neighbor {addr}")
                     return False
 
             elif non_direct:
                 # Duplicated but the node wants to add it as a non-direct connected neighbor
-                logging.info(f"{self.__self_addr} Cannot add a duplicate {addr} (undirected connection), already connected")
+                logging.info(f"({self.__self_addr}) Cannot add a duplicate {addr} (undirected connection), already connected")
                 return False
         else:
             # Add non-direct connected neighbors

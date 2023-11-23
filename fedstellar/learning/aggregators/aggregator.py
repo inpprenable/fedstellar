@@ -417,13 +417,18 @@ class Aggregator:
 
 
 def create_malicious_aggregator(aggregator, attack):
+    # It creates a partial function aggregate that wraps the aggregate method of the original aggregator. 
     aggregate = partial(aggregator.aggregate)  # None is the self (not used)
 
+    # This function will replace the original aggregate method of the aggregator.
     def malicious_aggregate(self, models):
+        # it first calls the original aggregate function with the models argument to get the initial aggregation result.
         accum = aggregate(models)
         if models is not None:
             accum = attack(accum)
         return accum
 
+    # It replaces the aggregate method of the aggregator with the malicious_aggregate function.
+    # This is done using the partial function again to bind the aggregator as the self argument of malicious_aggregate.
     aggregator.aggregate = partial(malicious_aggregate, aggregator)
     return aggregator

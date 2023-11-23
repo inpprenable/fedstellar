@@ -81,7 +81,6 @@ app.config["config_dir"] = os.environ.get("FEDSTELLAR_CONFIG_DIR")
 app.config["model_dir"] = os.environ.get("FEDSTELLAR_MODELS_DIR")
 app.config["root_host_path"] = os.environ.get("FEDSTELLAR_ROOT_HOST")
 app.config["DEBUG"] = os.environ.get("FEDSTELLAR_DEBUG")
-print("FEDSTELLAR_DEBUG: " + str(app.config["DEBUG"]))
 socketio = SocketIO(
     app,
     async_mode=async_mode,
