@@ -380,9 +380,8 @@ class Node(BaseNode):
                         # Write the metrics in a log file participant_{self.idx}_similarity.csv in log dir (with timestamp, round, cosine, euclidean, minkowski, manhattan, pearson_correlation, jaccard)
                         with open(f"{self.log_dir}/participant_{self.idx}_similarity.csv", "a+") as f:
                             if os.stat(f"{self.log_dir}/participant_{self.idx}_similarity.csv").st_size == 0:
-                                f.write("timestamp,source_ip,round,cosine,euclidean,minkowski,manhattan,pearson_correlation,jaccard\n")
-                            f.write(f"{datetime.now()}, {request.source}, {self.round}, {cosine_value}, {euclidean_value}, {minkowski_value}, {manhattan_value}, {pearson_correlation_value}, {jaccard_value}\n")
-                        
+                                f.write("timestamp,source_ip,contributors,round,current_round,cosine,euclidean,minkowski,manhattan,pearson_correlation,jaccard\n")
+                            f.write(f"{datetime.now()}, {request.source}, {' '.join(request.contributors)}, {request.round}, {self.round}, {cosine_value}, {euclidean_value}, {minkowski_value}, {manhattan_value}, {pearson_correlation_value}, {jaccard_value}\n") 
                         models_added = self.aggregator.add_model(
                             decoded_model, request.contributors, request.weight, source=request.source, round=request.round
                         )
@@ -1259,6 +1258,8 @@ class Node(BaseNode):
             if not neis:
                 logging.info(f"({self.addr}) Gossip| Gossip finished. No more nodes need models.")
                 return
+            
+            logging.info(f"({self.addr}) Gossip | last_x_status: {last_x_status} | j: {j}")
 
             # Save state of neighbors. If nodes are not responding gossip will stop
             if len(last_x_status) != self.config.participant["GOSSIP_EXIT_ON_X_EQUAL_ROUNDS"]:
@@ -1269,10 +1270,11 @@ class Node(BaseNode):
 
                 # Check if las messages are the same
                 for i in range(len(last_x_status) - 1):
+                    logging.info(f"({self.addr}) Gossip | Comparing {last_x_status[i]} with {last_x_status[i + 1]}")
                     if last_x_status[i] != last_x_status[i + 1]:
                         break
                     logging.info(
-                        f"({self.addr}) Gossip | Gossiping exited for {self.config.participant['GOSSIP_EXIT_ON_X_EQUAL_ROUNDS']} equal rounds."
+                        f"({self.addr}) Gossip | Gossiping exited for {self.config.participant['GOSSIP_EXIT_ON_X_EQUAL_ROUNDS']} equal rounds. (avoid duplicated gossiping)"
                     )
                     return
 

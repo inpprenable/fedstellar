@@ -81,6 +81,7 @@ app.config["config_dir"] = os.environ.get("FEDSTELLAR_CONFIG_DIR")
 app.config["model_dir"] = os.environ.get("FEDSTELLAR_MODELS_DIR")
 app.config["root_host_path"] = os.environ.get("FEDSTELLAR_ROOT_HOST")
 app.config["DEBUG"] = os.environ.get("FEDSTELLAR_DEBUG")
+print("FEDSTELLAR_DEBUG: " + str(app.config["DEBUG"]))
 socketio = SocketIO(
     app,
     async_mode=async_mode,
@@ -648,16 +649,16 @@ def fedstellar_update_node(scenario_name):
                     ).st_size
                     == 0
                 ):
-                    f.write("timestamp,latitude,longitude,neigbor,distance\n")
+                    f.write("timestamp,ip,latitude,longitude,distance\n")
 
                 f.write(
-                    f"{timestamp},{config['mobility_args']['latitude']},{config['mobility_args']['longitude']},None,None\n"
+                    f"{timestamp},{config['network_args']['ip'] + ':' + str(config['network_args']['port'])},{config['mobility_args']['latitude']},{config['mobility_args']['longitude']},None\n"
                 )
                 for neighbour in config["network_args"]["neighbors"].split(" "):
                     if neighbour != "":
                         try:
                             f.write(
-                                f"{timestamp},{neigbours_location[neighbour][0]},{neigbours_location[neighbour][1]},{neighbour},{neigbours_location[neighbour][2]}\n"
+                                f"{timestamp},{neighbour},{neigbours_location[neighbour][0]},{neigbours_location[neighbour][1]},{neigbours_location[neighbour][2]}\n"
                             )
                         except:
                             f.write(f"{timestamp},None,None,{neighbour},None\n")
