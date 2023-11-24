@@ -90,6 +90,7 @@ class Node(BaseNode):
 
         self.idx = idx
         logging.info("[NODE] My idx is {}".format(self.idx))
+        logging.info("[NODE] My IP is {}".format(self.addr))
 
         # Import configuration file
         self.config = config

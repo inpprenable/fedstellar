@@ -424,8 +424,10 @@ def create_malicious_aggregator(aggregator, attack):
     def malicious_aggregate(self, models):
         # it first calls the original aggregate function with the models argument to get the initial aggregation result.
         accum = aggregate(models)
+        logging.info(f"({self.node_name}) malicious_aggregate | original aggregation result={accum}")
         if models is not None:
             accum = attack(accum)
+            logging.info(f"({self.node_name}) malicious_aggregate | attack aggregation result={accum}")
         return accum
 
     # It replaces the aggregate method of the aggregator with the malicious_aggregate function.

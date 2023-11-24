@@ -8,7 +8,7 @@ from torch.nn import functional as F
 from typing import OrderedDict, List
 
 
-def cosine_metric(model1: OrderedDict[str, torch.Tensor], model2: OrderedDict[str, torch.Tensor], similarity: bool = False) -> Optional[float]:
+def cosine_metric2(model1: OrderedDict[str, torch.Tensor], model2: OrderedDict[str, torch.Tensor], similarity: bool = False) -> Optional[float]:
     if model1 is None or model2 is None:
         logging.info("Cosine similarity cannot be computed due to missing model")
         return None
@@ -35,6 +35,35 @@ def cosine_metric(model1: OrderedDict[str, torch.Tensor], model2: OrderedDict[st
     else:
         return None
     
+def cosine_metric(model1: OrderedDict, model2: OrderedDict, similarity: bool = False) -> Optional[float]:
+    if model1 is None or model2 is None:
+        logging.info("Cosine similarity cannot be computed due to missing model")
+        return None
+
+    cos_similarities: List = []
+
+    for layer in model1:
+        if layer in model2:
+            l1 = model1[layer].to('cpu')
+            l2 = model2[layer].to('cpu')
+            if l1.shape != l2.shape:
+                # Adjust the shape of the smaller layer to match the larger layer
+                min_len = min(l1.shape[0], l2.shape[0])
+                l1, l2 = l1[:min_len], l2[:min_len]
+            cos = torch.nn.CosineSimilarity(dim=l1.dim() - 1)
+            cos_mean = torch.mean(cos(l1.float(), l2.float())).mean()
+            cos_similarities.append(cos_mean)
+        else:
+            logging.info("Layer {} not found in model 2".format(layer))
+
+    if cos_similarities:    
+        cos = torch.Tensor(cos_similarities)
+        avg_cos = torch.mean(cos)
+        relu_cos = torch.nn.functional.relu(avg_cos)  # relu to avoid negative values
+        return relu_cos.item() if similarity else (1 - relu_cos.item())
+    else:
+        return None
+        
 
 def euclidean_metric(model1: OrderedDict[str, torch.Tensor], model2: OrderedDict[str, torch.Tensor], standardized: bool = False, similarity: bool = False) -> Optional[float]:
     if model1 is None or model2 is None:
