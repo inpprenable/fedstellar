@@ -36,6 +36,9 @@
     "delay": "100ms",
     "delay-distro": 0
   },
+  "adaptive_args": {
+    "model_similarity": false
+  },
   "mobility_args": {
     "random_geo": true,
     "latitude": "",
