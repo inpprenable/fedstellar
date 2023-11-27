@@ -4,8 +4,8 @@ import random
 import matplotlib
 import matplotlib.pyplot as plt
 
-matplotlib.use('Agg')
-plt.switch_backend('Agg')
+matplotlib.use("Agg")
+plt.switch_backend("Agg")
 
 import networkx as nx
 import numpy as np
@@ -15,7 +15,12 @@ from fedstellar.role import Role
 
 class TopologyManager:
     def __init__(
-            self, scenario_name=None, n_nodes=5, b_symmetric=True, undirected_neighbor_num=5, topology=None
+        self,
+        scenario_name=None,
+        n_nodes=5,
+        b_symmetric=True,
+        undirected_neighbor_num=5,
+        topology=None,
     ):
         self.scenario_name = scenario_name
         if topology is None:
@@ -36,14 +41,19 @@ class TopologyManager:
 
     def __getstate__(self):
         # Return the attributes of the class that should be serialized
-        return {'scenario_name': self.scenario_name, 'n_nodes': self.n_nodes, 'topology': self.topology, 'nodes': self.nodes}
+        return {
+            "scenario_name": self.scenario_name,
+            "n_nodes": self.n_nodes,
+            "topology": self.topology,
+            "nodes": self.nodes,
+        }
 
     def __setstate__(self, state):
         # Set the attributes of the class from the serialized state
-        self.scenario_name = state['scenario_name']
-        self.n_nodes = state['n_nodes']
-        self.topology = state['topology']
-        self.nodes = state['nodes']
+        self.scenario_name = state["scenario_name"]
+        self.n_nodes = state["n_nodes"]
+        self.topology = state["topology"]
+        self.nodes = state["nodes"]
 
     def draw_graph(self, plot=False, path=None):
         g = nx.from_numpy_array(self.topology)
@@ -76,20 +86,20 @@ class TopologyManager:
             labels[k] = f"P{k}\n" + str(self.nodes[k][0]) + ":" + str(self.nodes[k][1])
         # nx.draw_networkx_nodes(g, pos_shadow, node_color='k', alpha=0.5)
         nx.draw_networkx_nodes(g, pos, node_color=color_map, linewidths=2)
-        nx.draw_networkx_labels(g, pos, labels, font_size=10, font_weight='bold')
+        nx.draw_networkx_labels(g, pos, labels, font_size=10, font_weight="bold")
         nx.draw_networkx_edges(g, pos, width=2)
         # plt.margins(0.0)
         roles = [str(i[2]) for i in self.nodes]
         if Role.AGGREGATOR in roles:
-            plt.scatter([], [], c="orange", label='Aggregator')
+            plt.scatter([], [], c="orange", label="Aggregator")
         if Role.SERVER in roles:
-            plt.scatter([], [], c="green", label='Server')
+            plt.scatter([], [], c="green", label="Server")
         if Role.TRAINER in roles:
-            plt.scatter([], [], c="#6182bd", label='Trainer')
+            plt.scatter([], [], c="#6182bd", label="Trainer")
         if Role.PROXY in roles:
-            plt.scatter([], [], c="purple", label='Proxy')
+            plt.scatter([], [], c="purple", label="Proxy")
         if Role.IDLE in roles:
-            plt.scatter([], [], c="red", label='Idle')
+            plt.scatter([], [], c="red", label="Idle")
         # plt.scatter([], [], c="green", label='Central Server')
         # plt.scatter([], [], c="orange", label='Aggregator')
         # plt.scatter([], [], c="#6182bd", label='Trainer')
@@ -199,7 +209,8 @@ class TopologyManager:
 
     def __ring_topology(self, increase_convergence=False):
         topology_ring = np.array(
-            nx.to_numpy_matrix(nx.watts_strogatz_graph(self.n_nodes, 2, 0)), dtype=np.float32
+            nx.to_numpy_matrix(nx.watts_strogatz_graph(self.n_nodes, 2, 0)),
+            dtype=np.float32,
         )
 
         if increase_convergence:
@@ -217,7 +228,8 @@ class TopologyManager:
     def __randomly_pick_neighbors_symmetric(self):
         # First generate a ring topology
         topology_ring = np.array(
-            nx.to_numpy_matrix(nx.watts_strogatz_graph(self.n_nodes, 2, 0)), dtype=np.float32
+            nx.to_numpy_matrix(nx.watts_strogatz_graph(self.n_nodes, 2, 0)),
+            dtype=np.float32,
         )
 
         np.fill_diagonal(topology_ring, 0)
@@ -226,7 +238,8 @@ class TopologyManager:
         # If undirected_neighbor_num is X, then each node has X links to other nodes
         k = int(self.undirected_neighbor_num)
         topology_random_link = np.array(
-            nx.to_numpy_matrix(nx.watts_strogatz_graph(self.n_nodes, k, 0)), dtype=np.float32
+            nx.to_numpy_matrix(nx.watts_strogatz_graph(self.n_nodes, k, 0)),
+            dtype=np.float32,
         )
 
         # generate symmetric topology
@@ -244,14 +257,16 @@ class TopologyManager:
         # randomly add some links for each node (symmetric)
         k = self.undirected_neighbor_num
         topology_random_link = np.array(
-            nx.to_numpy_matrix(nx.watts_strogatz_graph(self.n_nodes, k, 0)), dtype=np.float32
+            nx.to_numpy_matrix(nx.watts_strogatz_graph(self.n_nodes, k, 0)),
+            dtype=np.float32,
         )
 
         np.fill_diagonal(topology_random_link, 0)
 
         # first generate a ring topology
         topology_ring = np.array(
-            nx.to_numpy_matrix(nx.watts_strogatz_graph(self.n_nodes, 2, 0)), dtype=np.float32
+            nx.to_numpy_matrix(nx.watts_strogatz_graph(self.n_nodes, 2, 0)),
+            dtype=np.float32,
         )
 
         np.fill_diagonal(topology_ring, 0)
@@ -276,8 +291,8 @@ class TopologyManager:
                 out_link = j * self.n_nodes + i
                 if topology_ring[i][j] == 0:
                     if (
-                            random_selection[index_of_zero] == 1
-                            and out_link not in out_link_set
+                        random_selection[index_of_zero] == 1
+                        and out_link not in out_link_set
                     ):
                         topology_ring[i][j] = 1
                         out_link_set.add(i * self.n_nodes + j)
@@ -289,7 +304,9 @@ class TopologyManager:
 
     def __fully_connected(self):
         topology_fully_connected = np.array(
-            nx.to_numpy_matrix(nx.watts_strogatz_graph(self.n_nodes, self.n_nodes - 1, 0)),
+            nx.to_numpy_matrix(
+                nx.watts_strogatz_graph(self.n_nodes, self.n_nodes - 1, 0)
+            ),
             dtype=np.float32,
         )
 
@@ -303,39 +320,3 @@ class TopologyManager:
         np.fill_diagonal(topology_fully_connected, 0)
 
         self.topology = topology_fully_connected
-
-    @staticmethod
-    def update_topology_3d_json(participants, path):
-        json_data = {
-            "nodes": [],
-            "links": [],
-        }
-        for node in participants:
-            json_data["nodes"].append(
-                {
-                    "uid": node['device_args']['uid'],
-                    "id": node['device_args']['idx'],
-                    "ipport": node['network_args']['ip'] + ":" + str(node['network_args']['port']),
-                    "role": node['device_args']['role'],
-                    "ip": node['network_args']['ip'],
-                    "port": str(node['network_args']['port']),
-                    "start": node['device_args']['start'],
-                }
-            )
-
-        # Then, we create a matrix of zeros
-        # matrix = np.zeros((len(nodes), len(nodes)))
-        # Then, we fill the matrix with the neighbours
-        for node in participants:
-            for neighbour in node['network_args']['neighbors'].split(" "):
-                if neighbour != '':
-                    json_data["links"].append(
-                        {
-                            "source": node['network_args']['ip'] + ":" + str(node['network_args']['port']),
-                            "target": neighbour,
-                            "value": 1,  # TODO: improve this
-                        }
-                    )
-                    # matrix[nodes.index(node['network_args']['ip'] + ':' + str(node['network_args']['port']))][nodes.index(neighbour)] = 1
-        with open(path, "w") as f:
-            json.dump(json_data, f, sort_keys=False, indent=2)

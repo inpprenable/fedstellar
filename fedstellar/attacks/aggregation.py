@@ -20,6 +20,8 @@ def create_attack(attack_name):
     """
     if attack_name == "GLLNeuronInversionAttack":
         return GLLNeuronInversionAttack()
+    elif attack_name == "NoiseInjectionAttack":
+        return NoiseInjectionAttack()
     elif attack_name == "SwappingWeightsAttack":
         return SwappingWeightsAttack()
     elif attack_name == "DelayerAttack":
@@ -54,12 +56,25 @@ class GLLNeuronInversionAttack(Attack):
         logging.info("[GLLNeuronInversionAttack] Performing neuron inversion attack")
         lkeys = list(received_weights.keys())
         logging.info(f"Layer inverted: {lkeys[-2]}")
-        # wmf = received_weights[lkeys[-2]].flatten()
-        # attacked_nodes = torch.argsort(wmf, descending=True)
-        # wmf[attacked_nodes[:int(len(wmf) * self.perc)]] = - self.strength * wmf[attacked_nodes[:int(len(wmf) * self.perc)]]
-        # received_weights[lkeys[-2]] = wmf.reshape(received_weights[lkeys[-2]].shape)
-        # return received_weights
         received_weights[lkeys[-2]].data = torch.rand(received_weights[lkeys[-2]].shape) * 10000
+        return received_weights
+    
+
+class NoiseInjectionAttack(Attack):
+    """
+    Function to perform noise injection attack on the received weights.
+    """
+    def __init__(self, strength=10000, perc=1.0):
+        super().__init__()
+        self.strength = strength
+        self.perc = perc
+
+    def attack(self, received_weights):
+        logging.info("[NoiseInjectionAttack] Performing noise injection attack")
+        lkeys = list(received_weights.keys())
+        for k in lkeys:
+            logging.info(f"Layer noised: {k}")
+            received_weights[k].data += torch.randn(received_weights[k].shape) * self.strength
         return received_weights
 
 

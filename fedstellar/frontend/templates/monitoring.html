@@ -116,6 +116,29 @@
     </table>
 </div>
 
+<!-- <h3>Deploy new node</h3>
+<p class="text-muted">This functionality enables you to deploy a new node with the neighbors of the selected nodes. The
+    new node will be deployed in the same federation as the selected nodes.</p>
+<div class="row">
+    <div class="col-md-4">
+        <div class="form-group">
+            <label for="selected-node">Select node(s)</label>
+            <select id="selected-node" class="form-control" multiple>
+                {% for uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, round, scenario, status in nodes %}
+                {% if role == "trainer" or role == "aggregator" %} 
+                <option value="{{ uid }}" data-id="{{ idx }}" data-ip="{{ ip }}" data-port="{{ port }}">{{ ip }}:{{ port }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-4">
+        <button id="deploy-node" class="btn btn-dark">Deploy node</button>
+    </div>
+</div> -->
+
 <h3>Map</h3>
 <p class="text-muted">This functionality enables you to visualize the nodes in a real-time map. Click on a node to see
     its details.</p>
@@ -222,6 +245,50 @@
         });
     });
 </script>
+
+<!-- <script>
+    // Deploy node
+    var deployNodeButton = document.getElementById("deploy-node");
+    deployNodeButton.addEventListener("click", function () {
+        // Get the selected nodes
+        var selectedNodes = document.getElementById("selected-node").selectedOptions;
+        var selectedNodes_list = [];
+        for (var i = 0; i < selectedNodes.length; i++) {
+            //selectedNodesIPs.push(selectedNodes[i].value);
+            selectedNodes_list[i] = {
+                uid : selectedNodes[i].value,
+                idx: selectedNodes[i].getAttribute("data-id"),
+                ip: selectedNodes[i].getAttribute("data-ip"),
+                port: selectedNodes[i].getAttribute("data-port")
+            };
+        }
+        console.log(selectedNodes_list);
+        // Send the selected nodes to the server
+        fetch('/api/scenario/' + scenario_name + '/node/deploy', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                selected_nodes: selectedNodes_list
+            })
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    showAlert("danger", "Error: " + response.status + " " + response.statusText);
+                    return;
+                }
+                // Examine the text in the response
+                response.json().then(function (data) {
+                    showAlert("success", data.message);
+                });
+            })
+            .catch(function (err) {
+                showAlert("danger", "Error: " + err);
+            });
+    });
+
+</script> -->
 
 <script>
     var map = L.map('map', {
@@ -354,7 +421,9 @@
         return null;
     }
 
-    function updateNeighborLines(droneId, droneLatLng, neighborsIPs) {
+    function updateNeighborLines(droneId, droneLatLng, neighborsIPs, condition) {
+        // console.log("Updating neighbor lines of drone " + droneMarkers[droneId].ip);
+        //console.log("Neighbors IPs: " + neighborsIPs);
         if (!droneLines[droneId]) {
             droneLines[droneId] = [];
         } else {
@@ -378,7 +447,17 @@
                 } else {
                     var line = L.polyline([droneLatLng, neighborLatLng], { color: 'blue' }).addTo(lineLayer);
                 }
-                line.bindPopup(`Distance: ${droneLatLng.distanceTo(neighborLatLng).toFixed(2)} m`);
+                try {
+                    // If condition is true, then the distance is calculated from the drone to the neighbor. Otherwise, the distance is calculated from the neighbor to the drone (this is because the distance is the same in both directions, avoiding concurrency problems)
+                    if (condition) {
+                        var distance = droneMarkers[droneId].neigbours_location[neighborIP][2];
+                    } else {
+                        var distance = neighborMarker.neigbours_location[droneMarkers[droneId].ip][2];
+                    }
+                    line.bindPopup(`Distance: ${distance} m`);
+                } catch (err) {
+                    line.bindPopup(`Distance: Calculating...`);
+                }
                 line.on('mouseover', function (e) {
                     this.openPopup();
                 });
@@ -394,13 +473,13 @@
                 var neighborIPs = droneMarkers[id].neighbors;
                 if (neighborIPs.includes(droneMarkers[droneId].ip)) {
                     // console.log("Updating neighbor lines of drone " + id);
-                    updateNeighborLines(id, droneMarkers[id].getLatLng(), neighborIPs);
+                    updateNeighborLines(id, droneMarkers[id].getLatLng(), neighborIPs, false);
                 }
             }
         }
     }
 
-    function updateDronePosition(uid, ip, lat, lng, neighborIPs) {
+    function updateDronePosition(uid, ip, lat, lng, neighborIPs, neighborsLocations) {
         var droneId = uid;
         var newLatLng = new L.LatLng(lat, lng);
         var popupContent = `<p><strong>UID:</strong> ${uid}<br><strong>IP:</strong> ${ip}<br><strong>Neighbors:</strong> ${neighborIPs}<br><strong>Latitude:</strong> ${lat}<br><strong>Longitude:</strong> ${lng}</p>`;
@@ -423,6 +502,7 @@
             });
             marker.ip = ip;
             marker.neighbors = neighborIPs;
+            marker.neigbours_location = neighborsLocations;
             droneMarkers[droneId] = marker
         } else {
             // Change the icon if the node is offline
@@ -438,6 +518,7 @@
             droneMarkers[droneId].moveTo(newLatLng, 5);
             droneMarkers[droneId].getPopup().setContent(popupContent);
             droneMarkers[droneId].neighbors = neighborIPs
+            droneMarkers[droneId].neigbours_location = neighborsLocations
         }
     }
 
@@ -456,12 +537,12 @@
         var newLatLng = new L.LatLng(data.latitude, data.longitude);
         neighborsIPs = data.neighbors.split(" ");
 
-        updateDronePosition(data.uid, data.ip, data.latitude, data.longitude, neighborsIPs);
+        updateDronePosition(data.uid, data.ip, data.latitude, data.longitude, neighborsIPs, data.neigbours_location);
 
         setTimeout(function () {
-            updateNeighborLines(data.uid, newLatLng, neighborsIPs);
+            updateNeighborLines(data.uid, newLatLng, neighborsIPs, true);
             updateAllRelatedLines(data.uid);
-        }, 30);
+        }, 20);
     }
 
 </script>

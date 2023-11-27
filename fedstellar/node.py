@@ -10,7 +10,6 @@ from datetime import datetime
 
 from fedstellar.attacks.aggregation import create_attack
 from fedstellar.learning.aggregators.aggregator import create_malicious_aggregator
-from fedstellar.learning.aggregators.helper import cosine_similarity
 from fedstellar.learning.pytorch.remotelogger import FedstellarWBLogger
 from fedstellar.learning.pytorch.statisticsloggerv2 import FedstellarLogger
 from fedstellar.messages import LearningNodeMessages
@@ -41,6 +40,8 @@ from fedstellar.learning.aggregators.median import Median
 from fedstellar.learning.aggregators.trimmedmean import TrimmedMean
 from fedstellar.learning.exceptions import DecodingParamsError, ModelNotMatchingError
 from fedstellar.learning.pytorch.lightninglearner import LightningLearner
+
+from fedstellar.learning.aggregators.helper import cosine_metric, euclidean_metric, minkowski_metric, manhattan_metric, pearson_correlation_metric, jaccard_metric 
 
 
 class Node(BaseNode):
@@ -89,6 +90,7 @@ class Node(BaseNode):
 
         self.idx = idx
         logging.info("[NODE] My idx is {}".format(self.idx))
+        logging.info("[NODE] My IP is {}".format(self.addr))
 
         # Import configuration file
         self.config = config
@@ -367,6 +369,22 @@ class Node(BaseNode):
                     logging.info(f"({self.addr}) add_model (gRPC) | Remote Service using gRPC (executed by {request.source})")
                     decoded_model = self.learner.decode_parameters(request.weights)
                     if self.learner.check_parameters(decoded_model):
+                        # Check model similarity between the model and the aggregated models. If the similarity is low enough, ignore the model. Use cossine similarity.
+                        if self.config.participant["adaptive_args"]["model_similarity"]:
+                            logging.info(f"({self.addr}) add_model (gRPC) | Checking model similarity")
+                            cosine_value = cosine_metric(self.learner.get_parameters(), decoded_model, similarity=True)
+                            euclidean_value = euclidean_metric(self.learner.get_parameters(), decoded_model, similarity=True)
+                            minkowski_value = minkowski_metric(self.learner.get_parameters(), decoded_model, p=2, similarity=True)
+                            manhattan_value = manhattan_metric(self.learner.get_parameters(), decoded_model, similarity=True)
+                            pearson_correlation_value = pearson_correlation_metric(self.learner.get_parameters(), decoded_model, similarity=True)
+                            jaccard_value = jaccard_metric(self.learner.get_parameters(), decoded_model, similarity=True)
+                            
+                            # Write the metrics in a log file participant_{self.idx}_similarity.csv in log dir (with timestamp, round, cosine, euclidean, minkowski, manhattan, pearson_correlation, jaccard)
+                            with open(f"{self.log_dir}/participant_{self.idx}_similarity.csv", "a+") as f:
+                                if os.stat(f"{self.log_dir}/participant_{self.idx}_similarity.csv").st_size == 0:
+                                    f.write("timestamp,source_ip,contributors,round,current_round,cosine,euclidean,minkowski,manhattan,pearson_correlation,jaccard\n")
+                                f.write(f"{datetime.now()}, {request.source}, {' '.join(request.contributors)}, {request.round}, {self.round}, {cosine_value}, {euclidean_value}, {minkowski_value}, {manhattan_value}, {pearson_correlation_value}, {jaccard_value}\n") 
+                        
                         models_added = self.aggregator.add_model(
                             decoded_model, request.contributors, request.weight, source=request.source, round=request.round
                         )
@@ -539,6 +557,13 @@ class Node(BaseNode):
         if response.status_code != 200:
             logging.error(f'Error received from controller: {response.status_code}')
             logging.error(response.text)
+        
+        try:
+            self._neighbors.set_neighbors_location(response.json()["neigbours_location"])
+        except:
+            logging.error(f'Error parsing neighbors location from controller response: {response.text}')
+            
+        # logging.info(f'({self.addr}) Neighbors location: {self._neighbors.get_neighbors_location()}')
 
     def __report_resources(self):
         """
@@ -1104,7 +1129,7 @@ class Node(BaseNode):
             logging.info(f'reputation_calculation self.get_name() at round {self.round}: {self.get_name()}')
             if untrusted_node != self.get_name():
                 untrusted_model = current_models[untrusted_node]
-                cossim = cosine_similarity(local_model, untrusted_model)
+                cossim = cosine_metric(local_model, untrusted_model, similarity=True)
                 logging.info(
                     f'reputation_calculation cossim at round {self.round}: {untrusted_node}: {cossim}')
                 self.learner.logger.log_metrics({f"Reputation/cossim_{untrusted_node}": cossim},
@@ -1236,6 +1261,8 @@ class Node(BaseNode):
             if not neis:
                 logging.info(f"({self.addr}) Gossip| Gossip finished. No more nodes need models.")
                 return
+            
+            logging.info(f"({self.addr}) Gossip | last_x_status: {last_x_status} | j: {j}")
 
             # Save state of neighbors. If nodes are not responding gossip will stop
             if len(last_x_status) != self.config.participant["GOSSIP_EXIT_ON_X_EQUAL_ROUNDS"]:
@@ -1246,10 +1273,11 @@ class Node(BaseNode):
 
                 # Check if las messages are the same
                 for i in range(len(last_x_status) - 1):
+                    logging.info(f"({self.addr}) Gossip | Comparing {last_x_status[i]} with {last_x_status[i + 1]}")
                     if last_x_status[i] != last_x_status[i + 1]:
                         break
                     logging.info(
-                        f"({self.addr}) Gossip | Gossiping exited for {self.config.participant['GOSSIP_EXIT_ON_X_EQUAL_ROUNDS']} equal rounds."
+                        f"({self.addr}) Gossip | Gossiping exited for {self.config.participant['GOSSIP_EXIT_ON_X_EQUAL_ROUNDS']} equal rounds. (avoid duplicated gossiping)"
                     )
                     return
 
@@ -1300,14 +1328,29 @@ class MaliciousNode(Node):
         self.fit_time = 0.0
         # Time it would wait additionally to the normal training time
         self.extra_time = 0.0
-        self.aggregator = create_malicious_aggregator(self.aggregator, self.attack)
+        
+        self.round_start_attack = 3
+        self.round_stop_attack = 6
+        
+        self.aggregator_bening = self.aggregator
 
-    def _Node__train(self):  # Required to override Node.__train method
-        if self.round == 0:
-            t0 = time.time()
-            logging.info(f"({self.addr}) Training...")
-            self.learner.fit()
-            self.fit_time = time.time() - t0 + self.extra_time
-        else:
-            logging.info(f"({self.addr}) Waiting {self.fit_time} seconds maliciously...")
-            time.sleep(max(self.fit_time, 0.0))
+    # def _Node__train(self):  # Required to override Node.__train method
+    #     if self.round == 0:
+    #         t0 = time.time()
+    #         logging.info(f"({self.addr}) Training...")
+    #         self.learner.fit()
+    #         self.fit_time = time.time() - t0 + self.extra_time
+    #     else:
+    #         logging.info(f"({self.addr}) Waiting {self.fit_time} seconds maliciously...")
+    #         time.sleep(max(self.fit_time, 0.0))
+        
+    def _Node__train_step(self):
+        if self.round in range(self.round_start_attack, self.round_stop_attack):
+            logging.info(f"({self.addr}) Changing aggregation function maliciously...")
+            self.aggregator = create_malicious_aggregator(self.aggregator, self.attack)
+        elif self.round == self.round_stop_attack: 
+            logging.info(f"({self.addr}) Changing aggregation function benignly...")
+            self.aggregator = self.aggregator_bening
+        
+        super()._Node__train_step()
+

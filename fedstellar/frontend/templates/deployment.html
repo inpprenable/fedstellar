@@ -288,6 +288,7 @@
                             <option>Sample Poisoning</option>
                             <option>Model Poisoning</option>
                             <option>GLLNeuronInversionAttack</option>
+                            <option>NoiseInjectionAttack</option>
                             <option>SwappingWeightsAttack</option>
                             <option>DelayerAttack</option>
                         </select>
@@ -975,7 +976,7 @@
             nodes: [...Array(n_nodes_predefined).keys()].map(i => ({
                 id: i,
                 ip: "127.0.0.1",
-                port: (45000 + i).toString(),
+                port: "45000",
                 role: i === 0 ? "aggregator" : "trainer",
                 malicious: false,
                 start: (i === 0),
@@ -1331,7 +1332,7 @@
         nodes: [...Array(N).keys()].map(i => ({
             id: i,
             ip: "127.0.0.1",
-            port: (45000 + i).toString(),
+            port: "45000",
             role: "aggregator",
             malicious: false,
             start: (i === 0),
@@ -1456,7 +1457,7 @@
                 const newNode = {
                     id: gData.nodes.length,
                     ip: "127.0.0.1",
-                    port: (45000 + gData.nodes.length).toString(),
+                    port: "45000",
                     role: 'trainer',
                     start: false
                 };
@@ -1490,7 +1491,7 @@
                         // Remove neighbors from node
                         n.neighbors = n.neighbors.filter(l => l.id !== node.id);
                         n.id = idx; // Reset node ids to array index
-                        n.port = (45000 + n.id).toString();
+                        n.port = "45000";
                     });
                     // Graph.graphData({nodes, links});
                     gData.nodes = nodes;
