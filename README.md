@@ -72,7 +72,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 If you use Fedstellar in a scientific publication, we would appreciate using the following citations:
 
 ```
-@article{MartinezBeltran:fedstellar:2023,
+@article{MartinezBeltran:fedstellar:2024,
 	title        = {{Fedstellar: A Platform for Decentralized Federated Learning}},
 	author       = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and Perales G{\'o}mez, {\'A}ngel Luis and Feng, Chao and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
 	year         = 2024,
