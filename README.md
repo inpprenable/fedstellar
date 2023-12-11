@@ -9,6 +9,7 @@
   <p align="center">
     A Platform for Decentralized Federated Learning
     <br>
+    <a href="https://fedstellar.dev">fedstellar.dev</a> / <a href="https://fedstellar.eu">fedstellar.eu</a> / <a href="https://fedstellar.com">fedstellar.com</a> / <a href="https://federeratedlearning.inf.um.es">federatedlearning.inf.um.es</a>
   </p>
 </p>
 
