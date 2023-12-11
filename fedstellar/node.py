@@ -11,7 +11,7 @@ from datetime import datetime
 from fedstellar.attacks.aggregation import create_attack
 from fedstellar.learning.aggregators.aggregator import create_malicious_aggregator
 from fedstellar.learning.pytorch.remotelogger import FedstellarWBLogger
-from fedstellar.learning.pytorch.statisticsloggerv2 import FedstellarLogger
+from fedstellar.learning.pytorch.statisticslogger import FedstellarLogger
 from fedstellar.messages import LearningNodeMessages
 from fedstellar.proto import node_pb2
 from fedstellar.role import Role
