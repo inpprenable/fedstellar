@@ -136,6 +136,7 @@ _build/
 app/
 *.yaml
 data/
+*.db
 
 docker-compose.yml
 /fedstellar/waf/grafana/*

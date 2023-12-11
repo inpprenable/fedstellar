@@ -9,6 +9,7 @@ import subprocess
 import sys
 import textwrap
 import time
+import shutil
 from datetime import datetime
 
 from dotenv import load_dotenv, set_key
@@ -182,6 +183,29 @@ class Controller:
         """
         )
         
+        waf_template = textwrap.dedent(
+            """
+            fedstellar-waf:
+                container_name: fedstellar-waf
+                image: fedstellar-waf
+                build: 
+                    context: .
+                    dockerfile: Dockerfile-waf
+                restart: unless-stopped
+                volumes:
+                    - {log_path}/waf/nginx:/var/log/nginx
+                extra_hosts:
+                    - "host.docker.internal:host-gateway"
+                ipc: host
+                privileged: true
+                ports:
+                    - {waf_port}:80
+                networks:
+                    fedstellar-net-base:
+                        ipv4_address: {ip}
+        """
+        )
+        
         grafana_template = textwrap.dedent(
             """
             grafana:
@@ -191,8 +215,6 @@ class Controller:
                     context: .
                     dockerfile: Dockerfile-grafana
                 restart: unless-stopped
-                volumes:
-                    - {grafana_path}/grafana.db:/var/lib/grafana/grafana.db
                 environment:
                     - GF_SECURITY_ADMIN_PASSWORD=admin
                     - GF_USERS_ALLOW_SIGN_UP=false
@@ -201,6 +223,8 @@ class Controller:
                     - GF_SERVER_DOMAIN=localhost:{grafana_port}
                     - GF_SERVER_ROOT_URL=http://localhost:{grafana_port}/grafana/
                     - GF_SERVER_SERVE_FROM_SUB_PATH=true
+                    - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/dashboard.json
+                    - GF_METRICS_MAX_LIMIT_TSDB=0
                 ports:
                     - {grafana_port}:3000
                 ipc: host
@@ -252,29 +276,6 @@ class Controller:
                         ipv4_address: {ip}
         """
         )
-        
-        waf_template = textwrap.dedent(
-            """
-            fedstellar-waf:
-                container_name: fedstellar-waf
-                image: fedstellar-waf
-                build: 
-                    context: .
-                    dockerfile: Dockerfile-waf
-                restart: unless-stopped
-                volumes:
-                    - {log_path}/waf/nginx:/var/log/nginx
-                extra_hosts:
-                    - "host.docker.internal:host-gateway"
-                ipc: host
-                privileged: true
-                ports:
-                    - {waf_port}:80
-                networks:
-                    fedstellar-net-base:
-                        ipv4_address: {ip}
-        """
-        )
 
         waf_template = textwrap.indent(waf_template, " " * 4)
         grafana_template = textwrap.indent(grafana_template, " " * 4)
@@ -306,15 +307,12 @@ class Controller:
         
         services += grafana_template.format(
             log_path=os.environ["FEDSTELLAR_LOGS_DIR"],
-            grafana_path=os.path.join(os.environ['FEDSTELLAR_ROOT'], 'fedstellar', 'waf', 'grafana'),
             grafana_port=self.grafana_port,
             loki_port=self.loki_port,  
             ip="192.168.100.201"  
         )
         
         services += loki_template.format(
-            log_path=os.environ["FEDSTELLAR_LOGS_DIR"],
-            loki_path=os.path.join(os.environ['FEDSTELLAR_ROOT'], 'fedstellar', 'waf', 'loki'),
             loki_port=self.loki_port,  
             ip="192.168.100.202"  
         )
@@ -609,6 +607,18 @@ class Controller:
 
     @staticmethod
     def stop_waf():
+        
+        #Removing waf log files
+        # try:
+        #     shutil.rmtree(
+        #         os.path.join(os.environ["FEDSTELLAR_LOGS_DIR"], "waf")
+        #     )
+        # except PermissionError:
+        #     # Avoid error if the user does not have enough permissions to remove the tf.events files
+        #     logging.warning(
+        #         "Not enough permissions to remove the files"
+        #     )
+        
         if sys.platform == "win32":
             try:
                 # kill all the docker containers which contain the word "fedstellar"
@@ -965,8 +975,7 @@ class Controller:
             raise e
 
     @classmethod
-    def remove_files_by_scenario(cls, scenario_name):
-        import shutil
+    def remove_files_by_scenario(cls, scenario_name):    
 
         shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_CONFIG_DIR"], scenario_name))
         try:

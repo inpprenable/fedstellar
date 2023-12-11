@@ -17,6 +17,9 @@ ingester:
   chunk_retain_period: 30s    # Must be greater than index read cache TTL if using an index cache (Default index read cache TTL is 5m)
   max_transfer_retries: 0     # Chunk transfers disabled
 
+query_scheduler:
+  max_outstanding_requests_per_tenant: 4096
+
 schema_config:
   configs:
     - from: 2020-10-24
@@ -42,6 +45,8 @@ compactor:
 
 limits_config:
   reject_old_samples: true
+  max_query_length: 0h
+  max_query_series: 100000
   reject_old_samples_max_age: 168h
 
 chunk_store_config:
@@ -50,6 +55,13 @@ chunk_store_config:
 table_manager:
   retention_deletes_enabled: false
   retention_period: 0s
+
+# limits_config:
+#   ingestion_rate_strategy: local # Default: global
+#   max_global_streams_per_user: 5000
+#   max_query_length: 0h # Default: 721h
+#   max_query_parallelism: 32 # Old Default: 14
+#   max_streams_per_user: 0 # Old Default: 10000
 
 ruler:
   storage:
