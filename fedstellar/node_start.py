@@ -4,12 +4,15 @@ import time
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from fedstellar.learning.pytorch.mnist.mnist import MNISTDataset
+from fedstellar.learning.pytorch.fashionmnist.fashionmnist import FashionMNISTDataset
 from fedstellar.learning.pytorch.syscall.syscall import SYSCALLDataset
 from fedstellar.learning.pytorch.cifar10.cifar10 import CIFAR10Dataset
 
 from fedstellar.config.config import Config
 from fedstellar.learning.pytorch.mnist.models.mlp import MNISTModelMLP
 from fedstellar.learning.pytorch.mnist.models.cnn import MNISTModelCNN
+from fedstellar.learning.pytorch.fashionmnist.models.mlp import FashionMNISTModelMLP
+from fedstellar.learning.pytorch.fashionmnist.models.cnn import FashionMNISTModelCNN
 from fedstellar.learning.pytorch.syscall.models.mlp import SyscallModelMLP
 from fedstellar.learning.pytorch.syscall.models.autoencoder import SyscallModelAutoencoder
 from fedstellar.learning.pytorch.cifar10.models.resnet import CIFAR10ModelResNet
@@ -99,6 +102,14 @@ def main():
             model = MNISTModelMLP()
         elif model_name == "CNN":
             model = MNISTModelCNN()
+        else:
+            raise ValueError(f"Model {model} not supported")
+    elif dataset == "FashionMNIST":
+        dataset = FashionMNISTDataset(num_classes=10, sub_id=idx, number_sub=n_nodes, iid=iid, partition="percent", seed=42, config=config)
+        if model_name == "MLP":
+            model = FashionMNISTModelMLP()
+        elif model_name == "CNN":
+            model = FashionMNISTModelCNN()
         else:
             raise ValueError(f"Model {model} not supported")
     elif dataset == "SYSCALL":

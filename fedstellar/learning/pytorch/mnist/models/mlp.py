@@ -3,11 +3,10 @@
 # Copyright (c) 2023 Enrique Tomás Martínez Beltrán.
 #
 
-# To Avoid Crashes with a lot of nodes
-import torch.multiprocessing
+# import torch.multiprocessing
+# torch.multiprocessing.set_sharing_strategy("file_system")
 
-torch.multiprocessing.set_sharing_strategy("file_system")
-
+import torch
 import lightning as pl
 from torchmetrics.classification import MulticlassAccuracy, MulticlassRecall, MulticlassPrecision, MulticlassF1Score, MulticlassConfusionMatrix
 from torchmetrics import MetricCollection

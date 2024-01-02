@@ -3,16 +3,13 @@
 # Copyright (c) 2023 Enrique Tomás Martínez Beltrán.
 #
 
-# To Avoid Crashes with a lot of nodes
-import torch.multiprocessing
+# import torch.multiprocessing
+# torch.multiprocessing.set_sharing_strategy("file_system")
 
-torch.multiprocessing.set_sharing_strategy("file_system")
-
+import torch
 import lightning as pl
 from torchmetrics.classification import MulticlassAccuracy, MulticlassRecall, MulticlassPrecision, MulticlassF1Score, MulticlassConfusionMatrix
 from torchmetrics import MetricCollection
-
-IMAGE_SIZE = 28
 
 
 class MNISTModelCNN(pl.LightningModule):
@@ -146,17 +143,25 @@ class MNISTModelCNN(pl.LightningModule):
         self.epoch_global_number = {"Train": 0, "Validation": 0, "Test": 0}
 
     def forward(self, x):
-        """ """
-        input_layer = x.view(-1, 1, IMAGE_SIZE, IMAGE_SIZE)
+        """Forward pass of the model."""
+        # Reshape the input tensor
+        input_layer = x.view(-1, 1, 28, 28)
+        
+        # First convolutional layer
         conv1 = self.relu(self.conv1(input_layer))
         pool1 = self.pool1(conv1)
+        
+        # Second convolutional layer
         conv2 = self.relu(self.conv2(pool1))
         pool2 = self.pool2(conv2)
+        
+        # Flatten the tensor
         pool2_flat = pool2.reshape(-1, 7 * 7 * 64)
-
+        
+        # Fully connected layers
         dense = self.relu(self.l1(pool2_flat))
         logits = self.l2(dense)
-
+        
         return logits
 
     def configure_optimizers(self):
@@ -203,7 +208,7 @@ class MNISTModelCNN(pl.LightningModule):
         return self.step(batch, "Validation")
 
     def on_validation_epoch_end(self):
-        self.log_metrics_by_epoch("Validation", print_cm=True, plot_cm=True)
+        self.log_metrics_by_epoch("Validation", print_cm=True, plot_cm=False)
 
     def test_step(self, batch, batch_idx):
         """
