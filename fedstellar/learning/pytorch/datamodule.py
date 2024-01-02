@@ -33,7 +33,9 @@ class DataModule(LightningDataModule):
     def __init__(
             self,
             train_set,
+            train_set_indices,
             test_set,
+            test_set_indices,
             sub_id=0,
             number_sub=1,
             batch_size=32,
@@ -53,7 +55,9 @@ class DataModule(LightningDataModule):
         super().__init__()
 
         self.train_set = train_set
+        self.train_set_indices = train_set_indices
         self.test_set = test_set
+        self.test_set_indices = test_set_indices
         self.sub_id = sub_id
         self.number_sub = number_sub
         self.batch_size = batch_size
@@ -73,23 +77,27 @@ class DataModule(LightningDataModule):
             raise ("Not exist the subset {}".format(self.sub_id))
 
         # Training / validation set
-        rows_by_sub = floor(len(train_set) / self.number_sub)
+        # rows_by_sub = floor(len(train_set) / self.number_sub)
         tr_subset = ChangeableSubset(
-            train_set, range(self.sub_id * rows_by_sub, (self.sub_id + 1) * rows_by_sub), label_flipping=self.label_flipping, data_poisoning=self.data_poisoning, poisoned_persent=self.poisoned_percent, poisoned_ratio=self.poisoned_ratio, targeted=self.targeted, target_label=self.target_label,
+            train_set, train_set_indices, label_flipping=self.label_flipping, data_poisoning=self.data_poisoning, poisoned_persent=self.poisoned_percent, poisoned_ratio=self.poisoned_ratio, targeted=self.targeted, target_label=self.target_label,
             target_changed_label=self.target_changed_label, noise_type=self.noise_type
         )
+        
+        train_size = round(len(tr_subset) * (1 - self.val_percent))
+        val_size = len(tr_subset) - train_size
+        
         data_train, data_val = random_split(
             tr_subset,
             [
-                round(len(tr_subset) * (1 - self.val_percent)),
-                round(len(tr_subset) * self.val_percent),
+                train_size,
+                val_size,
             ],
         )
 
         # Test set
-        rows_by_sub = floor(len(test_set) / self.number_sub)
+        # rows_by_sub = floor(len(test_set) / self.number_sub)
         te_subset = ChangeableSubset(
-            test_set, range(self.sub_id * rows_by_sub, (self.sub_id + 1) * rows_by_sub)
+            test_set, test_set_indices
         )
 
         if len(test_set) < self.number_sub:

@@ -6,8 +6,6 @@ import hashlib
 import sqlite3
 
 user_db_file_location = "database_file/users.db"
-note_db_file_location = "database_file/notes.db"
-image_db_file_location = "database_file/images.db"
 node_db_file_location = "database_file/nodes.db"
 scenario_db_file_location = "database_file/scenarios.db"
 
@@ -58,136 +56,17 @@ def delete_user_from_db(user):
         c = conn.cursor()
         c.execute("DELETE FROM users WHERE user = ?", (user,))
 
-    with sqlite3.connect(note_db_file_location) as conn:
-        c = conn.cursor()
-        c.execute("DELETE FROM notes WHERE user = ?", (user,))
-
-    with sqlite3.connect(image_db_file_location) as conn:
-        c = conn.cursor()
-        c.execute("DELETE FROM images WHERE owner = ?", (user,))
-
 
 def add_user(user, password, role):
     with sqlite3.connect(user_db_file_location) as conn:
         c = conn.cursor()
         c.execute("INSERT INTO users VALUES (?, ?, ?)", (user.upper(), hashlib.sha256(password.encode()).hexdigest(), role))
 
-
-"""
-    Notes Management
-"""
-
-
-def read_note_from_db(user):
-    with sqlite3.connect(note_db_file_location) as conn:
-        conn.row_factory = sqlite3.Row
+def update_user(user, password, role):
+    with sqlite3.connect(user_db_file_location) as conn:
         c = conn.cursor()
-
-        command = "SELECT note_id, timestamp, note FROM notes WHERE user = ?"
-        c.execute(command, (user.upper(),))
-        result = c.fetchall()
-
-    return result
-
-
-def match_user_id_with_note_id(note_id):
-    with sqlite3.connect(note_db_file_location) as conn:
-        c = conn.cursor()
-
-        command = "SELECT user FROM notes WHERE note_id = ?"
-        c.execute(command, (note_id,))
-        result = c.fetchone()[0]
-
-    return result
-
-
-def write_note_into_db(user, note_to_write):
-    with sqlite3.connect(note_db_file_location) as conn:
-        c = conn.cursor()
-
-        current_timestamp = str(datetime.datetime.now())
-        c.execute("INSERT INTO notes VALUES (?, ?, ?, ?)", (user.upper(), current_timestamp, note_to_write, hashlib.sha1((user.upper() + current_timestamp).encode()).hexdigest()))
-
-
-def delete_note_from_db(note_id):
-    with sqlite3.connect(note_db_file_location) as conn:
-        c = conn.cursor()
-
-        command = "DELETE FROM notes WHERE note_id = ?"
-        c.execute(command, (note_id,))
-
-
-"""
-    Image Management
-"""
-
-
-def image_upload_record(uid, owner, image_name, timestamp):
-    try:
-        with sqlite3.connect(image_db_file_location) as conn:
-            c = conn.cursor()
-            c.execute("INSERT INTO images VALUES (?, ?, ?, ?)", (uid, owner, image_name, timestamp))
-            conn.commit()
-    except sqlite3.Error as e:
-        print(f"Error occurred while uploading image record: {e}")
-
-
-# get uid and name from imagen where uid = image_uid
-# store the uid and name in a tuple
-def get_image_file_name(image_uid):
-    with sqlite3.connect(image_db_file_location) as conn:
-        c = conn.cursor()
-
-        command = "SELECT uid, name FROM images WHERE uid = ?"
-        c.execute(command, (image_uid,))
-        result = c.fetchone()
-
-    if result:
-        return result[0] + "-" + result[1]
-    else:
-        return None
-
-
-def list_images_for_user(owner):
-    try:
-        with sqlite3.connect(image_db_file_location) as conn:
-            c = conn.cursor()
-
-            command = "SELECT uid, timestamp, name FROM images WHERE owner = ?"
-            c.execute(command, (owner,))
-            result = c.fetchall()
-
-        return result
-    except sqlite3.Error as e:
-        print(f"Error occurred while listing images for user: {e}")
-        return None
-
-
-def match_user_id_with_image_uid(image_uid):
-    try:
-        with sqlite3.connect(image_db_file_location) as conn:
-            c = conn.cursor()
-            command = "SELECT owner FROM images WHERE uid = ?"
-            c.execute(command, (image_uid,))
-            result = c.fetchone()[0]
-        return result
-    except sqlite3.Error as e:
-        print(f"Error occurred while matching user id with image uid: {e}")
-        return None
-
-
-def delete_image_from_db(image_uid):
-    try:
-        with sqlite3.connect(image_db_file_location) as conn:
-            c = conn.cursor()
-
-            command = "DELETE FROM images WHERE uid = ?;"
-            c.execute(command, (image_uid,))
-
-            conn.commit()
-    except sqlite3.Error as e:
-        print(f"Error occurred while deleting image from database: {e}")
-
+        print(f"UPDATE users SET password = {hashlib.sha256(password.encode()).hexdigest()}, role = {role} WHERE user = {user.upper()}")
+        c.execute("UPDATE users SET password = ?, role = ? WHERE user = ?", (hashlib.sha256(password.encode()).hexdigest(), role, user.upper()))
 
 """
     Nodes Management

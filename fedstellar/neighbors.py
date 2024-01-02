@@ -99,6 +99,7 @@ class Neighbors:
             msg (node_pb2.Message): Message to send.
         """
         try:
+            # logging.info(f"({self.__self_addr}) Sending message (gRPC) {msg.cmd} to {self.__neighbors[nei][1]}")
             res = self.__neighbors[nei][1].send_message(
                 msg, timeout=self.__config.participant["GRPC_TIMEOUT"]
             )
@@ -236,6 +237,12 @@ class Neighbors:
             # Add neighbor
             self.__nei_lock.acquire()
             self.__neighbors[addr] = [channel, stub, time.time()]
+            # Update config
+            if self.__config.participant["network_args"]["neighbors"] == "":
+                self.__config.participant["network_args"]["neighbors"] = addr
+            else:
+                if addr not in self.__config.participant["network_args"]["neighbors"]:
+                    self.__config.participant["network_args"]["neighbors"] += " " + addr
             self.__nei_lock.release()
             return True
 
@@ -268,8 +275,7 @@ class Neighbors:
         # Cannot add duplicates
         self.__nei_lock.acquire()
         duplicated = addr in self.__neighbors.keys()
-        logging.info(f"({self.__self_addr}) Detected {addr} duplicated") if duplicated else logging.info(
-            f"({self.__self_addr}) Detected {addr} not duplicated")
+        logging.info(f"({self.__self_addr}) Attempting to add DIRECT connection {addr} (duplicated={duplicated})") if not non_direct else logging.info(f"({self.__self_addr}) Attempting to add NON DIRECT connection {addr} (duplicated={duplicated})")
         self.__nei_lock.release()
         # Avoid adding if duplicated and not non_direct neighbor (otherwise, connect creating a channel)
         if duplicated:
@@ -321,7 +327,7 @@ class Neighbors:
             # Remove neighbor
             del self.__neighbors[nei]
             # Remove neighbor from config
-            current_neighbors = self.__config.participant["network_args"]["neighbors"]  # String with "IP IP IP"
+            current_neighbors = self.get_all(only_direct=True)
             logging.info(f"({self.__self_addr}) Current neighbors: {current_neighbors}")
             final_neighbors = ""
             if current_neighbors == nei:
@@ -334,7 +340,7 @@ class Neighbors:
                 if final_neighbors[-1] == " ":
                     final_neighbors = final_neighbors[:-1]
             self.__config.participant["network_args"]["neighbors"] = final_neighbors
-            logging.info(f"({self.__self_addr}) Final neighbors: {final_neighbors}")
+            logging.info(f"({self.__self_addr}) Final neighbors: {final_neighbors} (config updated))")
         except:
             pass
         self.__nei_lock.release()
@@ -351,7 +357,7 @@ class Neighbors:
         """
         return self.__neighbors[nei][1]
 
-    def get_all(self, only_direct=False):
+    def get_all(self, only_direct=False, only_undirected=False):
         """
         Get all the neighbors (names).
 
@@ -362,8 +368,14 @@ class Neighbors:
             list: List of neighbor addresses.
         """
         neis = self.__neighbors.copy()
-        if only_direct:
+        
+        if only_direct and only_undirected:
+            return list(neis.keys())
+        elif only_direct:
             return [k for k, v in neis.items() if v[1] is not None]
+        elif only_undirected:
+            return [k for k, v in neis.items() if v[1] is None]
+        
         return list(neis.keys())
 
     def clear_neis(self):
@@ -400,6 +412,7 @@ class Neighbors:
             self.__nei_lock.release()
 
     def __start_heartbeater(self):
+        logging.info(f"({self.__self_addr}) Starting heartbeater thread")
         threading.Thread(target=self.__heartbeater).start()
 
     def _stop_heartbeater(self):
@@ -495,6 +508,7 @@ class Neighbors:
             self.__pending_msgs_lock.release()
 
     def __start_gossiper(self):
+        logging.debug(f"({self.__self_addr}) Starting gossiper thread")
         threading.Thread(target=self.__gossiper).start()
 
     def _stop_gossiper(self):

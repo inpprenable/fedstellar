@@ -36,6 +36,14 @@ fedstellar.learning.pytorch.datamodule module
    :undoc-members:
    :show-inheritance:
 
+fedstellar.learning.pytorch.fedstellardataset module
+----------------------------------------------------
+
+.. automodule:: fedstellar.learning.pytorch.fedstellardataset
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 fedstellar.learning.pytorch.lightninglearner module
 ---------------------------------------------------
 
@@ -56,14 +64,6 @@ fedstellar.learning.pytorch.statisticslogger module
 ---------------------------------------------------
 
 .. automodule:: fedstellar.learning.pytorch.statisticslogger
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-fedstellar.learning.pytorch.statisticsloggerv2 module
------------------------------------------------------
-
-.. automodule:: fedstellar.learning.pytorch.statisticsloggerv2
    :members:
    :undoc-members:
    :show-inheritance:

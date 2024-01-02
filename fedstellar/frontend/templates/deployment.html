@@ -62,8 +62,15 @@
 <div id="spinner"></div>
 
 <form id="form-configurations">
-    <div class="col-md-4 no-padding">
-        <div class="form-group row">
+    <div class="col-md-4">
+        <div class="form-group row container-shadow tiny grey">
+            <h4>Scenario Configuration <i class="fa fa-save"></i></h4>
+            <div id="save-load-configurations" style="display: flex; justify-content: space-between">
+                <button id="save-config-btn" type="button" class="btn btn-dark" style="width: 45%">Save</button>
+                <button id="load-config-btn" type="button" class="btn btn-dark" style="width: 45%">Load</button>
+            </div>
+        </div>
+        <div class="form-group row container-shadow tiny grey">
             <h4 class="step-number">Scenario Information <i class="fa fa-file-text"></i></h4>
             <h5 class="step-title">Scenario title</h5>
             <input type="text" class="form-control" id="scenario-title" style="width: 75%"
@@ -72,28 +79,28 @@
             <input type="text" class="form-control" id="scenario-description" style="width: 75%"
                 placeholder="Write a description for the scenario">
         </div>
-        <div class="form-group row" id="deployment-group">
+        <div class="form-group row container-shadow tiny grey" id="deployment-group">
             <h4 class="step-number">Deployment <i class="fa fa-cloud-upload"></i></h4>
-            <div style="margin-left: 10px">
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="locationRadioOptions" id="simulation-radio"
-                        value="simulation" checked>
-                    <label class="form-check-label" for="simulation-radio">Virtual participants</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="locationRadioOptions" id="real-radio"
-                        value="real" disabled>
-                    <label class="form-check-label" for="real-radio">Real devices</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="locationRadioOptions" id="datacenter-radio"
-                        value="datacenter" disabled>
-                    <label class="form-check-label" for="datacenter-radio">External datacenter</label>
-                </div>
+            <h5 class="step-title">Deployment type</h5>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="deploymentRadioOptions" id="simulation-radio"
+                    value="simulation" checked>
+                <label class="form-check-label" for="simulation-radio">Virtual participants</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="deploymentRadioOptions" id="real-radio" value="real"
+                    disabled>
+                <label class="form-check-label" for="real-radio">Real devices</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="deploymentRadioOptions" id="datacenter-radio"
+                    value="datacenter" disabled>
+                <label class="form-check-label" for="datacenter-radio">External datacenter</label>
             </div>
         </div>
-        <div class="form-group row">
-            <h4 class="step-number">Federation architecture <i class="fa fa-connectdevelop"></i></h4>
+        <div class="form-group row container-shadow tiny grey">
+            <h4 class="step-number">Federation Architecture <i class="fa fa-connectdevelop"></i></h4>
+            <h5 class="step-title">Federation approach</h5>
             <select class="form-control" id="federationArchitecture" name="federation"
                 style="display: inline; width: 50%">
                 <option selected>DFL</option>
@@ -104,8 +111,9 @@
                 <i id="architectureHelpIcon" class="fa fa-info-circle"></i>
             </small>
         </div>
-        <div id="networkTopologyForm" class="form-group row">
+        <div id="networkTopologyForm" class="form-group row container-shadow tiny grey">
             <h4 class="step-number">Network Topology <i class="fa fa-sitemap"></i></h4>
+            <h5 class="step-title">Topology generation</h5>
             <div class="form-check form-check-inline">
                 <input class="form-check-input" type="radio" name="inlineNetworkTopology" id="custom-topology-btn"
                     checked>
@@ -134,8 +142,9 @@
                 <i id="networkTopologyRandom" class="fa fa-refresh"></i>
             </div>
         </div>
-        <div class="form-group row">
+        <div class="form-group row container-shadow tiny grey">
             <h4 class="step-number">Dataset <i class="fa fa-database"></i></h4>
+            <h5>Federated dataset</h5>
             <select class="form-control" id="datasetSelect" name="dataset" style="display: inline; width: 50%">
                 <option selected>MNIST</option>
                 <option>CIFAR10</option>
@@ -144,16 +153,27 @@
             <small id="datasetHelp" class="form-text text-muted">
                 <i id="datasetHelpIcon" class="fa fa-info-circle"></i>
             </small>
+            <h5>Dataset type</h5>
+            <select class="form-control" id="iidSelect" name="iid" style="display: inline; width: 50%">
+                <option value="true">IID</option>
+                <option value="false" selected>Non-IID</option>
+            </select>
+            <small id="iidHelp" class="form-text text-muted">
+                <i id="iidHelpIcon" class="fa fa-info-circle"></i>
+            </small>
         </div>
-        <div class="form-group row">
+        <div class="form-group row container-shadow tiny grey">
             <h4 class="step-number">Training <i class="fa fa-cogs"></i></h4>
             <h5>Model</h5>
             <select class="form-control" id="modelSelect" name="model" style="display: inline; width: 50%">
                 <option selected>MLP</option>
                 <option>CNN</option>
             </select>
+            <small id="modelHelp" class="form-text text-muted">
+                <i id="modelHelpIcon" class="fa fa-info-circle"></i>
+            </small>
         </div>
-        <div class="form-group row">
+        <div class="form-group row container-shadow tiny grey">
             <h4 class="step-number">Aggregation <i class="fa fa-calculator"></i></h4>
             <h5>Aggregation algorithm</h5>
             <select class="form-control" id="aggregationSelect" name="aggregation" style="display: inline; width: 50%">
@@ -197,7 +217,7 @@
             <div id="node-dropdown" class="dropdown-menu" style="display: none"></div>
         </div>
     </div>
-    <div id="extra-container" class="col-md-4 no-padding"></div>
+    <div id="extra-container" class="col-md-4 "></div>
     <div id="submit-container" class="col-md-8">
         <button id="user-btn" type="button" class="btn btn-light" style="margin-top: 10px" disabled>User mode
         </button>
@@ -206,8 +226,8 @@
         <button id="run-btn" type="button" class="btn btn-dark" style="margin-top: 10px;float: right">Run Fedstellar
         </button>
     </div>
-    <div id="expert-container" class="col-md-12 no-padding" style="display: none">
-        <div class="form-group row">
+    <div id="expert-container" class="col-md-12 " style="display: none">
+        <div class="form-group row container-shadow tiny grey">
             <h4 class="step-number">Participants <i class="fa fa-users"></i></h4>
             <h5>Number of rounds</h5>
             <input type="number" class="form-control" id="rounds" placeholder="Number of rounds" value="10"
@@ -222,22 +242,22 @@
         </div>
         <div class="row">
             <!-- Advanced Deployment -->
-            <div class="col-md-4 no-padding">
+            <div class="col-md-12 container-shadow tiny grey">
                 <div class="form-group">
                     <h4 class="step-number">Advanced Deployment <i class="fa fa-cloud-upload"></i></h4>
-                    <div style="margin-left: 10px">
-                        <h5 class="step-title">Accelerator definition</h5>
-                        <select class="form-control" id="resourceUsage" name="resources"
-                            style="display: inline; width: 80%">
-                            <option value="cpu" selected>CPU</option>
-                            <option value="mps">MPS</option>
-                            <option value="gpu">GPU</option>
-                        </select>
-                    </div>
+                    <h5 class="step-title">Accelerator definition</h5>
+                    <select class="form-control" id="resourceUsage" name="resources"
+                        style="display: inline; width: 80%">
+                        <option value="cpu" selected>CPU</option>
+                        <option value="mps">MPS</option>
+                        <option value="gpu">GPU</option>
+                    </select>
                 </div>
             </div>
+        </div>
+        <div class="row">
             <!-- Advanced Topology -->
-            <div class="col-md-4 no-padding">
+            <div class="col-md-12 container-shadow tiny grey">
                 <div class="form-group">
                     <h4 class="step-number">Advanced Topology <i class="fa fa-sitemap"></i></h4>
                     <div>
@@ -249,8 +269,10 @@
                     </div>
                 </div>
             </div>
+        </div>
+        <div class="row">
             <!-- Advanced Communications -->
-            <div class="col-md-4 no-padding">
+            <div class="col-md-12 container-shadow tiny grey">
                 <div class="form-group">
                     <h4 class="step-number">Advanced Communications <i class="fa fa-wifi"></i></h4>
                     <div id="docker-options">
@@ -264,10 +286,9 @@
                 </div>
             </div>
         </div>
-
         <div class="row">
             <!-- Advanced Training -->
-            <div class="col-md-4 no-padding">
+            <div class="col-md-12 container-shadow tiny grey">
                 <div class="form-group">
                     <h4 class="step-number">Advanced Training <i class="fa fa-cogs"></i></h4>
                     <h5>Number of Epochs</h5>
@@ -275,45 +296,47 @@
                         style="display: inline; width: 80%">
                 </div>
             </div>
+        </div>
+        <div class="row">
             <!-- Advanced Robustness -->
-            <div class="col-md-4 no-padding">
+            <div class="col-md-12 container-shadow tiny grey">
                 <div class="form-group">
                     <h4 class="step-number">Robustness <i class="fa fa-shield"></i></h4>
-                    <div style="margin-left: 10px">
-                        <h5 class="step-title">Attack Type</h5>
-                        <select class="form-control" id="poisoning-attack-select" name="poisoning-attack"
-                            style="display: inline; width: 80%">
-                            <option selected>No Attack</option>
-                            <option>Label Flipping</option>
-                            <option>Sample Poisoning</option>
-                            <option>Model Poisoning</option>
-                            <option>GLLNeuronInversionAttack</option>
-                            <option>NoiseInjectionAttack</option>
-                            <option>SwappingWeightsAttack</option>
-                            <option>DelayerAttack</option>
-                        </select>
-                        <h5>Percent of malicious nodes</h5>
-                        <input type="number" class="form-control" id="poisoned-node-percent"
-                            placeholder="Percent of malicious nodes" min="0" value="0"
-                            style="display: inline; width: 80%">
-                        <small class="form-text text-muted">%</small>
-                        <h5>Percent of samples poisoned by each malicious node</h5>
-                        <input type="number" class="form-control" id="poisoned-sample-percent"
-                            placeholder="Percent of samples poisoned in each malicious node" min="0" value="0"
-                            style="display: inline; width: 80%">
-                        <small class="form-text text-muted">%</small>
-                        <h5>Percent of poisoned noise</h5>
-                        <input type="number" class="form-control" id="poisoned-noise-percent"
-                            placeholder="Percent of noise in each poisoned sample" min="0" value="0"
-                            style="display: inline; width: 80%">
-                        <small class="form-text text-muted">%</small>
-                    </div>
+                    <h5 class="step-title">Attack Type</h5>
+                    <select class="form-control" id="poisoning-attack-select" name="poisoning-attack"
+                        style="display: inline; width: 80%">
+                        <option selected>No Attack</option>
+                        <option>Label Flipping</option>
+                        <option>Sample Poisoning</option>
+                        <option>Model Poisoning</option>
+                        <option>GLLNeuronInversionAttack</option>
+                        <option>NoiseInjectionAttack</option>
+                        <option>SwappingWeightsAttack</option>
+                        <option>DelayerAttack</option>
+                    </select>
+                    <h5>Percent of malicious nodes</h5>
+                    <input type="number" class="form-control" id="poisoned-node-percent"
+                        placeholder="Percent of malicious nodes" min="0" value="0" style="display: inline; width: 80%">
+                    <small class="form-text text-muted">%</small>
+                    <h5>Percent of samples poisoned by each malicious node</h5>
+                    <input type="number" class="form-control" id="poisoned-sample-percent"
+                        placeholder="Percent of samples poisoned in each malicious node" min="0" value="0"
+                        style="display: inline; width: 80%">
+                    <small class="form-text text-muted">%</small>
+                    <h5>Percent of poisoned noise</h5>
+                    <input type="number" class="form-control" id="poisoned-noise-percent"
+                        placeholder="Percent of noise in each poisoned sample" min="0" value="0"
+                        style="display: inline; width: 80%">
+                    <small class="form-text text-muted">%</small>
                 </div>
             </div>
+        </div>
+        <div class="row">
             <!-- Advanced Defense -->
-            <div class="col-md-4 no-padding">
+            <div class="col-md-12 container-shadow tiny grey">
                 <div class="form-group">
                     <h4 class="step-number">Defense <i class="fa fa-wrench"></i></h4>
+                    <h5 class="step-title">Reputation System</h5>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="reputationSystem" id="without-reputation-btn"
                             checked>
@@ -351,10 +374,10 @@
         </div>
         <div class="row">
             <!-- Mobility -->
-            <div class="col-md-4 no-padding">
+            <div class="col-md-12 container-shadow tiny grey">
                 <div class="form-group">
                     <h4 class="step-number">Mobility <i class="fa fa-car"></i></h4>
-                    <h5>Select the default location for the participants</h5>
+                    <h5 class="step-title">Select the default location for the participants</h5>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="locationRadioOptions" id="random-geo-btn"
                             checked>
@@ -379,26 +402,50 @@
                             <div id="map" style="width: 100%; height: 300px"></div>
                         </div>
                     </div>
-                    <h5>Mobility configuration</h5>
+                    <h5 class="step-title">Mobility configuration</h5>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="mobility" id="without-mobility-btn" checked>
                         <label class="form-check-label" for="without-mobility-btn">Disable Mobility</label>
                     </div>
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="mobility" id="with-mobility-btn">
-                        <label class="form-check-label" for="with-mobility-btn">Enable Mobility</label>
+                        <input class="form-check-input" type="radio" name="mobility" id="mobility-btn">
+                        <label class="form-check-label" for="mobility-btn">Enable Mobility</label>
                     </div>
                     <div id="mobility-options" style="display: none; margin-left: 10px">
+                        <h5>Type of mobility</h5>
+                        <select class="form-control" id="mobilitySelect" name="mobility"
+                            style="display: inline; width: 80%">
+                            <option value="both" selected>Topology and Geographical</option>
+                            <option value="topology">Topology</option>
+                            <option value="geo">Geographical</option>
+                        </select>
+                        <h5>Radius of federation (m)</h5>
+                        <input type="number" class="form-control" id="radiusFederation" placeholder="meters" min="0"
+                            value="1000" style="display: inline; width: 80%">
                         <h5>Scheme of mobility</h5>
                         <select class="form-control" id="schemeMobilitySelect" name="schemeMobility"
-                            style="display: inline; width: 80%">
-                            <option selected>Circle</option>
-                            <option>Random</option>
+                            style="display: inline; width: 80%" disabled>
+                            <option value="random" selected>Random</option>
                         </select>
-                        <h5>Radius of mobility (m)</h5>
-                        <input type="number" class="form-control" id="radiusMobility"
-                            placeholder="Radius of mobility (m)" min="0" value="1000"
+                        <h5>Each participant moves every (rounds)</h5>
+                        <input type="number" class="form-control" id="roundFrequency" placeholder="rounds" min="1"
+                            value="1" style="display: inline; width: 80%">
+                        <h5><strong>%</strong> of mobile participants</h5>
+                        <input type="number" class="form-control" id="mobileParticipantsPercent"
+                            placeholder="Percent of mobile participants" min="0" value="50"
                             style="display: inline; width: 80%">
+                        <small class="form-text text-muted">%</small>
+                        <hr class="styled">
+                        <h5>Number of additional participants (deployed during federation)</h5>
+                        <input type="number" class="form-control" id="additionalParticipants"
+                            placeholder="Number of additional participants" min="0" value="0"
+                            style="display: inline; width: 80%">
+                        <div id="additional-participants-items"></div>
+                        <h5>Schema of deployment</h5>
+                        <select class="form-control" id="schemaAdditionalParticipantsSelect"
+                            name="schemaAdditionalParticipants" style="display: inline; width: 80%" disabled>
+                            <option value="random" selected>Random</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -538,11 +585,11 @@
     }
 
     .overlay {
-        position: absolute;
+        position: fixed;
         top: 0;
         left: 0;
         width: 100%;
-        height: 300vh;
+        height: 100%;
         background-color: rgba(0, 0, 0, 0.6);
         /* Semi-transparent black */
         display: none;
@@ -551,20 +598,18 @@
 
     #spinner {
         display: none;
-        border: 7px solid #f3f3f3;
-        /* Light grey */
-        border-top: 7px solid #3498db;
-        /* Blue */
+        border: 7px solid #f3f3f3; /* Light grey */
+        border-top: 7px solid #3498db; /* Blue */
         border-radius: 50%;
-        animation: spin 0.6s linear infinite;
+        animation: spin 1s linear infinite; /* Spin animation with 1 second duration */
 
         position: absolute;
         top: 50%;
         left: 50%;
-        z-index: 1000;
         transform: translate(-50%, -50%);
-        width: 100px;
-        height: 100px;
+        width: 80px;
+        height: 80px;
+        z-index: 1000;
     }
 
     @keyframes spin {
@@ -577,6 +622,206 @@
         }
     }
 </style>
+
+<script>
+    function getScenarioData() {
+        var nodes = {};
+        var n_nodes = document.getElementById("info-participants-number").innerHTML;
+        for (var i = 0; i < n_nodes; i++) {
+            nodes[i] = {
+                "id": i,
+                "ip": Graph.graphData().nodes[i].ip,
+                "port": Graph.graphData().nodes[i].port,
+                "role": Graph.graphData().nodes[i].role,
+                "malicious": Graph.graphData().nodes[i].malicious,
+                "start": Graph.graphData().nodes[i].start,
+            }
+        }
+        var aditional_participants = [];
+        additionalParticipants = document.getElementById("additionalParticipants");
+        for (var i = 0; i < additionalParticipants.value; i++) {
+            aditional_participants[i] = {
+                "round": document.getElementById("roundsAdditionalParticipant" + i).value,
+            }
+        }
+        
+        var data = {}
+        // Step 1
+        data["scenario_title"] = document.getElementById("scenario-title").value
+        data["scenario_description"] = document.getElementById("scenario-description").value
+        // Step 2
+        data["simulation"] = true
+        // Step 3
+        data["federation"] = document.getElementById("federationArchitecture").value
+        // Step 4
+        data["topology"] = document.getElementById("predefined-topology-btn").checked ? document.getElementById("predefined-topology-select").value : "Custom"
+        data["nodes"] = nodes
+        data["n_nodes"] = getNumberOfNodes()
+        data["matrix"] = getMatrix(Graph.graphData().nodes, Graph.graphData().links)
+        // Step 5
+        data["dataset"] = document.getElementById("datasetSelect").value
+        data["iid"] = document.getElementById("iidSelect").value === "true"
+        // Step 6
+        data["model"] = document.getElementById("modelSelect").value
+        // Step 7
+        data["agg_algorithm"] = document.getElementById("aggregationSelect").value
+        // Step 8
+        data["rounds"] = document.getElementById("rounds").value
+        data["logginglevel"] = document.getElementById("loggingLevel").value === "true"
+        // Step 9
+        data["accelerator"] = document.getElementById("resourceUsage").value
+        // Step 10-11
+        data["network_subnet"] = document.getElementById("network-subnet").value
+        data["network_gateway"] = document.getElementById("network-gateway").value
+        // Step 12
+        data["epochs"] = document.getElementById("epochs").value
+        // Step 13
+        data["attacks"] = document.getElementById("poisoning-attack-select").value
+        data["poisoned_node_percent"] = document.getElementById("poisoned-node-percent").value
+        data["poisoned_sample_percent"] = document.getElementById("poisoned-sample-percent").value
+        data["poisoned_noise_percent"] = document.getElementById("poisoned-noise-percent").value
+        // Step 14
+        data["with_reputation"] = document.getElementById("with-reputation-btn").checked ? true : false
+        data["is_dynamic_topology"] = document.getElementById("dynamic-topology-btn").checked ? true : false
+        data["is_dynamic_aggregation"] = document.getElementById("dynamic-aggregation-btn").checked ? true : false
+        data["target_aggregation"] = document.getElementById("dynamic-aggregation-btn").checked ? document.getElementById("targetAggregationSelect").value : false
+        // Step 15
+        data["random_geo"] = document.getElementById("random-geo-btn").checked ? true : false
+        data["latitude"] = document.getElementById("latitude").value
+        data["longitude"] = document.getElementById("longitude").value
+        data["mobility"] = document.getElementById("mobility-btn").checked ? true : false
+        data["mobility_type"] = document.getElementById("mobilitySelect").value
+        data["radius_federation"] = document.getElementById("radiusFederation").value
+        data["scheme_mobility"] = document.getElementById("schemeMobilitySelect").value
+        data["round_frequency"] = document.getElementById("roundFrequency").value
+        data["mobile_participants_percent"] = document.getElementById("mobileParticipantsPercent").value
+        data["additional_participants"] = aditional_participants
+        data["schema_additional_participants"] = document.getElementById("schemaAdditionalParticipantsSelect").value
+        return data
+    }
+
+    function setScenarioData(data) {
+        document.getElementById("expert-btn").click();
+        // Step 1
+        document.getElementById("scenario-title").value = data["scenario_title"];
+        document.getElementById("scenario-description").value = data["scenario_description"];
+        // Step 2
+        document.getElementById("simulation-radio").checked = data["simulation"];
+        // Step 3
+        document.getElementById("federationArchitecture").value = data["federation"];
+        // Step 4
+        if (data["topology"] === "Custom") {
+            document.getElementById("custom-topology-btn").checked = true;
+        } else {
+            document.getElementById("predefined-topology-btn").checked = true;
+            document.getElementById("predefined-topology-select").value = data["topology"];
+            document.getElementById("predefined-topology-nodes").value = data["n_nodes"];
+        }
+        // Step 5
+        document.getElementById("datasetSelect").value = data["dataset"];
+        document.getElementById("iidSelect").value = data["iid"];
+        // Step 6
+        document.getElementById("modelSelect").value = data["model"];
+        // Step 7
+        document.getElementById("aggregationSelect").value = data["agg_algorithm"];
+        // Step 8
+        document.getElementById("rounds").value = data["rounds"];
+        document.getElementById("loggingLevel").value = data["logginglevel"] ? "true" : "false";
+        // Step 9
+        document.getElementById("resourceUsage").value = data["accelerator"];
+        // Step 10-11
+        document.getElementById("network-subnet").value = data["network_subnet"];
+        document.getElementById("network-gateway").value = data["network_gateway"];
+        // Step 12
+        document.getElementById("epochs").value = data["epochs"];
+        // Step 13
+        document.getElementById("poisoning-attack-select").value = data["attacks"];
+        document.getElementById("poisoned-node-percent").value = data["poisoned_node_percent"];
+        document.getElementById("poisoned-sample-percent").value = data["poisoned_sample_percent"];
+        document.getElementById("poisoned-noise-percent").value = data["poisoned_noise_percent"];
+        // Step 14
+        document.getElementById("with-reputation-btn").checked = data["with_reputation"];
+        if (data["with_reputation"]) {
+            document.getElementById("mtd-strategy").style.display = "block";
+        }
+        document.getElementById("dynamic-topology-btn").checked = data["is_dynamic_topology"];
+        document.getElementById("dynamic-aggregation-btn").checked = data["is_dynamic_aggregation"];
+        document.getElementById("targetAggregationSelect").value = data["target_aggregation"];
+        // Step 15
+        document.getElementById("random-geo-btn").checked = data["random_geo"];
+        document.getElementById("latitude").value = data["latitude"];
+        document.getElementById("longitude").value = data["longitude"];
+        document.getElementById("mobility-btn").checked = data["mobility"];
+        if (data["mobility"]) {
+            document.getElementById("mobility-options").style.display = "block";
+        }
+        document.getElementById("mobilitySelect").value = data["mobility_type"];
+        document.getElementById("radiusFederation").value = data["radius_federation"];
+        document.getElementById("schemeMobilitySelect").value = data["scheme_mobility"];
+        document.getElementById("roundFrequency").value = data["round_frequency"];
+        document.getElementById("mobileParticipantsPercent").value = data["mobile_participants_percent"];
+        document.getElementById("schemaAdditionalParticipantsSelect").value = data["schema_additional_participants"];
+        // Additional Participants
+        console.log(data["additional_participants"])
+        var additionalParticipants = document.getElementById("additionalParticipants");
+        if (Object.keys(data["additional_participants"]).length > 0) {
+            additionalParticipants.value = Object.keys(data["additional_participants"]).length;
+            additionalParticipants.dispatchEvent(new Event('change'));
+            for (var i = 0; i < additionalParticipants.value; i++) {
+                document.getElementById("roundsAdditionalParticipant" + i).value = data["additional_participants"][i]["round"];
+            }
+        }
+    }
+</script>
+
+<script>
+    // When click on "save-config-btn" button, create a JSON file with the name "config.json" with the all parameters of the scenario
+    $('#save-config-btn').click(function () {
+        var data = getScenarioData()
+        var filename = "config.json";
+        var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'text/json;charset=utf-8;' });
+        if (navigator.msSaveBlob) { // IE 10+
+            navigator.msSaveBlob(blob, filename);
+        } else {
+            var link = document.createElement("a");
+            if (link.download !== undefined) { // feature detection
+                // Browsers that support HTML5 download attribute
+                var url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+    });
+
+    // When click on "load-config-btn" button, load the JSON file with the name "config.json" with the all parameters of the scenario
+    $('#load-config-btn').click(function () {
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json'; // Only allow JSON files
+        input.onchange = e => {
+            // getting a hold of the file reference
+            var file = e.target.files[0];
+            // setting up the reader
+            var reader = new FileReader();
+            reader.readAsText(file, 'UTF-8');
+            reader.onload = readerEvent => {
+                var content = readerEvent.target.result; // this is the content!
+                try {
+                    var data = JSON.parse(content)
+                    setScenarioData(data)
+                } catch (error) {
+                    alert("Error loading the configuration file")
+                }
+                
+            }
+        }
+        input.click();
+    });         
+</script>
 
 <script>
     // When click on architectureHelpIcon, show a popover on the bottom of the icon using Bootstrap and HTML code
@@ -600,6 +845,18 @@
         '                    <li>MNIST: The MNIST dataset</li>\n' +
         '                    <li>SYSCALL: The SYSCALL dataset</li>\n' +
         '                </ul>'
+    
+    contentIIDHelp = '<ul>\n' +
+        '                    <li>IID: Independent and identically distributed</li>\n' +
+        '                    <li>Non-IID: Non-independent and identically distributed</li>\n' +
+        '                </ul>'
+
+    contentModelHelp = '<ul>\n' +
+        '                    <li>MLP: Multi-layer perceptron</li>\n' +
+        '                    <li>CNN: Convolutional neural network</li>\n' +
+        '                    <li>RNN: Recurrent neural network</li>\n' +
+        '                </ul>'
+        
     $('#topologyCustomIcon').popover({
         title: 'Network topology',
         html: true,
@@ -632,6 +889,24 @@
         html: true,
         placement: 'right',
         content: contentDatasetHelp,
+        trigger: 'hover',
+        container: 'body',
+        delay: { show: 500, hide: 100 },
+    });
+    $('#iidHelpIcon').popover({
+        title: 'IID',
+        html: true,
+        placement: 'right',
+        content: contentIIDHelp,
+        trigger: 'hover',
+        container: 'body',
+        delay: { show: 500, hide: 100 },
+    });
+    $('#modelHelpIcon').popover({
+        title: 'Model',
+        html: true,
+        placement: 'right',
+        content: contentModelHelp,
         trigger: 'hover',
         container: 'body',
         delay: { show: 500, hide: 100 },
@@ -685,7 +960,6 @@
         // Show the modal
         $('#confirm-modal').modal('show');
 
-        // TODO: check parameters related to the scenario
         // Check if there a element with the class "participant-started" in the DOM
         if (!$(".participant-started").length > 0) {
             $('#confirm-modal-body').html('Please select one "start" participant for the scenario');
@@ -697,51 +971,8 @@
 
             document.getElementById("yes-button").addEventListener("click", function () {
 
-                var nodes = {};
-                var n_nodes = document.getElementById("info-participants-number").innerHTML;
-                for (var i = 0; i < n_nodes; i++) {
-                    nodes[i] = {
-                        "id": i,
-                        "ip": Graph.graphData().nodes[i].ip,
-                        "port": Graph.graphData().nodes[i].port,
-                        "role": Graph.graphData().nodes[i].role,
-                        "malicious": Graph.graphData().nodes[i].malicious,
-                        "start": Graph.graphData().nodes[i].start,
-                    }
-                }
-                // Get resource usage from the DOM
-                var data = {
-                    "scenario_title": document.getElementById("scenario-title").value,
-                    "scenario_description": document.getElementById("scenario-description").value,
-                    "nodes": nodes,
-                    "n_nodes": getNumberOfNodes(),
-                    "matrix": getMatrix(Graph.graphData().nodes, Graph.graphData().links),
-                    "federation": document.getElementById("federationArchitecture").value,
-                    "simulation": true,
-                    "topology": document.getElementById("predefined-topology-btn").checked ? document.getElementById("predefined-topology-select").value : "Custom",
-                    "rounds": document.getElementById("rounds").value,
-                    "dataset": document.getElementById("datasetSelect").value,
-                    "model": document.getElementById("modelSelect").value,
-                    "epochs": document.getElementById("epochs").value,
-                    "accelerator": document.getElementById("resourceUsage").value,
-                    "logginglevel": document.getElementById("loggingLevel").value === "true",
-                    "network_subnet": document.getElementById("network-subnet").value,
-                    "network_gateway": document.getElementById("network-gateway").value,
-                    "attacks": document.getElementById("poisoning-attack-select").value,
-                    "poisoned_node_percent": document.getElementById("poisoned-node-percent").value,
-                    "poisoned_sample_percent": document.getElementById("poisoned-sample-percent").value,
-                    "poisoned_noise_percent": document.getElementById("poisoned-noise-percent").value,
-                    "with_reputation": document.getElementById("with-reputation-btn").checked ? true : false,
-                    "is_dynamic_topology": document.getElementById("dynamic-topology-btn").checked ? true : false,
-                    "is_dynamic_aggregation": document.getElementById("dynamic-aggregation-btn").checked ? true : false,
-                    "target_aggregation": document.getElementById("dynamic-aggregation-btn").checked ? document.getElementById("targetAggregationSelect").value : false,
-                    "random_geo": document.getElementById("random-geo-btn").checked ? true : false,
-                    "latitude": document.getElementById("latitude").value,
-                    "longitude": document.getElementById("longitude").value,
-                    "with_mobility": document.getElementById("with-mobility-btn").checked ? true : false,
-                    "scheme_mobility": document.getElementById("schemeMobilitySelect").value,
-                    "radius_mobility": document.getElementById("radiusMobility").value,
-                };
+                var data = getScenarioData();
+                
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", "/scenario/deployment/run", true);
                 xhr.setRequestHeader('Content-Type', 'application/json');
@@ -811,13 +1042,13 @@
             .bindPopup('Default location')
             .openPopup();
 
-        if (document.getElementById("with-mobility-btn").checked) {
+        if (document.getElementById("mobility-btn").checked) {
             // Add new circle
             L.circle([38.023522, -1.174389], {
                 color: 'red',
                 fillColor: '#f03',
                 fillOpacity: 0.4,
-                radius: document.getElementById("radiusMobility").value
+                radius: document.getElementById("radiusFederation").value
             }).addTo(map);
         }
 
@@ -845,13 +1076,13 @@
             document.getElementById("latitude").value = e.latlng.lat;
             document.getElementById("longitude").value = e.latlng.lng;
 
-            if (document.getElementById("with-mobility-btn").checked) {
+            if (document.getElementById("mobility-btn").checked) {
                 // Add new circle
                 L.circle([e.latlng.lat, e.latlng.lng], {
                     color: 'red',
                     fillColor: '#f03',
                     fillOpacity: 0.4,
-                    radius: document.getElementById("radiusMobility").value
+                    radius: document.getElementById("radiusFederation").value
                 }).addTo(map);
             }
         });
@@ -859,7 +1090,7 @@
         // When radius of mobility is changed
 
         // Adjust radius of the circle (radius of mobility)
-        document.getElementById("radiusMobility").addEventListener("change", function () {
+        document.getElementById("radiusFederation").addEventListener("change", function () {
             // Remove previous circle
             map.eachLayer(function (layer) {
                 if (layer instanceof L.Circle) {
@@ -871,7 +1102,7 @@
                 color: 'red',
                 fillColor: '#f03',
                 fillOpacity: 0.4,
-                radius: document.getElementById("radiusMobility").value
+                radius: document.getElementById("radiusFederation").value
             }).addTo(map);
         });
 
@@ -904,7 +1135,7 @@
         }
     });
 
-    withMobilityBtn = document.getElementById("with-mobility-btn");
+    withMobilityBtn = document.getElementById("mobility-btn");
     withMobilityBtn.addEventListener("click", function () {
         mobilityOptionsDiv.style.display = "block";
         if (document.getElementById("map-container").style.display === "block") {
@@ -913,11 +1144,44 @@
                 color: 'red',
                 fillColor: '#f03',
                 fillOpacity: 0.4,
-                radius: document.getElementById("radiusMobility").value
+                radius: document.getElementById("radiusFederation").value
             }).addTo(map);
         }
     });
 
+</script>
+
+<script>
+    // Detect number of additional participants to deploy and show inputs below (one for participant, below additionalParticipants) to indicate the round of deployment of each one
+    additionalParticipants = document.getElementById("additionalParticipants");
+    additionalParticipants.addEventListener("change", function () {
+        console.log(additionalParticipants.value);
+        // Remove all elements with class "additional-participant-item"
+        $(".additional-participant-item").remove();
+        // Add new elements
+        for (var i = 0; i < additionalParticipants.value; i++) {
+            var participantItem = document.createElement("div");
+            participantItem.style.marginLeft = "20px";
+            participantItem.classList.add("additional-participant-item");
+
+            var participantHeading = document.createElement("h5");
+            participantHeading.textContent = "Round of deployment (participant " + (i + 1) + ")";
+            participantItem.appendChild(participantHeading);
+
+            var participantInput = document.createElement("input");
+            participantInput.type = "number";
+            participantInput.classList.add("form-control");
+            participantInput.id = "roundsAdditionalParticipant" + i;
+            participantInput.placeholder = "round";
+            participantInput.min = "1";
+            participantInput.value = "1";
+            participantInput.style.display = "inline";
+            participantInput.style.width = "20%";
+            participantItem.appendChild(participantInput);
+
+            document.getElementById("additional-participants-items").appendChild(participantItem);
+        }
+    });
 </script>
 
 <script>
@@ -1003,8 +1267,6 @@
             for (var i = 0; i < gData.nodes.length; i++) {
                 for (var j = 0; j < gData.nodes.length; j++) {
                     if (i !== j) {
-                        // TODO: Se podría comprobar que si el source-target o target-source (misma pareja) está ya en links, no se mete
-                        // Lo mismo para los otros casos
                         gData.links.push({ source: i, target: j });
                     }
                 }

@@ -8,16 +8,17 @@ The platform enables developers to create distributed applications that use fede
 
 Prerequisites
 =============
-* Python 3.8 or higher
+* Python 3.8 or higher (3.11 recommended)
 * pip3
-* Docker
+* Docker Engine 24.0.4 or higher (24.0.7 recommended)
+* Docker Compose 2.19.0 or higher (2.19.1 recommended)
 
 .. _deploy_venv:
 
 Deploy a virtual environment
 ===================================
 
-`Virtualenv`_ is a tool to build isolated Python environments.
+Virtualenv is a tool to build isolated Python environments.
 
 It's a great way to quickly test new libraries without cluttering your
 global site-packages or run multiple projects on the same machine which
@@ -146,7 +147,7 @@ You can login with the following credentials::
 - User: admin
 - Password: admin
 
-If not working the default credentials, send an email to `Enrique Tomás Martínez Beltrán <https://www.enriquetomasmb.com/>`_ to get the credentials.
+If not working the default credentials, send an email to `Enrique Tomás Martínez Beltrán <mailto:enriquetomas@um.es>`_ to get the credentials.
 
 
 Stop Fedstellar
@@ -205,6 +206,3 @@ Solution: Start the docker daemon
 If frontend is not working, restart docker daemon
 
     sudo systemctl restart docker
-
-===================================
-

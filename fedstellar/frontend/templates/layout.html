@@ -81,9 +81,9 @@
             const container = document.querySelector('.container');
             container.insertBefore(alert, container.firstChild);
             // Hide the alert after 3 seconds
-            setTimeout(() => {
-                alert.remove();
-            }, 3000);
+            //setTimeout(() => {
+            //    alert.remove();
+            //}, 3000);
         }
     </script>
 </head>
@@ -173,14 +173,12 @@
     {% block container_extend %}{% endblock %}
 
     <div class="container">
-
         <h1 id="page-title">{% block page_title %}{% endblock %}</h1>
-
         <p>{% block body %}{% endblock %}</p>
-
     </div>
 
     <div class='container'>
+        <button type="button" id="btn-up" class="btn btn-dark" title="Go to top"><i class="fa fa-arrow-up"></i></button>
         <footer>
             <hr>
             <div class="col-md-6">
@@ -218,8 +216,6 @@
                 body: formData,
             })
                 .then((response) => {
-                    console.log(response);
-                    console.log(response.status);
                     if (!response.ok) {
                         showAlert('danger', 'Invalid credentials');
                     } else {
@@ -232,6 +228,26 @@
         });
     }
 
+</script>
+
+<script>
+    window.onscroll = function() {
+        scrollFunction();
+    };
+    
+    function scrollFunction() {
+        var btn = document.getElementById("btn-up");
+        var scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+        if (scrollPosition > 20) {
+            btn.style.display = "block";
+        } else {
+            btn.style.display = "none";
+        }
+    }
+    
+    document.getElementById("btn-up").onclick = function() {
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    };
 </script>
 
 </html>

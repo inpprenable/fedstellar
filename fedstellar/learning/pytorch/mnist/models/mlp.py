@@ -193,7 +193,7 @@ class MNISTModelMLP(pl.LightningModule):
         return self.step(batch, "Validation")
 
     def on_validation_epoch_end(self):
-        self.log_metrics_by_epoch("Validation", print_cm=True, plot_cm=True)
+        self.log_metrics_by_epoch("Validation", print_cm=True, plot_cm=False)
 
     def test_step(self, batch, batch_idx):
         """

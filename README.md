@@ -4,11 +4,9 @@
   <a href="https://github.com/enriquetomasmb/fedstellar">
     <img src="docs/_static/fedstellar-logo.jpg" alt="fedstellar">
   </a>
-  <h3 align="center">Fedstellar</h3>
+  <h3 align="center">Fedstellar: A Platform for Decentralized Federated Learning</h3>
 
   <p align="center">
-    A Platform for Decentralized Federated Learning
-    <br>
     <a href="https://fedstellar.dev">fedstellar.dev</a> / <a href="https://fedstellar.eu">fedstellar.eu</a> / <a href="https://fedstellar.com">fedstellar.com</a> / <a href="https://federeratedlearning.inf.um.es">federatedlearning.inf.um.es</a>
   </p>
 </p>
@@ -31,7 +29,7 @@ The platform incorporates a modular architecture comprising three elements:
 
 
 <br><br>
-Fedstellar is developed by Enrique Tomás Martínez Beltrán in collaboration with the [University of Murcia](https://www.um.es/en), [armasuisse](https://www.armasuisse.ch/en), and the [University of Zurich (UZH)](https://www.uzh.ch/).
+Fedstellar is developed by [Enrique Tomás Martínez Beltrán](https://enriquetomasmb.com) in collaboration with the [University of Murcia](https://www.um.es/en), [armasuisse](https://www.armasuisse.ch/en), and the [University of Zurich (UZH)](https://www.uzh.ch/).
 
 <a href="https://um.es">
   <img src="docs/_static/umu.jpg" alt="University of Murcia" width="200" height="60">
@@ -43,7 +41,7 @@ Fedstellar is developed by Enrique Tomás Martínez Beltrán in collaboration wi
   <img src="docs/_static/uzh.jpg" alt="University of Zurich" width="200" height="60">
 </a>
 <br><br>
-For any questions, please contact Enrique Tomás Martínez Beltrán <a href="mailto:enriquetomas@um.es">enriquetomas@um.es</a>.
+For any questions, please contact Enrique Tomás Martínez Beltrán (<a href="mailto:enriquetomas@um.es">enriquetomas@um.es</a>).
 
 
 ## Support

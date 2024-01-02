@@ -25,8 +25,13 @@ from fedstellar.learning.scikit.mnist.mnist import MNISTDatasetScikit
 
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
+# os.environ["GRPC_VERBOSITY"] = "DEBUG"
+# os.environ["GRPC_TRACE"] = "http"
+# os.environ["GRPC_PYTHON_BUILD_SYSTEM_OPENSSL"] = "1"
+# os.environ["GRPC_PYTHON_BUILD_SYSTEM_ZLIB"] = "1"
 
-# os.environ["GRPC_VERBOSITY"] = "debug"
+# os.environ["TORCH_LOGS"] = "+dynamo"
+# os.environ["TORCHDYNAMO_VERBOSE"] = "1"
 
 
 def main():
@@ -40,11 +45,12 @@ def main():
     host = config.participant["network_args"]["ip"]
     port = config.participant["network_args"]["port"]
     neighbors = config.participant["network_args"]["neighbors"].split()
+    
+    additional_node_status = config.participant["mobility_args"]['additional_node']['status']
+    additional_node_round = config.participant["mobility_args"]['additional_node']['round_start']
 
     rounds = config.participant["scenario_args"]["rounds"]
     epochs = config.participant["training_args"]["epochs"]
-
-    aggregation_algorithm = config.participant["aggregator_args"]["algorithm"]
 
     # Config of attacks
     attacks = config.participant["adversarial_args"]["attacks"]
@@ -54,7 +60,7 @@ def main():
     target_label = config.participant["adversarial_args"]["target_label"]
     target_changed_label = config.participant["adversarial_args"]["target_changed_label"]
     noise_type = config.participant["adversarial_args"]["noise_type"]
-    is_iid = True
+    iid = config.participant["data_args"]["iid"]
 
     indices_dir = config.participant['tracking_args']["model_dir"]
     label_flipping = False
@@ -85,9 +91,10 @@ def main():
         poisoned_ratio = 0
 
     dataset = config.participant["data_args"]["dataset"]
+    num_workers = config.participant["data_args"]["num_workers"]
     model = None
     if dataset == "MNIST":
-        dataset = MNISTDataset(sub_id=idx, number_sub=n_nodes, iid=is_iid)
+        dataset = MNISTDataset(num_classes=10, sub_id=idx, number_sub=n_nodes, iid=iid, partition="percent", seed=42, config=config)
         if model_name == "MLP":
             model = MNISTModelMLP()
         elif model_name == "CNN":
@@ -95,7 +102,7 @@ def main():
         else:
             raise ValueError(f"Model {model} not supported")
     elif dataset == "SYSCALL":
-        dataset = SYSCALLDataset(sub_id=idx, number_sub=n_nodes, root_dir=f"{sys.path[0]}/data", iid=is_iid)
+        dataset = SYSCALLDataset(sub_id=idx, number_sub=n_nodes, root_dir=f"{sys.path[0]}/data", iid=iid)
         if model_name == "MLP":
             model = SyscallModelMLP()
         elif model_name == "SVM":
@@ -105,7 +112,7 @@ def main():
         else:
             raise ValueError(f"Model {model} not supported")
     elif dataset == "CIFAR10":
-        dataset = CIFAR10Dataset(sub_id=idx, number_sub=n_nodes, root_dir=f"{sys.path[0]}/data", iid=is_iid)
+        dataset = CIFAR10Dataset(sub_id=idx, number_sub=n_nodes, root_dir=f"{sys.path[0]}/data", iid=iid)
         if model_name == "ResNet9":
             model = CIFAR10ModelResNet(classifier="resnet9")
         elif model_name == "ResNet18":
@@ -121,7 +128,7 @@ def main():
     else:
         raise ValueError(f"Dataset {dataset} not supported")
 
-    dataset = DataModule(dataset.train_set, dataset.test_set, sub_id=idx, number_sub=n_nodes, indices_dir=indices_dir, label_flipping=label_flipping, data_poisoning=data_poisoning, poisoned_persent=poisoned_persent, poisoned_ratio=poisoned_ratio, targeted=targeted, target_label=target_label,
+    dataset = DataModule(train_set=dataset.train_set, train_set_indices=dataset.train_indices_map, test_set=dataset.test_set, test_set_indices=dataset.test_indices_map, num_workers=num_workers, sub_id=idx, number_sub=n_nodes, indices_dir=indices_dir, label_flipping=label_flipping, data_poisoning=data_poisoning, poisoned_persent=poisoned_persent, poisoned_ratio=poisoned_ratio, targeted=targeted, target_label=target_label,
                          target_changed_label=target_changed_label, noise_type=noise_type)
 
     # TODO: Improve support for scikit-learn models
@@ -152,21 +159,32 @@ def main():
 
     node.start()
     time.sleep(10)
+    # TODO: If it is an additional node, it should wait until additional_node_round to connect to the network
+    # In order to do that, it should request the current round to the API
+    if additional_node_status:
+        print(f"Waiting for round {additional_node_round} to start")
+        time.sleep(6000)
+        import requests
+        url = f'http://{node.config.participant["scenario_args"]["controller"]}/scenario/{node.config.participant["scenario_args"]["name"]}/round'
+        current_round = int(requests.get(url).json()['round'])
+        while current_round < additional_node_round:
+            print(f"Waiting for round {additional_node_round} to start")
+            time.sleep(10)
+        print(f"Round {additional_node_round} started, connecting to the network")
 
     # Node Connection to the neighbors
     for i in neighbors:
-        print(f"Connecting to {i}")
         addr = f"{i.split(':')[0]}:{i.split(':')[1]}"
         node.connect(addr)
         time.sleep(2)
 
-    print("Node started, grace time for network start-up (10s)")
     time.sleep(5)
 
     if config.participant["device_args"]["start"]:
         time.sleep(10)
         node.set_start_learning(rounds=rounds, epochs=epochs)  # rounds=10, epochs=5
 
+    node.grpc_wait()
 
 if __name__ == "__main__":
     os.system("clear")

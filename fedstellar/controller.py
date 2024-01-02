@@ -349,14 +349,13 @@ class Controller:
             )
         except subprocess.CalledProcessError as e:
             logging.error(
-                "Docker Compose failed to start, please check if Docker is running and Docker Compose is installed."
+                "Docker Compose failed to start, please check if Docker Compose is installed (https://docs.docker.com/compose/install/) and Docker Engine is running."
             )
-            logging.error(e)
             raise e
 
     def run_frontend(self):
         if sys.platform == "win32":
-            if not os.path.exists("//./pipe/docker_engine"):
+            if not os.path.exists("//./pipe/docker_Engine"):
                 raise Exception(
                     "Docker is not running, please check if Docker is running and Docker Compose is installed."
                 )
@@ -468,9 +467,8 @@ class Controller:
             )
         except subprocess.CalledProcessError as e:
             logging.error(
-                "Docker Compose failed to start, please check if Docker is running and Docker Compose is installed."
+                "Docker Compose failed to start, please check if Docker Compose is installed (https://docs.docker.com/compose/install/) and Docker Engine is running."
             )
-            logging.error(e)
             raise e
 
     @staticmethod
@@ -606,19 +604,7 @@ class Controller:
                 raise Exception("Error while killing docker containers: {}".format(e))
 
     @staticmethod
-    def stop_waf():
-        
-        #Removing waf log files
-        # try:
-        #     shutil.rmtree(
-        #         os.path.join(os.environ["FEDSTELLAR_LOGS_DIR"], "waf")
-        #     )
-        # except PermissionError:
-        #     # Avoid error if the user does not have enough permissions to remove the tf.events files
-        #     logging.warning(
-        #         "Not enough permissions to remove the files"
-        #     )
-        
+    def stop_waf():    
         if sys.platform == "win32":
             try:
                 # kill all the docker containers which contain the word "fedstellar"
@@ -659,7 +645,7 @@ class Controller:
         Controller.stop_network()
         sys.exit(0)
 
-    def load_configurations_and_start_nodes(self):
+    def load_configurations_and_start_nodes(self, additional_participants = None, schema_additional_participants=None):
         if not self.scenario_name:
             self.scenario_name = f'fedstellar_{self.federation}_{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}'
         # Once the scenario_name is defined, we can update the config_dir
@@ -683,7 +669,7 @@ class Controller:
         participant_files.sort()
         if len(participant_files) == 0:
             raise ValueError("No participant files found in config folder")
-
+        
         self.config.set_participants_config(participant_files)
         self.n_nodes = len(participant_files)
         logging.info("Number of nodes: {}".format(self.n_nodes))
@@ -743,6 +729,43 @@ class Controller:
         self.topologymanager.draw_graph(
             path=f"{self.log_dir}/{self.scenario_name}/topology.png", plot=False
         )
+        
+        # Include additional participants (if any) as copies of the last participant
+        additional_participants_files = []
+        if additional_participants:
+            import random
+            last_participant_file = participant_files[-1]
+            last_participant_index = len(participant_files)
+            
+            for i, additional_participant in enumerate(additional_participants):
+                print("Adding additional participant {}...".format(i))
+                additional_participant_file = f"{self.config_dir}/participant_{last_participant_index + i}.json"
+                shutil.copy(last_participant_file, additional_participant_file)
+                
+                with open(additional_participant_file) as f:
+                    participant_config = json.load(f)
+                
+                participant_config["scenario_args"]["n_nodes"] = self.n_nodes + i + 1
+                participant_config["device_args"]["idx"] = last_participant_index + i
+                participant_config["network_args"]["neighbors"] = ""
+                participant_config["network_args"]["ip"] = participant_config["network_args"]["ip"].rsplit('.', 1)[0] + '.' + str(int(participant_config["network_args"]["ip"].rsplit('.', 1)[1]) + 1)
+                participant_config["device_args"]["uid"] = hashlib.sha1(
+                    (
+                        str(participant_config["network_args"]["ip"])
+                        + str(participant_config["network_args"]["port"])
+                        + str(self.scenario_name)
+                    ).encode()
+                ).hexdigest()
+                participant_config["mobility_args"]["additional_node"]["status"] = True
+                participant_config["mobility_args"]["additional_node"]["round_start"] = additional_participant["round"]
+                
+                with open(additional_participant_file, "w") as f:
+                    json.dump(participant_config, f, sort_keys=False, indent=2)
+                
+                additional_participants_files.append(additional_participant_file)
+        
+        if additional_participants_files:
+            self.config.add_participants_config(additional_participants_files)
 
         if self.simulation:
             self.start_nodes_docker()
@@ -842,7 +865,7 @@ class Controller:
                     - /bin/bash
                     - -c
                     - |
-                        ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
+                        ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.11 /fedstellar/fedstellar/node_start.py {}
                 networks:
                     fedstellar-net-scenario:
                         ipv4_address: {}
@@ -868,7 +891,7 @@ class Controller:
                     - /bin/bash
                     - -c
                     - |
-                        ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.8 /fedstellar/fedstellar/node_start.py {}
+                        ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.11 /fedstellar/fedstellar/node_start.py {}
                 deploy:
                     resources:
                         reservations:
@@ -969,9 +992,8 @@ class Controller:
             )
         except subprocess.CalledProcessError as e:
             logging.error(
-                "Docker Compose failed to start, please check if Docker is running and Docker Compose is installed."
+                "Docker Compose failed to start, please check if Docker Compose is installed (https://docs.docker.com/compose/install/) and Docker Engine is running."
             )
-            logging.error(e)
             raise e
 
     @classmethod

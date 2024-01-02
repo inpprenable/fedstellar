@@ -74,3 +74,8 @@ class Config:
         self.participants_path = participants_config
         for participant in participants_config:
             self.add_participant_config(participant)
+    
+    def add_participants_config(self, participants_config):
+        self.participants_path = participants_config
+        for participant in participants_config:
+            self.add_participant_config(participant)

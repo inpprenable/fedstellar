@@ -4,6 +4,7 @@
 //
 
 // compile command:
+// pip instal grpcio-tools==1.60.0
 // python -m grpc_tools.protoc -I=fedstellar/proto --python_out=fedstellar/proto --grpc_python_out=fedstellar/proto fedstellar/proto/node.proto
 
 syntax = "proto3";

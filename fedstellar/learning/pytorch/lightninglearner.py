@@ -4,10 +4,13 @@
 # 
 
 import logging
+import os
 import pickle
 from collections import OrderedDict
+import random
 import traceback
 import hashlib
+import numpy as np
 
 import torch
 from lightning import Trainer
@@ -36,8 +39,9 @@ class LightningLearner(NodeLearner):
     """
 
     def __init__(self, model, data, config=None, logger=None):
+        # logging.info("[Learner] Compiling model... (BETA)")
+        # self.model = torch.compile(model, mode="reduce-overhead")
         self.model = model
-        # self.model = torch.compile(model)  # PyTorch 2.0
         self.data = data
         self.config = config
         self.logger = logger
@@ -47,11 +51,22 @@ class LightningLearner(NodeLearner):
 
         # FL information
         self.round = 0
-        # self.local_step = 0
-        # self.global_step = 0
-
+        
+        self.fix_randomness()
         self.logger.log_metrics({"Round": self.round}, step=self.logger.global_step)
 
+    def fix_randomness(self):
+        seed = self.config.participant["scenario_args"]["random_seed"]
+        logging.info("[Learner] Fixing randomness with seed {}".format(seed))
+        np.random.seed(seed)
+        os.environ["PYTHONHASHSEED"] = str(seed)
+        random.seed(seed)        
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+    
     def get_round(self):
         return self.round
 
@@ -184,7 +199,7 @@ class LightningLearner(NodeLearner):
             # strategy="ddp" if self.config.participant["device_args"]["accelerator"] != "auto" else None,
             # strategy=self.config.participant["device_args"]["strategy"] if self.config.participant["device_args"]["accelerator"] != "auto" else None,
             logger=self.logger,
-            log_every_n_steps=20,
+            log_every_n_steps=50,
             enable_checkpointing=False,
             enable_model_summary=False,
             enable_progress_bar=True

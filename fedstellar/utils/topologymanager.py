@@ -69,8 +69,6 @@ class TopologyManager:
         labels = {}
         color_map = []
         server = False
-        print("draw_graph")
-        print(self.nodes)
         for k in range(self.n_nodes):
             if str(self.nodes[k][2]) == Role.AGGREGATOR:
                 color_map.append("orange")
@@ -139,7 +137,6 @@ class TopologyManager:
     def generate_custom_topology(self, topology):
         self.topology = topology
 
-    # TODO: fix this
     def get_matrix_adjacency_from_neighbors(self, neighbors):
         matrix_adjacency = np.zeros((self.n_nodes, self.n_nodes), dtype=np.float32)
         for i in range(self.n_nodes):

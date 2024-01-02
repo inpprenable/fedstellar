@@ -103,7 +103,7 @@
             {% if status == "running" %}
             <td id="status"><span class="label label-success">Running</span></td>
             {% elif status == "completed" %}
-            <td id="status"><span class="label label-info">Completed</span></td>
+            <td id="status"><span class="label label-warning">Completed</span></td>
             {% else %}
             <td id="status"><span class="label label-danger">Finished</span></td>
             {% endif %}
@@ -117,7 +117,6 @@
                 {% elif status == "completed" %}
                 <a href="{{ url_for('fedstellar_stop_scenario', scenario_name=name) }}" class="label btn btn-danger">Stop scenario</a>
                 {% else %}
-                <a id="reload-btn" data-scenario-name="{{ name }}" class="label btn btn-dark">Reload</a>
                 <a id="remove-btn" data-scenario-name="{{ name }}" class="label btn btn-danger"><i class="fa fa-times"></i></a>
                 {% endif %}
             </td>
@@ -127,38 +126,6 @@
 </div>
 
 {% endif %}
-
-<script>
-    // When clicking on reload-btn (there are many in the document), show a modal to confirm the action
-    $(document).on('click', '#reload-btn', function () {
-        var scenario_name = $(this).data('scenario-name');
-        $('#confirm-modal').modal('show');
-        $('#confirm-modal .modal-title').text('Reload scenario');
-        $('#confirm-modal #confirm-modal-body').html('Are you sure you want to reload the scenario ' + scenario_name + '?<br><br><p style="color: #772953; font-weight: bold">Warning: this will stop the running scenario and start a new one.</p>');
-        $('#confirm-modal #yes-button').click(function () {
-            // Check the response code of the request using xhr
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', '/scenario/' + scenario_name + '/deployment/reload', true);
-            xhr.send()
-            xhr.addEventListener("load", function () {
-                // When the request is done could be 401 or 301.
-                // If it is 401, the user is a demo and cannot reload the scenario.
-                // If it is 301, the scenario has been reload and the page is reloaded.
-                if (xhr.status != 401) {
-                    window.location.href = "/scenario";
-                } else {
-                    // Hide the modal
-                    $('#confirm-modal').modal('hide');
-                    // If the user is a demo, show a modal with a message
-                    $('#confirm-modal').on('hidden.bs.modal', function () {
-                        $('#info-modal-body').html('You are not allowed to reload a scenario with demo role.');
-                        $('#info-modal').modal('show');
-                    });
-                }
-            });
-        });
-    });
-</script>
 
 <script>
     $(document).on('click', '#remove-btn', function () {

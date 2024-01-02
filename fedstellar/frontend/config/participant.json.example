@@ -6,7 +6,7 @@
     "rounds": 10,
     "simulation": true,
     "controller": "127.0.0.1:5000",
-    "random_seed": 0,
+    "random_seed": 42,
     "n_nodes": 0,
     "config_version": "development"
   },
@@ -43,12 +43,21 @@
     "random_geo": true,
     "latitude": "",
     "longitude": "",
-    "with_mobility": false,
-    "scheme_mobility": "circle",
-    "radius_mobility": 1000
+    "mobility": false,
+    "mobility_type": "topology",
+    "radius_federation": 1000,
+    "scheme_mobility": "random",
+    "round_frequency": 1,
+    "additional_node": {
+      "status": false,
+      "round_start": 0,
+      "scheme": "random"
+    }
   },  
   "data_args": {
-    "dataset": "MNIST"
+    "dataset": "MNIST",
+    "iid": true,
+    "num_workers": 0
   },
   "model_args": {
     "model": "MLP"
@@ -100,15 +109,15 @@
   "GOSSIP_MESSAGES_FREC": 100,
   "GOSSIP_MESSAGES_PER_ROUND": 500,
   "GOSSIP_MODELS_FREC": 1,
-  "GRPC_TIMEOUT": 10,
+  "GRPC_TIMEOUT": 30,
   "HEARTBEAT_PERIOD": 2,
   "HEARTBEAT_TIMEOUT": 5,
   "GOSSIP_PERIOD": 0.1,
   "TTL": 10,
   "GOSSIP_MESSAGES_PER_PERIOD": 100,
   "AMOUNT_LAST_MESSAGES_SAVED": 100,
-  "GOSSIP_MODELS_PERIOD": 50,
-  "GOSSIP_MODELS_PER_ROUND": 2,
+  "GOSSIP_MODELS_PERIOD": 3,
+  "GOSSIP_MODELS_PER_ROUND": 50,
   "GOSSIP_EXIT_ON_X_EQUAL_ROUNDS": 3,
   "TRAIN_SET_SIZE": 10,
   "VOTE_TIMEOUT": 60,

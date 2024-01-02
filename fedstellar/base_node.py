@@ -11,8 +11,6 @@ from logging import Formatter, FileHandler
 
 import grpc
 
-print(sys.path)
-
 from fedstellar.messages import NodeMessages
 from fedstellar.neighbors import Neighbors
 from fedstellar.proto import node_pb2
@@ -53,17 +51,6 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
         self.__msg_callbacks = {}
         self.add_message_handler(NodeMessages.BEAT, self.__heartbeat_callback)
 
-        # Setting Up Node Socket (listening)
-        # self.__node_socket = socket.socket(
-        #    socket.AF_INET, socket.SOCK_STREAM
-        # )  # TCP Socket
-        # if port is None:
-        #    self.__node_socket.bind((host, 0))  # gets a random free port
-        #    self.port = self.__node_socket.getsockname()[1]
-        # else:
-        #    print("[BASENODE] Trying to bind to {}:{}".format(host, port))
-        #    self.__node_socket.bind((host, port))
-
         self.addr = f"{self.host}:{self.port}"
 
         # Neighbors
@@ -74,7 +61,9 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
         opts = [("grpc.keepalive_time_ms", 10000),
                 ("grpc.keepalive_timeout_ms", 5000),
                 ("grpc.keepalive_permit_without_calls", True),
-                ("grpc.http2.max_ping_strikes", 0)]
+                ("grpc.http2.max_ping_strikes", 0),
+                ("grpc.max_send_message_length", 1024 * 1024 * 1024),
+                ("grpc.max_receive_message_length", 1024 * 1024 * 1024)]
         self.__server = grpc.server(futures.ThreadPoolExecutor(max_workers=20), options=opts)
 
         # Logging
@@ -167,17 +156,19 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
         self.assert_running(False)
         # Set running
         self.__running = True
-        # Heartbeat and Gossip
-        self._neighbors.start()
         # Server
-        print("[BASENODE] Starting server at {}".format(self.addr))
         node_pb2_grpc.add_NodeServicesServicer_to_server(self, self.__server)
         self.__server.add_insecure_port(self.addr)
+        logging.info(f"({self.addr}) Starting gRPC thread at {self.addr}...")
         self.__server.start()
-        print("[BASENODE] Server started at {}".format(self.addr))
-        if wait:
-            self.__server.wait_for_termination()
-            logging.info(f"({self.addr}) Server terminated.")
+        logging.info(f"({self.addr}) gRPC started.")
+        # Heartbeat and Gossip
+        self._neighbors.start()
+        
+    def grpc_wait(self):
+        logging.info(f"({self.addr}) Waiting for gRPC to terminate...")
+        self.__server.wait_for_termination()
+        logging.info(f"({self.addr}) gRPC terminated.")
 
     def stop(self):
         """
@@ -216,7 +207,7 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
         logging.info(f"({self.addr}) connecting to {addr}...")
         return self._neighbors.add(addr, handshake_msg=True)
 
-    def get_neighbors(self, only_direct=False):
+    def get_neighbors(self, only_direct=False, only_undirected=False):
         """
         Returns the neighbors of the node.
 
@@ -226,7 +217,7 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
         Returns:
             list: The list of neighbors.
         """
-        return self._neighbors.get_all(only_direct)
+        return self._neighbors.get_all(only_direct=only_direct, only_undirected=only_undirected)
 
     def disconnect_from(self, addr):
         """
@@ -249,6 +240,7 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
         """
         GRPC service. It is called when a node connects to another.
         """
+        logging.info(f"({self.addr}) handshake (gRPC) | from {request.addr}")
         if self._neighbors.add(request.addr, handshake_msg=False):
             return node_pb2.ResponseMessage()
         else:
@@ -269,13 +261,16 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
         More in detail, it is called when a neighbor use your stub to send a message to you.
         Then, you process the message and gossip it to your neighbors.
         """
+        # logging.info(f"({self.addr}) received message from {request.source} | {request.cmd} {request.args}")
         # If not processed
         if self._neighbors.add_processed_msg(request.hash):
             # Gossip
+            # logging.info(f"({self.addr}) gossiping message from {request.source} | {request.cmd} {request.args}")
             self._neighbors.gossip(request)
             # Process message
             if request.cmd in self.__msg_callbacks.keys():
                 try:
+                    # logging.info(f"({self.addr}) running callback for {request.cmd} {request.args}")
                     self.__msg_callbacks[request.cmd](request)
                 except Exception as e:
                     error_text = f"[{self.addr}] Error while processing command: {request.cmd} {request.args}: {e}"

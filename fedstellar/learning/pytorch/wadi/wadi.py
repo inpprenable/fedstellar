@@ -9,7 +9,7 @@ from math import floor
 # To Avoid Crashes with a lot of nodes
 import torch.multiprocessing
 from lightning import LightningDataModule
-from torch.utils.data import DataLoader, Subset, random_split
+from torch.utils.data import DataLoader, Subset, random_split, Dataset
 from torchvision import transforms
 from torchvision.datasets import MNIST, utils
 import urllib.request
@@ -63,7 +63,7 @@ class WADI(MNIST):
 #######################################
 
 
-class WADIDataModule(LightningDataModule):
+class WADIDataModule(Dataset):
     """
     LightningDataModule of partitioned WADI.
 

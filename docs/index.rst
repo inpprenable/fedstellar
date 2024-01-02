@@ -43,6 +43,10 @@ For any questions, please contact Enrique Tomás Martínez Beltrán (enriquetoma
    :width: 200
    :alt: Armasuisse logo
 
+.. image:: _static/uzh.jpg
+   :width: 200
+   :alt: University of Zurich logo
+
 :raw-html:`<br />`
 :raw-html:`<br />`
 

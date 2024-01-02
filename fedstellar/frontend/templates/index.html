@@ -18,6 +18,13 @@
         <a href="https://github.com/enriquetomasmb/fedstellar" target="_blank" style="display: inline-block; vertical-align: middle;">
             <img alt="enriquetomasmb/fedstellar" src="https://img.shields.io/github/stars/enriquetomasmb/fedstellar?style=for-the-badge&logo=github&label=Fedstellar&color=success">
         </a>
+        <hr class="styled">
+        <p style="display: inline-block; margin-right: 10px;"><strong>Fedstellar from our web domains:</strong></p>
+        <a href="https://fedstellar.dev" target="_blank" style="display: inline-block; vertical-align: middle;">fedstellar.dev</a> <i class="fa fa-globe"></i> /
+        <a href="https://fedstellar.eu" target="_blank" style="display: inline-block; vertical-align: middle;">fedstellar.eu</a> <i class="fa fa-globe"></i> /
+        <a href="https://fedstellar.com" target="_blank" style="display: inline-block; vertical-align: middle;">fedstellar.com</a> <i class="fa fa-globe"></i> /
+        <a href="https://federatedlearning.inf.um.es" target="_blank" style="display: inline-block; vertical-align: middle;">federatedlearning.inf.um.es</a> <i class="fa fa-globe"></i>
+
         {% for alert in alerts %}
             <div class="alert {{ 'alert-info' if alert['alert_type'] == 'info' else 'alert-warning' if alert['alert_type'] == 'warning' else 'alert-danger' }}">
                 <strong>[{{ alert['timestamp']|datetimeformat }}]  {{ alert['title'] }}:</strong> {{ alert['message'] }}
@@ -61,22 +68,27 @@
     <p>Please cite the following publications if you use Fedstellar in your research</p>
     <div class="publication">
         <div class="publication-logo">
-            <img src="{{ url_for('static', filename='img/publications/arxiv.png') }}" alt="Fedstellar: A Platform for Decentralized Federated Learning">
+            <img src="{{ url_for('static', filename='img/publications/eswa.gif') }}" alt="Fedstellar: A Platform for Decentralized Federated Learning">
         </div>
         <div class="publication-info">
             <h4><a href="https://arxiv.org/abs/2306.09750">Fedstellar: A Platform for Decentralized Federated Learning</a></h4>
             <p><b>Enrique Tomás Martínez Beltrán</b>, Ángel Luis Perales Gómez, Chao Feng, Pedro Miguel Sánchez Sánchez, Sergio López Bernal, Gérôme Bovet, Manuel Gil Pérez, Gregorio Martínez Pérez, Alberto Huertas Celdrán</p>
-            <button class="bibtex-button" onclick="window.open('https://arxiv.org/abs/2306.09750')">Preprint</button>
-            <button class="bibtex-button" onclick="copyToClipboard('bibtex1')">Copy BibTeX</button>
+            <button type="button" class="bibtex-button" onclick="window.open('https://doi.org/10.1016/j.eswa.2023.122861')">Paper</button>
+            <button type="button" class="bibtex-button" onclick="window.open('https://arxiv.org/abs/2306.09750')">Preprint</button>
+            <button type="button" class="bibtex-button" onclick="copyToClipboard('bibtex1')">Copy BibTeX</button>
             <div id="bibtex1" style="display: none;">
                 {% raw %}
-                @article{MartinezBeltran:fedstellar:2023,
+                @article{MartinezBeltran:fedstellar:2024,
                 title = {{Fedstellar: A Platform for Decentralized Federated Learning}},
                 author = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and Perales G{\'o}mez, {\'A}ngel Luis and Feng, Chao and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas
                 Celdr{\'a}n, Alberto},
-                year = 2023,
-                url = {https://arxiv.org/abs/2306.09750},
-                journal = {arXiv preprint arXiv:2306.09750},
+                year = 2024,
+                volume = {242},
+                issn = {0957-4174},
+	            pages = {122861},
+	            journal = {Expert Systems with Applications},
+  	            doi = {10.1016/j.eswa.2023.122861},
+	            preprint = {https://arxiv.org/abs/2306.09750}
                 abstract = {In 2016, Google proposed Federated Learning (FL) as a novel paradigm to train Machine Learning (ML) models across the participants of a federation while preserving data privacy. Since its birth, Centralized FL (CFL) has been the most used approach, where a central entity
                 aggregates participants' models to create a global one. However, CFL presents limitations such as communication bottlenecks, single point of failure, and reliance on a central server. Decentralized Federated Learning (DFL) addresses these issues by enabling decentralized model
                 aggregation and minimizing dependency on a central entity. Despite these advances, current platforms training DFL models struggle with key issues such as managing heterogeneous federation network topologies. To overcome these challenges, this paper presents Fedstellar, a novel
@@ -96,8 +108,8 @@
         <div class="publication-info">
             <h4><a href="https://doi.org/10.24963/ijcai.2023/838">Fedstellar: A Platform for Training Models in a Privacy-preserving and Decentralized Fashion</a></h4>
             <p><b>Enrique Tomás Martínez Beltrán</b>, Pedro Miguel Sánchez Sánchez, Sergio López Bernal, Gérôme Bovet, Manuel Gil Pérez, Gregorio Martínez Pérez, Alberto Huertas Celdrán</p>
-            <button class="bibtex-button" onclick="window.open('https://doi.org/10.24963/ijcai.2023/838')">Paper</button>
-            <button class="bibtex-button" onclick="copyToClipboard('bibtex2')">Copy BibTeX</button>
+            <button type="button" class="bibtex-button" onclick="window.open('https://doi.org/10.24963/ijcai.2023/838')">Paper</button>
+            <button type="button" class="bibtex-button" onclick="copyToClipboard('bibtex2')">Copy BibTeX</button>
             <div id="bibtex2" style="display: none;">
                 {% raw %}
                 @inproceedings{MartinezBeltran:fedstellar_demo:2023,
@@ -128,9 +140,9 @@
         <div class="publication-info">
             <h4><a href="https://arxiv.org/abs/2211.08413">Decentralized Federated Learning: Fundamentals, State of the Art, Frameworks, Trends, and Challenges</a></h4>
             <p><b>Enrique Tomás Martínez Beltrán</b>, Mario Quiles Pérez, Pedro Miguel Sánchez Sánchez, Sergio López Bernal, Gérôme Bovet, Manuel Gil Pérez, Gregorio Martínez Pérez, Alberto Huertas Celdrán</p>
-            <button class="bibtex-button" onclick="window.open('https://doi.org/10.1109/COMST.2023.3315746')">Paper</button>
-            <button class="bibtex-button" onclick="window.open('https://arxiv.org/abs/2211.08413')">Preprint</button>
-            <button class="bibtex-button" onclick="copyToClipboard('bibtex3')">Copy BibTeX</button>
+            <button type="button" class="bibtex-button" onclick="window.open('https://doi.org/10.1109/COMST.2023.3315746')">Paper</button>
+            <button type="button" class="bibtex-button" onclick="window.open('https://arxiv.org/abs/2211.08413')">Preprint</button>
+            <button type="button" class="bibtex-button" onclick="copyToClipboard('bibtex3')">Copy BibTeX</button>
             <div id="bibtex3" style="display: none;">
                 {% raw %}
                 @article{MartinezBeltran:DFL:2023,
@@ -162,8 +174,8 @@
         <div class="publication-info">
             <h4><a href="https://arxiv.org/abs/2307.11730">Mitigating Communications Threats in Decentralized Federated Learning through Moving Target Defense</a></h4>
             <p><b>Enrique Tomás Martínez Beltrán</b>, Pedro Miguel Sánchez Sánchez, Sergio López Bernal, Gérôme Bovet, Manuel Gil Pérez, Gregorio Martínez Pérez, Alberto Huertas Celdrán</p>
-            <button class="bibtex-button" onclick="window.open('https://arxiv.org/abs/2307.11730')">Preprint</button>
-            <button class="bibtex-button" onclick="copyToClipboard('bibtex4')">Copy BibTeX</button>
+            <button type="button" class="bibtex-button" onclick="window.open('https://arxiv.org/abs/2307.11730')">Preprint</button>
+            <button type="button" class="bibtex-button" onclick="copyToClipboard('bibtex4')">Copy BibTeX</button>
             <div id="bibtex4" style="display: none;">
                 {% raw %}
                 @article{MartinezBeltran:DFL_mitigating_threats:2023,
@@ -192,8 +204,8 @@
         <div class="publication-info">
             <h4><a href="https://arxiv.org/abs/2308.03554">TemporalFED: Detecting Cyberattacks in Industrial Time-Series Data Using Decentralized Federated Learning</a></h4>
             <p>Ángel Luis Perales Gómez, <b>Enrique Tomás Martínez Beltrán</b>, Pedro Miguel Sánchez Sánchez, Alberto Huertas Celdrán</p>
-            <button class="bibtex-button" onclick="window.open('https://arxiv.org/abs/2308.03554')">Preprint</button>
-            <button class="bibtex-button" onclick="copyToClipboard('bibtex5')">Copy BibTeX</button>
+            <button type="button" class="bibtex-button" onclick="window.open('https://arxiv.org/abs/2308.03554')">Preprint</button>
+            <button type="button" class="bibtex-button" onclick="copyToClipboard('bibtex5')">Copy BibTeX</button>
             <div id="bibtex5" style="display: none;">
                 {% raw %}
                 @article{PeralesGomez:temporalfed:2023,

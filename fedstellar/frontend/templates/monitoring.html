@@ -116,29 +116,6 @@
     </table>
 </div>
 
-<!-- <h3>Deploy new node</h3>
-<p class="text-muted">This functionality enables you to deploy a new node with the neighbors of the selected nodes. The
-    new node will be deployed in the same federation as the selected nodes.</p>
-<div class="row">
-    <div class="col-md-4">
-        <div class="form-group">
-            <label for="selected-node">Select node(s)</label>
-            <select id="selected-node" class="form-control" multiple>
-                {% for uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, round, scenario, status in nodes %}
-                {% if role == "trainer" or role == "aggregator" %} 
-                <option value="{{ uid }}" data-id="{{ idx }}" data-ip="{{ ip }}" data-port="{{ port }}">{{ ip }}:{{ port }}</option>
-                {% endif %}
-                {% endfor %}
-            </select>
-        </div>
-    </div>
-</div>
-<div class="row">
-    <div class="col-md-4">
-        <button id="deploy-node" class="btn btn-dark">Deploy node</button>
-    </div>
-</div> -->
-
 <h3>Map</h3>
 <p class="text-muted">This functionality enables you to visualize the nodes in a real-time map. Click on a node to see
     its details.</p>
@@ -246,50 +223,6 @@
     });
 </script>
 
-<!-- <script>
-    // Deploy node
-    var deployNodeButton = document.getElementById("deploy-node");
-    deployNodeButton.addEventListener("click", function () {
-        // Get the selected nodes
-        var selectedNodes = document.getElementById("selected-node").selectedOptions;
-        var selectedNodes_list = [];
-        for (var i = 0; i < selectedNodes.length; i++) {
-            //selectedNodesIPs.push(selectedNodes[i].value);
-            selectedNodes_list[i] = {
-                uid : selectedNodes[i].value,
-                idx: selectedNodes[i].getAttribute("data-id"),
-                ip: selectedNodes[i].getAttribute("data-ip"),
-                port: selectedNodes[i].getAttribute("data-port")
-            };
-        }
-        console.log(selectedNodes_list);
-        // Send the selected nodes to the server
-        fetch('/api/scenario/' + scenario_name + '/node/deploy', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                selected_nodes: selectedNodes_list
-            })
-        })
-            .then(function (response) {
-                if (!response.ok) {
-                    showAlert("danger", "Error: " + response.status + " " + response.statusText);
-                    return;
-                }
-                // Examine the text in the response
-                response.json().then(function (data) {
-                    showAlert("success", data.message);
-                });
-            })
-            .catch(function (err) {
-                showAlert("danger", "Error: " + err);
-            });
-    });
-
-</script> -->
-
 <script>
     var map = L.map('map', {
         center: [44.194021, 12.397141],
@@ -311,6 +244,18 @@
 </script>
 
 <script>
+    function createTextTexture(text) {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        context.font = '40px Arial';
+        context.fillStyle = 'black';
+        context.fillText(text, 0, 40);
+    
+        const texture = new THREE.Texture(canvas);
+        texture.needsUpdate = true;
+        return texture;
+    }
+    
     const width = document.getElementById('3d-graph').offsetWidth;
     // When resize the window, resize the graph
     window.addEventListener("resize", function () {
@@ -338,13 +283,37 @@
                 3000  // ms transition duration
             )
         })
-        //.linkSource('source')
-        //.linkTarget('target')
+        .nodeThreeObject(node => {
+            const group = new THREE.Group();
 
-        .nodeColor(node => offlineNodes.has(node.ipport) ? 'grey' :
+            const nodeColor = offlineNodes.has(node.ipport) ? 'grey' :
             (node.role === "trainer" ? '#0173B2'
                 : (node.role === "aggregator" ? 'rgba(255,136,0,0.6)'
-                    : (node.role === "evaluator" ? '#F44336' : undefined))))
+                    : (node.role === "evaluator" ? '#F44336' : '#68B0AB')));
+
+            const sphereRadius = 5;
+    
+            const material = new THREE.MeshBasicMaterial({ 
+                color: nodeColor,
+                transparent: true,
+                opacity: 0.5,
+            });
+            const sphere = new THREE.Mesh(new THREE.SphereGeometry(5, 32, 32), material);
+            group.add(sphere);
+    
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ 
+                map: createTextTexture(`NODE ${node.id}`), 
+                depthWrite: false,
+                depthTest: false
+            }));
+
+            const spriteScale = 0.5 * sphereRadius;
+            sprite.scale.set(10, 10 * 0.7, 5);
+            sprite.position.set(0, 5, 0);
+            group.add(sprite);
+    
+            return group;
+        })
         .linkColor(link => link.color ? 'red' : 'black')
         .linkOpacity(0.6)
         .linkWidth(0.3)
@@ -755,7 +724,7 @@
         }
         if (!nodeExists) {
             console.log("Adding new node to the graph")
-            showAlert("success", "New node added to the graph");
+            showAlert("success", "New node (" + data.ip + ":" + data.port + ") added to the graph")
             gData.nodes.push({
                 id: data.idx,
                 ip: data.ip,

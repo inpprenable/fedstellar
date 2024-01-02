@@ -36,6 +36,9 @@ extensions = [
     'autoapi.extension',  # Automatically generate API documentation
     'sphinx.ext.intersphinx',  # Link to other project's documentation
     'sphinx.ext.todo',  # Support for todo items
+    'sphinx.ext.autodoc',  # Support for automatic documentation
+    'sphinx.ext.autosummary',  # Support for automatic summaries
+    'sphinx.ext.doctest',  # Support for doctests
 ]
 
 

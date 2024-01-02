@@ -12,6 +12,14 @@ fedstellar.utils.env module
    :undoc-members:
    :show-inheritance:
 
+fedstellar.utils.functions module
+---------------------------------
+
+.. automodule:: fedstellar.utils.functions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 fedstellar.utils.topologymanager module
 ---------------------------------------
 

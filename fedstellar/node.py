@@ -8,6 +8,7 @@ import math
 import os
 from datetime import datetime
 
+from fedstellar.utils.functions import print_msg_box
 from fedstellar.attacks.aggregation import create_attack
 from fedstellar.learning.aggregators.aggregator import create_malicious_aggregator
 from fedstellar.learning.pytorch.remotelogger import FedstellarWBLogger
@@ -43,6 +44,28 @@ from fedstellar.learning.pytorch.lightninglearner import LightningLearner
 
 from fedstellar.learning.aggregators.helper import cosine_metric, euclidean_metric, minkowski_metric, manhattan_metric, pearson_correlation_metric, jaccard_metric 
 
+import sys
+import pdb
+import signal
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    """ Log uncaught exceptions """
+    logging.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+    pdb.set_trace()
+    pdb.post_mortem(exc_traceback)
+    
+# sys.excepthook = handle_exception
+
+def signal_handler(sig, frame):
+    print('Signal handler called with signal', sig)
+    print('Exiting gracefully')
+    sys.exit(0)
+    
+# signal.signal(signal.SIGINT, signal_handler)
+# signal.signal(signal.SIGTERM, signal_handler)
 
 class Node(BaseNode):
     """
@@ -89,11 +112,11 @@ class Node(BaseNode):
         BaseNode.__init__(self, experiment_name, host, port, encrypt, config)
 
         self.idx = idx
-        logging.info("[NODE] My idx is {}".format(self.idx))
-        logging.info("[NODE] My IP is {}".format(self.addr))
-
+        
         # Import configuration file
         self.config = config
+        
+        print_msg_box(msg=f"ID {self.idx}\nIP: {self.addr}\nRole: {self.config.participant['device_args']['role']}", indent=2, title="Node information")
 
         # Report the configuration to the controller (first instance)
         self.__report_status_to_controller()
@@ -136,54 +159,21 @@ class Node(BaseNode):
         self.model_poisoning = model_poisoning
         self.poisoned_ratio = poisoned_ratio
         self.noise_type = noise_type
-
-        self.__trusted_nei = []
-        self.__is_malicious = False
+        
+        # Mobility environment
+        self.mobility = self.config.participant["mobility_args"]["mobility"]
+        self.mobility_type = self.config.participant["mobility_args"]["mobility_type"]
+        self.radius_federation = float(self.config.participant["mobility_args"]["radius_federation"])
+        self.scheme_mobility = self.config.participant["mobility_args"]["scheme_mobility"]
+        self.round_frequency = int(self.config.participant["mobility_args"]["round_frequency"])
+        # Logging box with mobility information
+        mobility_msg = f"Mobility: {self.mobility}\nMobility type: {self.mobility_type}\nRadius federation: {self.radius_federation}\nScheme mobility: {self.scheme_mobility}\nEach {self.round_frequency} rounds"
+        print_msg_box(msg=mobility_msg, indent=2, title="Mobility information")
 
         self.with_reputation = self.config.participant['defense_args']["with_reputation"]
         self.is_dynamic_topology = self.config.participant['defense_args']["is_dynamic_topology"]
         self.is_dynamic_aggregation = self.config.participant['defense_args']["is_dynamic_aggregation"]
-
-        logging.info(f"[NODE] with_reputation={self.with_reputation}")
-        logging.info(f"[NODE] is_dynamic_topology={self.is_dynamic_topology}")
-        logging.info(f"[NODE] is_dynamic_aggregation={self.is_dynamic_aggregation}")
-
-        # Learner and learner logger
-        # log_model="all" to log model
-        # mode="disabled" to disable wandb
-        if self.config.participant['tracking_args']['enable_remote_tracking']:
-            logging.info("[NODE] Tracking W&B enabled")
-            logging.getLogger("wandb").setLevel(logging.ERROR)
-            fedstellarlogger = FedstellarWBLogger(project="platform-enrique", group=self.experiment_name,
-                                                 name=f"participant_{self.idx}")
-            fedstellarlogger.watch(model, log="all")
-        else:
-            if self.config.participant['tracking_args']['local_tracking'] == 'csv':
-                logging.info("[NODE] Tracking CSV enabled")
-                fedstellarlogger = CSVLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}")
-            elif self.config.participant['tracking_args']['local_tracking'] == 'web':
-                logging.info("[NODE] Tracking Web enabled")
-                fedstellarlogger = FedstellarLogger(f"{self.log_dir}", name="metrics",
-                                                     version=f"participant_{self.idx}", log_graph=True)
         
-        self.learner = learner(model, data, config=self.config, logger=fedstellarlogger)
-
-        logging.info("[NODE] Role: " + str(self.config.participant["device_args"]["role"]))
-        if self.config.participant["adversarial_args"]["attacks"] != "No Attack":
-            self.__is_malicious = True
-        logging.info("[NODE] Benign node" if not self.__is_malicious else "[NODE] Malicious node")
-
-        # Aggregators
-        if self.config.participant["aggregator_args"]["algorithm"] == "FedAvg":
-            self.aggregator = FedAvg(node_name=self.get_name(), config=self.config)
-        elif self.config.participant["aggregator_args"]["algorithm"] == "Krum":
-            self.aggregator = Krum(node_name=self.get_name(), config=self.config)
-        elif self.config.participant["aggregator_args"]["algorithm"] == "Median":
-            self.aggregator = Median(node_name=self.get_name(), config=self.config)
-        elif self.config.participant["aggregator_args"]["algorithm"] == "TrimmedMean":
-            self.aggregator = TrimmedMean(node_name=self.get_name(), config=self.config)
-
-        # whether to use the dynamic aggregator
         if self.is_dynamic_aggregation:
             # Target Aggregators
             if self.config.participant["defense_args"]["target_aggregation"] == "FedAvg":
@@ -194,6 +184,50 @@ class Node(BaseNode):
                 self.target_aggregation = Median(node_name=self.get_name(), config=self.config)
             elif self.config.participant["defense_args"]["target_aggregation"] == "TrimmedMean":
                 self.target_aggregation = TrimmedMean(node_name=self.get_name(), config=self.config)
+        msg = f"Reputation system: {self.with_reputation}\nDynamic topology: {self.is_dynamic_topology}\nDynamic aggregation: {self.is_dynamic_aggregation}"
+        msg += f"\nTarget aggregation: {self.target_aggregation.__class__.__name__}" if self.is_dynamic_aggregation else ""
+        print_msg_box(msg=msg, indent=2, title="Defense information")
+
+
+        # Learner and learner logger
+        # log_model="all" to log model
+        # mode="disabled" to disable wandb
+        if self.config.participant['tracking_args']['enable_remote_tracking']:
+            logging.getLogger("wandb").setLevel(logging.ERROR)
+            fedstellarlogger = FedstellarWBLogger(project="platform-enrique", group=self.experiment_name,
+                                                 name=f"participant_{self.idx}")
+            fedstellarlogger.watch(model, log="all")
+        else:
+            if self.config.participant['tracking_args']['local_tracking'] == 'csv':
+                fedstellarlogger = CSVLogger(f"{self.log_dir}", name="metrics", version=f"participant_{self.idx}")
+            elif self.config.participant['tracking_args']['local_tracking'] == 'web':
+                fedstellarlogger = FedstellarLogger(f"{self.log_dir}", name="metrics",
+                                                     version=f"participant_{self.idx}", log_graph=True)
+        
+        self.learner = learner(model, data, config=self.config, logger=fedstellarlogger)
+        print_msg_box(msg=f"Logging type: {fedstellarlogger.__class__.__name__}", indent=2, title="Logging information")
+
+        # Aggregators
+        if self.config.participant["aggregator_args"]["algorithm"] == "FedAvg":
+            self.aggregator = FedAvg(node_name=self.get_name(), config=self.config)
+        elif self.config.participant["aggregator_args"]["algorithm"] == "Krum":
+            self.aggregator = Krum(node_name=self.get_name(), config=self.config)
+        elif self.config.participant["aggregator_args"]["algorithm"] == "Median":
+            self.aggregator = Median(node_name=self.get_name(), config=self.config)
+        elif self.config.participant["aggregator_args"]["algorithm"] == "TrimmedMean":
+            self.aggregator = TrimmedMean(node_name=self.get_name(), config=self.config)
+        
+        self.__trusted_nei = []
+        self.__is_malicious = False
+        if self.config.participant["adversarial_args"]["attacks"] != "No Attack":
+            self.__is_malicious = True
+        
+        msg = f"Dataset: {self.config.participant['data_args']['dataset']}"
+        msg += f"\nIID: {self.config.participant['data_args']['iid']}"
+        msg += f"\nModel: {model.__class__.__name__}"
+        msg += f"\nAggregation algorithm: {self.aggregator.__class__.__name__}"
+        msg += f"\nNode behavior: {'malicious' if self.__is_malicious else 'benign'}"
+        print_msg_box(msg=msg, indent=2, title="Additional information")
 
         # Train Set Votes
         self.__train_set_votes = {}
@@ -263,11 +297,9 @@ class Node(BaseNode):
         logging.info(f"malicious detected at round {self.round}, change aggergation protocol!")
         if self.aggregator != self.target_aggregation:
             logging.info(f"get_aggregated_models current aggregator is: {self.aggregator}")
-            # do some threading
             self.aggregator = self.target_aggregation
             self.aggregator.set_nodes_to_aggregate(self.__train_set)
 
-            # current_models = {}
             for subnodes in aggregated_models_weights.keys():
                 sublist = subnodes.split()
                 (submodel, weights) = aggregated_models_weights[subnodes]
@@ -443,13 +475,14 @@ class Node(BaseNode):
         """
         GRPC service. It is called when a node connects to another.
         """
-        if self.round is not None:
-            logging.info(
-                f"({self.addr}) Cant connect to other nodes when learning is running."
-            )
-            return node_pb2.ResponseMessage(error="Cant connect: learning is running")
-        else:
-            return super().handshake(request, _)
+        # if self.round is not None:
+        #     logging.info(
+        #         f"({self.addr}) Cant connect to other nodes when learning is running."
+        #     )
+        #     return node_pb2.ResponseMessage(error="Cant connect: learning is running")
+        # else:
+        #     return super().handshake(request, _)
+        return super().handshake(request, _)
 
     #########################
     #    Node Management    #
@@ -466,11 +499,11 @@ class Node(BaseNode):
             bool: True if the connection was successful, False otherwise.
         """
         # Check if learning is running
-        if self.round is not None:
-            logging.info(
-                f"({self.addr}) Cant connect to other nodes when learning is running."
-            )
-            return False
+        # if self.round is not None:
+        #     logging.info(
+        #         f"({self.addr}) Cant connect to other nodes when learning is running."
+        #     )
+        #     return False
         # Connect
         return super().connect(addr)
 
@@ -490,49 +523,19 @@ class Node(BaseNode):
         )
         learning_thread.name = "reporter_thread-" + self.addr
         learning_thread.daemon = True
+        logging.info(f"({self.addr}) Starting reporter thread")
         learning_thread.start()
 
     def __start_reporter(self):
         while True:
-            time.sleep(5)
+            time.sleep(3)
             self.__change_geo_location()
             self.__report_status_to_controller()
             self.__report_resources()
             
-    def __change_geo_location(self):
-        mobility = self.config.participant["mobility_args"]["with_mobility"]
-        if mobility:
-            latitude = float(self.config.participant["mobility_args"]["latitude"])
-            longitude = float(self.config.participant["mobility_args"]["longitude"])
-            scheme_mobility = self.config.participant["mobility_args"]["scheme_mobility"]
-            radius_mobility = float(self.config.participant["mobility_args"]["radius_mobility"])
-            
-            # Change latitude and longitude based on the scheme and radius.
-            # The scheme can be "random" or "circle"
-            # Radius is the radius of the circle in meters
-            radius_in_degrees = radius_mobility / 111000
-            
-            if scheme_mobility.lower() == "random":
-                latitude = latitude + random.uniform(-radius_in_degrees, radius_in_degrees)
-                longitude = longitude + random.uniform(-radius_in_degrees, radius_in_degrees)
-            elif scheme_mobility.lower() == "circle":
-                radius = random.uniform(0, radius_in_degrees)
-                angle = random.uniform(0, 2 * math.pi)
-                latitude = latitude + radius * math.cos(angle)
-                longitude = longitude + radius * math.sin(angle)
-            else:
-                logging.error(f"({self.addr}) Mobility scheme not supported")
-                return
-            
-            # Check if the new latitude and longitude are valid
-            if latitude < -90 or latitude > 90 or longitude < -180 or longitude > 180:
-                logging.error(f"({self.addr}) New geo location not valid")
-                return
-            
-            # Update the geo location
-            self.config.participant["mobility_args"]["latitude"] = latitude
-            self.config.participant["mobility_args"]["longitude"] = longitude
-            logging.info(f"({self.addr}) New geo location: {latitude}, {longitude}")
+    ##########################
+    #         Report         #
+    ##########################
 
     def __report_status_to_controller(self):
         """
@@ -548,7 +551,7 @@ class Node(BaseNode):
         # Send the POST request if the controller is available
         try:
             response = requests.post(url, data=json.dumps(self.config.participant),
-                                     headers={'Content-Type': 'application/json'})
+                                     headers={'Content-Type': 'application/json', 'User-Agent': f'Fedstellar Participant {self.idx}'})
         except requests.exceptions.ConnectionError:
             logging.error(f'Error connecting to the controller at {url}')
             return
@@ -602,18 +605,13 @@ class Node(BaseNode):
         uptime = psutil.boot_time()
 
         # Logging and reporting
-        # logging.info(f'Resources: CPU {cpu_percent}%, CPU temp {cpu_temp}C, RAM {ram_percent}%, Disk {disk_percent}%')
-        self.learner.logger.log_metrics(
-            {"Resources/CPU_percent": cpu_percent, "Resources/CPU_temp": cpu_temp, "Resources/RAM_percent": ram_percent,
-             "Resources/Disk_percent": disk_percent}, step=step)
-        # logging.info(f'Resources: Bytes sent {bytes_sent}, Bytes recv {bytes_recv}, Packets sent {packets_sent}, Packets recv {packets_recv}')
-        self.learner.logger.log_metrics({"Resources/Bytes_sent": bytes_sent, "Resources/Bytes_recv": bytes_recv,
+        self.learner.logger.log_metrics({"Resources/CPU_percent": cpu_percent, "Resources/CPU_temp": cpu_temp,
+                                         "Resources/RAM_percent": ram_percent, "Resources/Disk_percent": disk_percent,
+                                         "Resources/Bytes_sent": bytes_sent, "Resources/Bytes_recv": bytes_recv,
                                          "Resources/Packets_sent": packets_sent,
-                                         "Resources/Packets_recv": packets_recv}, step=step)
-        # logging.info(f'Resources: Uptime {uptime}')
-        self.learner.logger.log_metrics({"Resources/Uptime": uptime}, step=step)
-
-        self.learner.logger.log_metrics({"Network/Connected": len(self.get_neighbors(only_direct=True))}, step=step)
+                                         "Resources/Packets_recv": packets_recv,
+                                         "Resources/Uptime": uptime,
+                                         "Network/Connected": len(self.get_neighbors(only_direct=True))}, step=step)
 
         # Check if pynvml is available
         try:
@@ -648,6 +646,71 @@ class Node(BaseNode):
         except Exception as e:
             logging.error(f'Error getting GPU usage: {e}')
 
+    ##########################
+    # Mobility Functionality #
+    ##########################
+    
+    def __change_geo_location(self):
+        if self.mobility and (self.mobility_type == "geo" or self.mobility_type == "both"):
+            latitude = float(self.config.participant["mobility_args"]["latitude"])
+            longitude = float(self.config.participant["mobility_args"]["longitude"])
+            
+            # Change latitude and longitude based on the scheme and radius.
+            # Radius is the radius of the circle in meters
+            radius_in_degrees = self.radius_federation / 111000
+            
+            radius = random.uniform(0, radius_in_degrees)
+            angle = random.uniform(0, 2 * math.pi)
+            latitude = latitude + radius * math.cos(angle)
+            longitude = longitude + radius * math.sin(angle)
+            
+            # Check if the new latitude and longitude are valid
+            if latitude < -90 or latitude > 90 or longitude < -180 or longitude > 180:
+                logging.error(f"({self.addr}) New geo location not valid")
+                return
+            
+            # Update the geo location
+            self.config.participant["mobility_args"]["latitude"] = latitude
+            self.config.participant["mobility_args"]["longitude"] = longitude
+            logging.info(f"({self.addr}) New geo location: {latitude}, {longitude}")
+            
+    def __change_connections(self):
+        """
+        Change the connections of the node.
+        """
+        if self.mobility and (self.mobility_type == "topology" or self.mobility_type == "both") and self.round % self.round_frequency == 0:
+            logging.info(f"({self.addr}) Changing connections")
+            current_neighbors = self.get_neighbors(only_direct=True)
+            potential_neighbors = self.get_neighbors(only_undirected=True)
+            logging.info(f"({self.addr}) Current neighbors: {current_neighbors}")
+            logging.info(f"({self.addr}) Potential future neighbors: {potential_neighbors}")
+            
+            # Check if the node has enough neighbors
+            if len(current_neighbors) < 1:
+                logging.error(f"({self.addr}) Not enough neighbors")
+                return
+            
+            # Check if the node has enough potential neighbors
+            if len(potential_neighbors) < 1:
+                logging.error(f"({self.addr}) Not enough potential neighbors")
+                return
+            
+            if self.scheme_mobility == "random":
+                # Get random neighbor, disconnect and connect with a random potential neighbor
+                random_neighbor = random.choice(current_neighbors)
+                random_potential_neighbor = random.choice(potential_neighbors)
+                logging.info(f"({self.addr}) Selected node(s) to disconnect: {random_neighbor}")
+                logging.info(f"({self.addr}) Selected node(s) to connect: {random_potential_neighbor}")
+                
+                self._neighbors.remove(random_neighbor, disconnect_msg=True)
+                self.connect(random_potential_neighbor)
+                logging.info(f"({self.addr}) New neighbors: {self.get_neighbors(only_direct=True)}")
+                logging.info(f"({self.addr}) Neighbors in config: {self.config.participant['network_args']['neighbors']}")
+            else:
+                logging.error(f"({self.addr}) Mobility scheme {self.scheme_mobility} not implemented")
+                return
+                
+            
     ##########################
     #    Learning Setters    #
     ##########################
@@ -727,6 +790,7 @@ class Node(BaseNode):
         )
         learning_thread.name = "learning_thread-" + self.addr
         learning_thread.daemon = True
+        logging.info(f"({self.addr}) Starting learning thread")
         learning_thread.start()
 
     def __start_learning(self, rounds, epochs):
@@ -736,7 +800,10 @@ class Node(BaseNode):
             self.totalrounds = rounds
             self.__start_thread_lock.release()
             begin = time.time()
-
+            
+            logging.info(f"({self.addr}) Starting Federated Learning process...")
+            logging.info(f"({self.addr}) Initial DIRECT neighbors: {self.get_neighbors(only_direct=True)} | Initial UNDIRECT participants: {self.get_neighbors(only_undirected=True)}")
+        
             # Wait and gossip model initialization
             logging.info(f"({self.addr}) Waiting initialization.")
             self.__model_initialized_lock.acquire()
@@ -801,7 +868,7 @@ class Node(BaseNode):
     def __train_step(self):
         # Set train set
         if self.round is not None:
-            # self.__train_set = self.__vote_train_set() # TODO: Remove vote train set
+            # self.__train_set = self.__vote_train_set()
             self.__train_set = self.get_neighbors(only_direct=False)
             self.__train_set = self.__validate_train_set(self.__train_set)
             if self.addr not in self.__train_set:
@@ -811,7 +878,7 @@ class Node(BaseNode):
             )
             # Logging neighbors (indicate the direct neighbors and undirected neighbors)
             logging.info(
-                f"{self.addr} All neighbors: {self.get_neighbors()} | Direct neighbors: {self.get_neighbors(only_direct=True)}"
+                f"{self.addr} Direct neighbors: {self.get_neighbors(only_direct=True)} | Undirected neighbors: {self.get_neighbors(only_undirected=True)}"
             )
 
         # Determine if node is in the train set
@@ -913,7 +980,7 @@ class Node(BaseNode):
                 )
                                 
                 logging.info(f"({self.addr}) Gossiping (difusion) my current model parameters.")
-                self.__gossip_model_difusion()  # TODO: Check this function, not doing "aggregation"
+                self.__gossip_model_difusion()
 
 
         elif self.config.participant["device_args"]["role"] == Role.IDLE:
@@ -1087,6 +1154,9 @@ class Node(BaseNode):
         # Clear node aggregation
         self.__models_aggregated = {}
         self.finish_round_lock.release()
+        
+        # Change the connections of the node
+        self.__change_connections()
 
         # Next Step or Finish
         if self.round < self.totalrounds:
@@ -1098,7 +1168,7 @@ class Node(BaseNode):
             self.round = None
             self.totalrounds = None
             self.__model_initialized_lock.acquire()
-            logging.info(f"({self.addr}) Training finished!!.")
+            logging.info(f"({self.addr}) Federated Learning process has been completed.")
 
     #########################
     #    Model Gossiping    #

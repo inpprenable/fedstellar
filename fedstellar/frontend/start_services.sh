@@ -10,10 +10,21 @@ echo "Starting services..."
 nginx &
 
 # Change directory to where app.py is located
-cd /fedstellar/fedstellar/frontend
+FEDSTELLAR_FRONTEND_DIR=/fedstellar/fedstellar/frontend
+cd $FEDSTELLAR_FRONTEND_DIR
 
 # Iniciar Gunicorn
-gunicorn --worker-class eventlet --workers 1 --bind unix:/tmp/fedstellar.sock --access-logfile $SERVER_LOG app:app &
+DEBUG=$FEDSTELLAR_DEBUG
+echo "DEBUG: $DEBUG"
+if [ "$DEBUG" = "True" ]; then
+    echo "Starting Gunicorn in debug mode..."
+    # Include PYTHONUNBUFFERED=1 to avoid buffering of stdout and stderr
+    export PYTHONUNBUFFERED=1
+    gunicorn --worker-class eventlet --workers 1 --bind unix:/tmp/fedstellar.sock --access-logfile $SERVER_LOG --error-logfile $SERVER_LOG  --reload --reload-extra-file $FEDSTELLAR_FRONTEND_DIR --capture-output --log-level debug app:app &
+else
+    echo "Starting Gunicorn in production mode..."
+    gunicorn --worker-class eventlet --workers 1 --bind unix:/tmp/fedstellar.sock --access-logfile $SERVER_LOG app:app &
+fi
 
 # Iniciar TensorBoard
 tensorboard --host 0.0.0.0 --port 8080 --logdir $FEDSTELLAR_LOGS_DIR --window_title "Fedstellar Statistics" --reload_interval 30 --max_reload_threads 10 --reload_multifile true &
