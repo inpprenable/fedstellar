@@ -19,6 +19,8 @@ from fedstellar.learning.pytorch.cifar10.models.resnet import CIFAR10ModelResNet
 from fedstellar.learning.pytorch.cifar10.models.fastermobilenet import FasterMobileNet
 from fedstellar.learning.pytorch.cifar10.models.simplemobilenet import SimpleMobileNetV1
 from fedstellar.learning.pytorch.cifar10.models.cnn import CIFAR10ModelCNN
+from fedstellar.learning.pytorch.cifar10.models.cnnV2 import CIFAR10ModelCNN_V2
+from fedstellar.learning.pytorch.cifar10.models.cnnV3 import CIFAR10ModelCNN_V3
 from fedstellar.learning.pytorch.syscall.models.svm import SyscallModelSGDOneClassSVM
 from fedstellar.node import Node, MaliciousNode
 from fedstellar.learning.pytorch.datamodule import DataModule
@@ -123,7 +125,7 @@ def main():
         else:
             raise ValueError(f"Model {model} not supported")
     elif dataset == "CIFAR10":
-        dataset = CIFAR10Dataset(sub_id=idx, number_sub=n_nodes, root_dir=f"{sys.path[0]}/data", iid=iid)
+        dataset = CIFAR10Dataset(num_classes=10, sub_id=idx, number_sub=n_nodes, iid=iid, partition="percent", seed=42, config=config)
         if model_name == "ResNet9":
             model = CIFAR10ModelResNet(classifier="resnet9")
         elif model_name == "ResNet18":
@@ -134,6 +136,10 @@ def main():
             model = SimpleMobileNetV1()
         elif model_name == "CNN":
             model = CIFAR10ModelCNN()
+        elif model_name == "CNN_V2":
+            model = CIFAR10ModelCNN_V2()
+        elif model_name == "CNN_V3":
+            model = CIFAR10ModelCNN_V3()
         else:
             raise ValueError(f"Model {model} not supported")
     else:

@@ -10,7 +10,7 @@ import torch
 from fedstellar.learning.pytorch.fedstellarmodel import FedstellarModel
 
 
-class CIFAR10ModelCNN(FedstellarModel):
+class CIFAR10ModelCNN_V2(FedstellarModel):
     """
     LightningModule for MNIST.
     """
@@ -37,20 +37,24 @@ class CIFAR10ModelCNN(FedstellarModel):
         self.criterion = torch.nn.CrossEntropyLoss()
 
         # Define layers of the model
-        self.conv1 = torch.nn.Conv2d(in_channels, 16, 3, padding=1)
-        self.conv2 = torch.nn.Conv2d(16, 32, 3, padding=1)
-        self.conv3 = torch.nn.Conv2d(32, 64, 3, padding=1)
+        self.conv1 = torch.nn.Conv2d(in_channels, 32, 5, padding=2)
+        self.bn1 = torch.nn.BatchNorm2d(32)
+        self.conv2 = torch.nn.Conv2d(32, 64, 3, padding=1)
+        self.bn2 = torch.nn.BatchNorm2d(64)
+        self.conv3 = torch.nn.Conv2d(64, 128, 3, padding=1)
+        self.bn3 = torch.nn.BatchNorm2d(128)
         self.pool = torch.nn.MaxPool2d(2, 2)
-        self.fc1 = torch.nn.Linear(64 * 4 * 4, 512)
+        self.fc1 = torch.nn.Linear(128 * 4 * 4, 512)
         self.fc2 = torch.nn.Linear(512, out_channels)
+        self.dropout = torch.nn.Dropout(0.5)
 
     def forward(self, x):
-        """Forward pass of the model."""
-        x = self.pool(torch.relu(self.conv1(x)))
-        x = self.pool(torch.relu(self.conv2(x)))
-        x = self.pool(torch.relu(self.conv3(x)))
-        x = x.view(-1, 64 * 4 * 4)
+        x = self.pool(torch.relu(self.bn1(self.conv1(x))))
+        x = self.pool(torch.relu(self.bn2(self.conv2(x))))
+        x = self.pool(torch.relu(self.bn3(self.conv3(x))))
+        x = x.view(-1, 128 * 4 * 4)
         x = torch.relu(self.fc1(x))
+        x = self.dropout(x)
         x = self.fc2(x)
         return x
 
