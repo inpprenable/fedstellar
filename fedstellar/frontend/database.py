@@ -218,7 +218,7 @@ def get_all_scenarios_and_check_completed(sort_by="start_time"):
     return result
 
 
-def scenario_update_record(scenario_name, start_time, end_time, title, description, status, network_subnet, rounds, role):
+def scenario_update_record(scenario_name, start_time, end_time, title, description, status, network_subnet, model, dataset, rounds, role):
     _conn = sqlite3.connect(scenario_db_file_location)
     _c = _conn.cursor()
 
@@ -228,11 +228,11 @@ def scenario_update_record(scenario_name, start_time, end_time, title, descripti
 
     if result is None:
         # Create a new record
-        _c.execute("INSERT INTO scenarios VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (scenario_name, start_time, end_time, title, description, status, network_subnet, rounds, role))
+        _c.execute("INSERT INTO scenarios VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (scenario_name, start_time, end_time, title, description, status, network_subnet, model, dataset, rounds, role))
     else:
         # Update the record
-        command = "UPDATE scenarios SET start_time = ?, end_time = ?, title = ?, description = ?, status = ?, network_subnet = ?, rounds = ?, role = ? WHERE name = ?;"
-        _c.execute(command, (start_time, end_time, title, description, status, network_subnet, rounds, role, scenario_name))
+        command = "UPDATE scenarios SET start_time = ?, end_time = ?, title = ?, description = ?, status = ?, network_subnet = ?, model = ?, dataset = ?, rounds = ?, role = ? WHERE name = ?;"
+        _c.execute(command, (start_time, end_time, title, description, status, network_subnet, model, dataset, rounds, role, scenario_name))
 
     _conn.commit()
     _conn.close()

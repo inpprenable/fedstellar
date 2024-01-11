@@ -1070,6 +1070,8 @@ def fedstellar_scenario_deployment_run():
                 title=data["scenario_title"],
                 description=data["scenario_description"],
                 network_subnet=data["network_subnet"],
+                model=data["model"],
+                dataset=data["dataset"],
                 rounds=data["rounds"],
                 role=session["role"],
             )
