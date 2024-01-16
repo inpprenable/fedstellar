@@ -26,7 +26,7 @@ message Weights {
     int32 round = 2;
     bytes weights = 3;
     repeated string contributors = 4;
-    int32 weight = 5;
+    int64 weight = 5;
 }
 
 message HandShakeRequest {
