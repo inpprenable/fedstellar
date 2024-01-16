@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import random
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from fedstellar.learning.pytorch.mnist.mnist import MNISTDataset
@@ -159,6 +160,17 @@ def main():
         node_cls = Node
     else:
         node_cls = MaliciousNode
+        
+    
+    # Calculate the dynamic sleep time based on the number of nodes to wait for all the nodes to join the federation
+    # sleep_time = n_nodes * 2
+
+    # Adjust the GRPC_TIMEOUT and HEARTBEAT_TIMEOUT dynamically based on the number of nodes
+    config.participant["GRPC_TIMEOUT"] = n_nodes * 10
+    config.participant["HEARTBEAT_TIMEOUT"] = n_nodes * 5
+    
+    # Adjust REPORT_FREQUENCY dynamically based on the number of nodes (default is 10), nodes have to report in different times (+- 5 seconds)
+    config.participant["REPORT_FREQUENCY"] = (n_nodes * 0.4) + random.randint(-5, 5) if n_nodes > 10 else 10 + random.randint(-5, 5)
 
     node = node_cls(
         idx=idx,

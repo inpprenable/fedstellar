@@ -9,6 +9,17 @@ user_db_file_location = "database_file/users.db"
 node_db_file_location = "database_file/nodes.db"
 scenario_db_file_location = "database_file/scenarios.db"
 
+def enable_wal_mode(db_file):
+    with sqlite3.connect(db_file) as conn:
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL;")
+        mode = cursor.fetchone()
+        print(f"Journal mode: {mode[0]}")
+
+enable_wal_mode(user_db_file_location)
+enable_wal_mode(node_db_file_location)
+enable_wal_mode(scenario_db_file_location)
+
 """
     User Management
 """

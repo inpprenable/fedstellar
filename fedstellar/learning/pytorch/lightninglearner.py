@@ -11,6 +11,8 @@ import random
 import traceback
 import hashlib
 import numpy as np
+import io
+import gzip
 
 import torch
 from lightning import Trainer
@@ -78,19 +80,27 @@ class LightningLearner(NodeLearner):
 
     ####
     # Model weights
+    # Encode/decode parameters: https://pytorch.org/docs/stable/notes/serialization.html
+    # There are other ways to encode/decode parameters: protobuf, msgpack, etc.
     ####
-    def encode_parameters(self, params=None, contributors=None, weight=None):
+    def encode_parameters(self, params=None):
         if params is None:
             params = self.model.state_dict()
-        array = [val.cpu().numpy() for _, val in params.items()]
-        return pickle.dumps(array)
+        buffer = io.BytesIO()
+        #with gzip.GzipFile(fileobj=buffer, mode='wb') as f:
+        #    torch.save(params, f)
+        torch.save(params, buffer)
+        return buffer.getvalue()
 
     def decode_parameters(self, data):
         try:
-            params_dict = zip(self.model.state_dict().keys(), pickle.loads(data))
-            return OrderedDict({k: torch.tensor(v) for k, v in params_dict})
-        except:
-            raise DecodingParamsError("Error decoding parameters")
+            buffer = io.BytesIO(data)
+            # with gzip.GzipFile(fileobj=buffer, mode='rb') as f:
+            #     params_dict = torch.load(f, map_location='cpu')
+            params_dict = torch.load(buffer, map_location='cpu')
+            return OrderedDict(params_dict)
+        except Exception as e:
+            raise DecodingParamsError("Error decoding parameters: {}".format(e))
 
     def check_parameters(self, params):
         # Check ordered dict keys
@@ -177,7 +187,7 @@ class LightningLearner(NodeLearner):
         pass
 
     def create_trainer(self):
-        logging.debug("[Learner] Creating trainer with accelerator: {}".format(self.config.participant["device_args"]["accelerator"]))
+        logging.info("[Learner] Creating trainer with accelerator: {}".format(self.config.participant["device_args"]["accelerator"]))
         progress_bar = RichProgressBar(
             theme=RichProgressBarTheme(
                 description="green_yellow",
@@ -232,5 +242,5 @@ class LightningLearner(NodeLearner):
                 num_samples += inputs.size(0)
 
         avg_loss = running_loss / len(bootstrap_dataloader)
-        logging.debug("[Learner.validate_neighbour]: Computed neighbor loss over {} data samples".format(num_samples))
+        logging.info("[Learner.validate_neighbour]: Computed neighbor loss over {} data samples".format(num_samples))
         return avg_loss

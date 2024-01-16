@@ -452,7 +452,7 @@ class Node(BaseNode):
 
             # Warning: these stops can cause a denegation of service attack
             except DecodingParamsError as e:
-                logging.error(f"({self.addr}) add_model (gRPC) | Error decoding parameters.")
+                logging.error(f"({self.addr}) add_model (gRPC) | Error decoding parameters: {e}")
                 self.stop()
 
             except ModelNotMatchingError as e:
@@ -464,7 +464,7 @@ class Node(BaseNode):
                 self.stop()
 
         else:
-            logging.debug(
+            logging.info(
                 f"({self.addr}) add_model (gRPC) | Tried to add a model while learning is not running"
             )
 
@@ -528,7 +528,7 @@ class Node(BaseNode):
 
     def __start_reporter(self):
         while True:
-            time.sleep(3)
+            time.sleep(self.config.participant["REPORT_FREC"])
             self.__change_geo_location()
             self.__report_status_to_controller()
             self.__report_resources()
@@ -558,8 +558,9 @@ class Node(BaseNode):
 
         # If endpoint is not available, log the error
         if response.status_code != 200:
-            logging.error(f'Error received from controller: {response.status_code}')
-            logging.error(response.text)
+            logging.error(f'Error received from controller: {response.status_code} (probably there is overhead in the controller, trying again in the next round)')
+            logging.debug(response.text)
+            return
         
         try:
             self._neighbors.set_neighbors_location(response.json()["neigbours_location"])
@@ -850,9 +851,6 @@ class Node(BaseNode):
             logging.info(
                 f"({self.addr}) __wait_aggregated_model | Aggregation done for round {self.round}, including parameters in local model.")
             self.learner.set_parameters(params)
-            logging.debug(
-                f"({self.addr}) Broadcast aggregation done for round {self.round}"
-            )
             # Share that aggregation is done
             logging.info(
                 f"({self.addr}) __wait_aggregated_model | Broadcasting aggregation done for round {self.round}")

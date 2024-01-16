@@ -55,6 +55,10 @@ class Config:
         Default values are defined here.
         """
         pass
+    
+    def to_json(self):
+        # Return participant configuration as a json string
+        return json.dumps(self.participant, sort_keys=False, indent=2)
 
     # Read the configuration file scenario_config.json, and return a dictionary with the configuration
     def set_participant_config(self, participant_config):
