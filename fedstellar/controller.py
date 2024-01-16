@@ -609,8 +609,8 @@ class Controller:
             try:
                 # kill all the docker containers which contain the word "fedstellar"
                 commands = [
-                    """docker-compose -p waf down | Out-Null""",
-                    """docker-compose -p waf rm | Out-Null""",
+                    """docker compose -p waf down | Out-Null""",
+                    """docker compose -p waf rm | Out-Null""",
                 ]
 
                 for command in commands:
@@ -623,8 +623,8 @@ class Controller:
         else:
             try:
                 commands = [
-                    """docker-compose -p waf down > /dev/null 2>&1""",
-                    """docker-compose -p waf rm > /dev/null 2>&1""",
+                    """docker compose -p waf down > /dev/null 2>&1""",
+                    """docker compose -p waf rm > /dev/null 2>&1""",
                 ]
 
                 for command in commands:
@@ -644,6 +644,11 @@ class Controller:
         Controller.stop_statistics()
         Controller.stop_network()
         sys.exit(0)
+    
+    @staticmethod
+    def stop_nodes():
+        logging.info("Closing Fedstellar nodes... Please wait")
+        Controller.stop_participants()
 
     def load_configurations_and_start_nodes(self, additional_participants = None, schema_additional_participants=None):
         if not self.scenario_name:
@@ -865,7 +870,7 @@ class Controller:
                     - /bin/bash
                     - -c
                     - |
-                        ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.11 /fedstellar/fedstellar/node_start.py {}
+                        ifconfig && echo '{} host.docker.internal' >> /etc/hosts && sleep {} && python3.11 /fedstellar/fedstellar/node_start.py {}
                 networks:
                     fedstellar-net-scenario:
                         ipv4_address: {}
@@ -891,7 +896,7 @@ class Controller:
                     - /bin/bash
                     - -c
                     - |
-                        ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.11 /fedstellar/fedstellar/node_start.py {}
+                        ifconfig && echo '{} host.docker.internal' >> /etc/hosts && sleep {} && python3.11 /fedstellar/fedstellar/node_start.py {}
                 deploy:
                     resources:
                         reservations:
@@ -928,6 +933,7 @@ class Controller:
         self.config.participants.sort(key=lambda x: x["device_args"]["idx"])
         for node in self.config.participants:
             idx = node["device_args"]["idx"]
+            cold_start_time = 10 if node["device_args"]["start"] else 0 # seconds
             path = f"/fedstellar/app/config/{self.scenario_name}/participant_{idx}.json"
             logging.info("Starting node {} with configuration {}".format(idx, path))
             logging.info(
@@ -940,6 +946,7 @@ class Controller:
                     idx,
                     self.root_path,
                     self.network_gateway,
+                    cold_start_time,
                     path,
                     node["network_args"]["ip"],
                 )
@@ -949,6 +956,7 @@ class Controller:
                     idx,
                     self.root_path,
                     self.network_gateway,
+                    cold_start_time,
                     path,
                     node["network_args"]["ip"],
                 )

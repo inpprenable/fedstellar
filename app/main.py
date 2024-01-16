@@ -52,9 +52,10 @@ argparser.add_argument(
     "-st",
     "--stop",
     dest="stop",
-    action="store_true",
-    default=False,
-    help="Stop Fedstellar platform",
+    nargs="?",
+    const='all', # If no argument is given, stop all
+    default=None,
+    help="Stop Fedstellar platform or nodes only (use '--stop nodes' to stop only the nodes)",
 )
 argparser.add_argument(
     "-sp",
@@ -128,7 +129,9 @@ Code for deploying the controller
 """
 if __name__ == "__main__":
     
-    if args.stop:
+    if args.stop == 'all':
         Controller.stop()
+    elif args.stop == 'nodes':
+        Controller.stop_nodes()
     
     Controller(args).start()
