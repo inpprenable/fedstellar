@@ -870,7 +870,7 @@ class Controller:
                     - /bin/bash
                     - -c
                     - |
-                        ifconfig && echo '{} host.docker.internal' >> /etc/hosts && sleep {} && python3.11 /fedstellar/fedstellar/node_start.py {}
+                        ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.11 /fedstellar/fedstellar/node_start.py {}
                 networks:
                     fedstellar-net-scenario:
                         ipv4_address: {}
@@ -896,7 +896,7 @@ class Controller:
                     - /bin/bash
                     - -c
                     - |
-                        ifconfig && echo '{} host.docker.internal' >> /etc/hosts && sleep {} && python3.11 /fedstellar/fedstellar/node_start.py {}
+                        ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.11 /fedstellar/fedstellar/node_start.py {}
                 deploy:
                     resources:
                         reservations:
@@ -933,7 +933,6 @@ class Controller:
         self.config.participants.sort(key=lambda x: x["device_args"]["idx"])
         for node in self.config.participants:
             idx = node["device_args"]["idx"]
-            cold_start_time = 10 if node["device_args"]["start"] else 0 # seconds
             path = f"/fedstellar/app/config/{self.scenario_name}/participant_{idx}.json"
             logging.info("Starting node {} with configuration {}".format(idx, path))
             logging.info(
@@ -946,7 +945,6 @@ class Controller:
                     idx,
                     self.root_path,
                     self.network_gateway,
-                    cold_start_time,
                     path,
                     node["network_args"]["ip"],
                 )
@@ -956,7 +954,6 @@ class Controller:
                     idx,
                     self.root_path,
                     self.network_gateway,
-                    cold_start_time,
                     path,
                     node["network_args"]["ip"],
                 )

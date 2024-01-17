@@ -52,6 +52,6 @@ class FedAvg(Aggregator):
         for layer in accum:
             accum[layer] /= total_samples
             
-        self.print_model_size(accum)
+        # self.print_model_size(accum)
 
         return accum

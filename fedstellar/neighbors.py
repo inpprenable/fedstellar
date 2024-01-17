@@ -152,7 +152,7 @@ class Neighbors:
         """
         try:
             logging.info(
-                f"({self.__self_addr}) Sending model to {nei} with round {round}: contributors={contributors}, weight={weight}"
+                f"({self.__self_addr}) Sending model to {nei} with round {round}: contributors={contributors}, weight={weight} | size={sys.getsizeof(serialized_model) / (1024 ** 2) if serialized_model is not None else 0} MB"
             )
             stub = self.__neighbors[nei][1]
             # if not connected, create a temporal stub to send the message
@@ -183,8 +183,6 @@ class Neighbors:
             logging.info(
                 f"({self.__self_addr}) Cannot send model to {nei}. Error: {str(e)}"
             )
-            logging.info(f"[{self.__self_addr}] The message was: source={self.__self_addr}, round={round}, weights={sys.getsizeof(serialized_model)} (bytes), contributors={contributors}, weight={weight}")
-
             self.remove(nei)
 
     ####
@@ -428,8 +426,6 @@ class Neighbors:
         period = self.__config.participant["HEARTBEAT_PERIOD"]
         timeout = self.__config.participant["HEARTBEAT_TIMEOUT"]
         toggle = False
-        cold_start_time = self.__config.participant["HEARTBEAT_COLD_START_TIME"]
-        time.sleep(cold_start_time)
         
         while not self.__heartbeat_terminate_flag.is_set():
             t = time.time()

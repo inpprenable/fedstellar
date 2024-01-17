@@ -160,14 +160,9 @@ def main():
         node_cls = Node
     else:
         node_cls = MaliciousNode
-        
-    
-    # Calculate the dynamic sleep time based on the number of nodes to wait for all the nodes to join the federation
-    # sleep_time = n_nodes * 2
 
     # Adjust the GRPC_TIMEOUT and HEARTBEAT_TIMEOUT dynamically based on the number of nodes
     config.participant["GRPC_TIMEOUT"] = n_nodes * 10
-    config.participant["HEARTBEAT_TIMEOUT"] = n_nodes * 5
     
     # Adjust REPORT_FREQUENCY dynamically based on the number of nodes (default is 10), nodes have to report in different times (+- 5 seconds)
     config.participant["REPORT_FREQUENCY"] = (n_nodes * 0.4) + random.randint(-5, 5) if n_nodes > 10 else 10 + random.randint(-5, 5)
@@ -187,12 +182,12 @@ def main():
     )
 
     node.start()
-    time.sleep(10)
+    time.sleep(config.participant["COLD_START_TIME"])
     # TODO: If it is an additional node, it should wait until additional_node_round to connect to the network
     # In order to do that, it should request the current round to the API
     if additional_node_status:
         print(f"Waiting for round {additional_node_round} to start")
-        time.sleep(6000)
+        time.sleep(6000) # DEBUG purposes
         import requests
         url = f'http://{node.config.participant["scenario_args"]["controller"]}/scenario/{node.config.participant["scenario_args"]["name"]}/round'
         current_round = int(requests.get(url).json()['round'])
@@ -207,10 +202,10 @@ def main():
         node.connect(addr)
         time.sleep(2)
 
-    time.sleep(5)
+    # time.sleep(5)
 
     if config.participant["device_args"]["start"]:
-        time.sleep(10)
+        time.sleep(config.participant["GRACE_TIME_START_FEDERATION"]) # Wait for the grace time to start the federation (default is 20 seconds)
         node.set_start_learning(rounds=rounds, epochs=epochs)  # rounds=10, epochs=5
 
     node.grpc_wait()
