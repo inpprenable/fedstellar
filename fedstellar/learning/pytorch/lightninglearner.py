@@ -87,17 +87,17 @@ class LightningLearner(NodeLearner):
         if params is None:
             params = self.model.state_dict()
         buffer = io.BytesIO()
-        with gzip.GzipFile(fileobj=buffer, mode='wb') as f:
-            torch.save(params, f)
-        # torch.save(params, buffer)
+        #with gzip.GzipFile(fileobj=buffer, mode='wb') as f:
+        #    torch.save(params, f)
+        torch.save(params, buffer)
         return buffer.getvalue()
 
     def decode_parameters(self, data):
         try:
             buffer = io.BytesIO(data)
-            with gzip.GzipFile(fileobj=buffer, mode='rb') as f:
-                params_dict = torch.load(f, map_location='cpu')
-            #params_dict = torch.load(buffer, map_location='cpu')
+            #with gzip.GzipFile(fileobj=buffer, mode='rb') as f:
+            #    params_dict = torch.load(f, map_location='cpu')
+            params_dict = torch.load(buffer, map_location='cpu')
             return OrderedDict(params_dict)
         except Exception as e:
             raise DecodingParamsError("Error decoding parameters: {}".format(e))

@@ -414,6 +414,15 @@ class Aggregator:
         )
 
         return self.aggregate(dict_aux), nodes_aggregated, aggregation_weight
+    
+    def get_local_model(self):
+        """
+        Get my local model in __models.
+        """
+        if self.node_name in self.__models.keys():
+            return self.__models[self.node_name][0], [self.node_name], self.__models[self.node_name][1]
+        else:
+            return None
 
     def print_model_size(self, model):
         """

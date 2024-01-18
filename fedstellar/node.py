@@ -434,7 +434,7 @@ class Node(BaseNode):
                         raise ModelNotMatchingError("Not matching models")
                 else:
                     # Initialize model (try to handle concurrent initializations)
-                    logging.info(f"({self.addr}) add_model (gRPC) | Initializing model (executed by {request.source})")
+                    logging.info(f"({self.addr}) add_model (gRPC) | Initializing model (executed by {request.source}) | contributors={request.contributors}")
                     try:
                         self.__model_initialized_lock.release()
                         model = self.learner.decode_parameters(request.weights)
@@ -1271,9 +1271,10 @@ class Node(BaseNode):
             node,
             self.get_aggregated_models(node),
         )
-        model_function = lambda node: self.aggregator.get_partial_aggregation(
-            self.get_aggregated_models(node)
-        )
+        # model_function = lambda node: self.aggregator.get_partial_aggregation(
+        #    self.get_aggregated_models(node)
+        #)
+        model_function = lambda node: self.aggregator.get_local_model()
 
         # Gossip
         self.__gossip_model(candidate_condition, status_function, model_function)
