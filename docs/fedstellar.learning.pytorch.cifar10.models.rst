@@ -12,6 +12,22 @@ fedstellar.learning.pytorch.cifar10.models.cnn module
    :undoc-members:
    :show-inheritance:
 
+fedstellar.learning.pytorch.cifar10.models.cnnV2 module
+-------------------------------------------------------
+
+.. automodule:: fedstellar.learning.pytorch.cifar10.models.cnnV2
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+fedstellar.learning.pytorch.cifar10.models.cnnV3 module
+-------------------------------------------------------
+
+.. automodule:: fedstellar.learning.pytorch.cifar10.models.cnnV3
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 fedstellar.learning.pytorch.cifar10.models.fastermobilenet module
 -----------------------------------------------------------------
 
