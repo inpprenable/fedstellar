@@ -1,21 +1,27 @@
 import os
 import sys
 import time
+import random
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from fedstellar.learning.pytorch.mnist.mnist import MNISTDataset
+from fedstellar.learning.pytorch.fashionmnist.fashionmnist import FashionMNISTDataset
 from fedstellar.learning.pytorch.syscall.syscall import SYSCALLDataset
 from fedstellar.learning.pytorch.cifar10.cifar10 import CIFAR10Dataset
 
 from fedstellar.config.config import Config
 from fedstellar.learning.pytorch.mnist.models.mlp import MNISTModelMLP
 from fedstellar.learning.pytorch.mnist.models.cnn import MNISTModelCNN
+from fedstellar.learning.pytorch.fashionmnist.models.mlp import FashionMNISTModelMLP
+from fedstellar.learning.pytorch.fashionmnist.models.cnn import FashionMNISTModelCNN
 from fedstellar.learning.pytorch.syscall.models.mlp import SyscallModelMLP
 from fedstellar.learning.pytorch.syscall.models.autoencoder import SyscallModelAutoencoder
 from fedstellar.learning.pytorch.cifar10.models.resnet import CIFAR10ModelResNet
 from fedstellar.learning.pytorch.cifar10.models.fastermobilenet import FasterMobileNet
 from fedstellar.learning.pytorch.cifar10.models.simplemobilenet import SimpleMobileNetV1
 from fedstellar.learning.pytorch.cifar10.models.cnn import CIFAR10ModelCNN
+from fedstellar.learning.pytorch.cifar10.models.cnnV2 import CIFAR10ModelCNN_V2
+from fedstellar.learning.pytorch.cifar10.models.cnnV3 import CIFAR10ModelCNN_V3
 from fedstellar.learning.pytorch.syscall.models.svm import SyscallModelSGDOneClassSVM
 from fedstellar.node import Node, MaliciousNode
 from fedstellar.learning.pytorch.datamodule import DataModule
@@ -101,6 +107,14 @@ def main():
             model = MNISTModelCNN()
         else:
             raise ValueError(f"Model {model} not supported")
+    elif dataset == "FashionMNIST":
+        dataset = FashionMNISTDataset(num_classes=10, sub_id=idx, number_sub=n_nodes, iid=iid, partition="percent", seed=42, config=config)
+        if model_name == "MLP":
+            model = FashionMNISTModelMLP()
+        elif model_name == "CNN":
+            model = FashionMNISTModelCNN()
+        else:
+            raise ValueError(f"Model {model} not supported")
     elif dataset == "SYSCALL":
         dataset = SYSCALLDataset(sub_id=idx, number_sub=n_nodes, root_dir=f"{sys.path[0]}/data", iid=iid)
         if model_name == "MLP":
@@ -112,7 +126,7 @@ def main():
         else:
             raise ValueError(f"Model {model} not supported")
     elif dataset == "CIFAR10":
-        dataset = CIFAR10Dataset(sub_id=idx, number_sub=n_nodes, root_dir=f"{sys.path[0]}/data", iid=iid)
+        dataset = CIFAR10Dataset(num_classes=10, sub_id=idx, number_sub=n_nodes, iid=iid, partition="percent", seed=42, config=config)
         if model_name == "ResNet9":
             model = CIFAR10ModelResNet(classifier="resnet9")
         elif model_name == "ResNet18":
@@ -123,6 +137,10 @@ def main():
             model = SimpleMobileNetV1()
         elif model_name == "CNN":
             model = CIFAR10ModelCNN()
+        elif model_name == "CNN_V2":
+            model = CIFAR10ModelCNN_V2()
+        elif model_name == "CNN_V3":
+            model = CIFAR10ModelCNN_V3()
         else:
             raise ValueError(f"Model {model} not supported")
     else:
@@ -143,6 +161,12 @@ def main():
     else:
         node_cls = MaliciousNode
 
+    # Adjust the GRPC_TIMEOUT and HEARTBEAT_TIMEOUT dynamically based on the number of nodes
+    config.participant["GRPC_TIMEOUT"] = n_nodes * 10
+    
+    # Adjust REPORT_FREQUENCY dynamically based on the number of nodes (default is 10), nodes have to report in different times (+- 5 seconds)
+    config.participant["REPORT_FREQUENCY"] = (n_nodes * 0.4) + random.randint(-5, 5) if n_nodes > 10 else 10 + random.randint(-5, 5)
+
     node = node_cls(
         idx=idx,
         experiment_name=experiment_name,
@@ -158,12 +182,12 @@ def main():
     )
 
     node.start()
-    time.sleep(10)
+    time.sleep(config.participant["COLD_START_TIME"])
     # TODO: If it is an additional node, it should wait until additional_node_round to connect to the network
     # In order to do that, it should request the current round to the API
     if additional_node_status:
         print(f"Waiting for round {additional_node_round} to start")
-        time.sleep(6000)
+        time.sleep(6000) # DEBUG purposes
         import requests
         url = f'http://{node.config.participant["scenario_args"]["controller"]}/scenario/{node.config.participant["scenario_args"]["name"]}/round'
         current_round = int(requests.get(url).json()['round'])
@@ -178,10 +202,10 @@ def main():
         node.connect(addr)
         time.sleep(2)
 
-    time.sleep(5)
+    # time.sleep(5)
 
     if config.participant["device_args"]["start"]:
-        time.sleep(10)
+        time.sleep(config.participant["GRACE_TIME_START_FEDERATION"]) # Wait for the grace time to start the federation (default is 20 seconds)
         node.set_start_learning(rounds=rounds, epochs=epochs)  # rounds=10, epochs=5
 
     node.grpc_wait()

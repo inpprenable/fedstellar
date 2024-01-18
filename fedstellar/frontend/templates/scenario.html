@@ -84,13 +84,15 @@
             <th>Title</th>
             <th>Description</th>
             <th>Network Subnet</th>
+            <th>Model</th>
+            <th>Dataset</th>
             <th>Rounds</th>
             <th>Role</th>
             <th>Status</th>
             <th>Action</th>
         </tr>
         </thead>
-        {% for name, start_time, end_time, title, description, status, network_subnet, rounds, role in scenarios %}
+        {% for name, start_time, end_time, title, description, status, network_subnet, model, dataset, rounds, role in scenarios %}
         <tr id="scenario-vars">
             <td id="name">{{ name }}</td>
             <td id="start_time">{{ start_time }}</td>
@@ -98,6 +100,8 @@
             <td id="title" class="truncate-text" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{{ title }}">{{ title }}</td>
             <td id="description" class="truncate-text" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{{ description }}">{{ description }}</td>
             <td id="network_subnet">{{ network_subnet }}</td>
+            <td id="model">{{ model }}</td>
+            <td id="dataset">{{ dataset }}</td>
             <td id="rounds">{{ rounds }}</td>
             <td id="role">{{ role }}</td>
             {% if status == "running" %}

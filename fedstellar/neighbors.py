@@ -7,6 +7,7 @@ import logging
 import random
 import threading
 import time
+import sys
 from datetime import datetime
 
 import grpc
@@ -109,9 +110,10 @@ class Neighbors:
                 )
                 self.remove(nei, disconnect_msg=True)
             else:
-                logging.debug(
-                    f"({self.__self_addr}) send_message (gRPC) | Message {msg.cmd} sent to {nei} with hash {msg.hash}"
-                )
+                pass
+                # logging.debug(
+                #     f"({self.__self_addr}) send_message (gRPC) | Message {msg.cmd} sent to {nei} with hash {msg.hash}"
+                # )
         except Exception as e:
             # Remove neighbor
             logging.error(
@@ -150,7 +152,7 @@ class Neighbors:
         """
         try:
             logging.info(
-                f"({self.__self_addr}) Sending model to {nei} with round {round}: contributors={contributors}, weight={weight}"
+                f"({self.__self_addr}) Sending model to {nei} with round {round}: contributors={contributors}, weight={weight} | size={sys.getsizeof(serialized_model) / (1024 ** 2) if serialized_model is not None else 0} MB"
             )
             stub = self.__neighbors[nei][1]
             # if not connected, create a temporal stub to send the message
@@ -424,6 +426,7 @@ class Neighbors:
         period = self.__config.participant["HEARTBEAT_PERIOD"]
         timeout = self.__config.participant["HEARTBEAT_TIMEOUT"]
         toggle = False
+        
         while not self.__heartbeat_terminate_flag.is_set():
             t = time.time()
 
@@ -481,7 +484,7 @@ class Neighbors:
         if len(self.__processed_messages) > self.__config.participant["AMOUNT_LAST_MESSAGES_SAVED"]:
             self.__processed_messages.pop(0)
         # Add message
-        logging.debug(f"({self.__self_addr}) Adding processed message\n{msg}")
+        # logging.debug(f"({self.__self_addr}) Adding processed message\n{msg}")
         self.__processed_messages.append(msg)
         self.__processed_messages_lock.release()
         return True
@@ -493,8 +496,8 @@ class Neighbors:
         Args:
             msg (node_pb2.Message): Message to add.
         """
-        logging.debug(f"({self.__self_addr}) Gossiping\n{msg}")
-        logging.debug(f"({self.__self_addr}) TTL: {msg.ttl}")
+        # logging.debug(f"({self.__self_addr}) Gossiping\n{msg}")
+        # logging.debug(f"({self.__self_addr}) TTL: {msg.ttl}")
         if msg.ttl > 1:
             # Update ttl and broadcast
             msg.ttl -= 1
@@ -502,13 +505,13 @@ class Neighbors:
             # Add to pending messages
             self.__pending_msgs_lock.acquire()
             pending_neis = [n for n in self.__neighbors.keys() if n != msg.source]
-            logging.debug(f"({self.__self_addr}) Adding pending message\n{msg}")
+            # logging.debug(f"({self.__self_addr}) Adding pending message\n{msg}")
             self.__pending_msgs.append((msg, pending_neis))
-            logging.debug(f"Pending messages to gossip:\n{str(self.__pending_msgs)}")
+            # logging.debug(f"Pending messages to gossip:\n{str(self.__pending_msgs)}")
             self.__pending_msgs_lock.release()
 
     def __start_gossiper(self):
-        logging.debug(f"({self.__self_addr}) Starting gossiper thread")
+        logging.info(f"({self.__self_addr}) Starting gossiper thread")
         threading.Thread(target=self.__gossiper).start()
 
     def _stop_gossiper(self):

@@ -59,12 +59,12 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
         # Server
         self.__running = False
         opts = [("grpc.keepalive_time_ms", 10000),
-                ("grpc.keepalive_timeout_ms", 5000),
+                ("grpc.keepalive_timeout_ms", 10000),
                 ("grpc.keepalive_permit_without_calls", True),
                 ("grpc.http2.max_ping_strikes", 0),
                 ("grpc.max_send_message_length", 1024 * 1024 * 1024),
                 ("grpc.max_receive_message_length", 1024 * 1024 * 1024)]
-        self.__server = grpc.server(futures.ThreadPoolExecutor(max_workers=20), options=opts)
+        self.__server = grpc.server(futures.ThreadPoolExecutor(max_workers=50), options=opts)
 
         # Logging
         self.log_dir = os.path.join(config.participant['tracking_args']["log_dir"], self.experiment_name)
@@ -82,6 +82,12 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
                                 file_handler_only_debug,
                                 exp_errors_file_handler
                             ])
+        
+        # Save the current configuration in config folder
+        config_dir = config.participant['tracking_args']["config_dir"]
+        with open(f"{config_dir}/participant_{config.participant['device_args']['idx']}.json", 'w') as f:
+            f.write(config.to_json())
+
 
     def get_addr(self):
         """

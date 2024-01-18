@@ -25,36 +25,33 @@ class FedAvg(Aggregator):
 
     def aggregate(self, models):
         """
-        Ponderated average of the models.
+        Weighted average of the models.
 
         Args:
-            models: Dictionary with the models (node: model,num_samples).
+            models: Dictionary with the models (node: model, num_samples).
         """
-        # Check if there are models to aggregate
         if len(models) == 0:
-            logging.error(
-                "[FedAvg] Trying to aggregate models when there is no models"
-            )
+            logging.error("[FedAvg] Trying to aggregate models when there are no models")
             return None
 
         models = list(models.values())
 
         # Total Samples
-        total_samples = sum([y for _, y in models])
+        total_samples = sum(w for _, w in models)
 
         # Create a Zero Model
-        accum = (models[-1][0]).copy()
-        for layer in accum:
-            accum[layer] = torch.zeros_like(accum[layer])
+        accum = {layer: torch.zeros_like(param) for layer, param in models[-1][0].items()}
 
-        # Add weighteds models
-        logging.info("[FedAvg.aggregate] Aggregating models: num={}".format(len(models)))
-        for m, w in models:
-            for layer in m:
-                accum[layer] = accum[layer] + m[layer] * w
+        # Add weighted models
+        logging.info(f"[FedAvg.aggregate] Aggregating models: num={len(models)}")
+        for model, weight in models:
+            for layer in accum:
+                accum[layer] += model[layer] * weight
 
         # Normalize Accum
         for layer in accum:
-            accum[layer] = accum[layer] / total_samples
+            accum[layer] /= total_samples
+            
+        # self.print_model_size(accum)
 
         return accum

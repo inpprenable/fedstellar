@@ -259,7 +259,21 @@ class FedstellarDataset(Dataset, ABC):
             # This creates federated data subsets with a 20% level of non-IID-ness.
         """
         np.random.seed(self.seed)
-        X_train, y_train = dataset.data.numpy(), dataset.targets.numpy()
+        
+        if isinstance(dataset.data, np.ndarray):
+            X_train = dataset.data
+        elif hasattr(dataset.data, 'numpy'):  # Check if it's a tensor with .numpy() method
+            X_train = dataset.data.numpy()
+        else:  # If it's a list
+            X_train = np.asarray(dataset.data)
+
+        if isinstance(dataset.targets, np.ndarray):
+            y_train = dataset.targets
+        elif hasattr(dataset.targets, 'numpy'):  # Check if it's a tensor with .numpy() method
+            y_train = dataset.targets.numpy()
+        else:  # If it's a list
+            y_train = np.asarray(dataset.targets)
+        
         num_classes = self.num_classes
         num_subsets = self.number_sub
         class_indices = {i: np.where(y_train == i)[0] for i in range(num_classes)}

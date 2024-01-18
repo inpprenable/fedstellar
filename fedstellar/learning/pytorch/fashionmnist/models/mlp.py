@@ -3,11 +3,10 @@
 # Copyright (c) 2023 Enrique Tomás Martínez Beltrán.
 #
 
-# To Avoid Crashes with a lot of nodes
-import torch.multiprocessing
+# import torch.multiprocessing
+# torch.multiprocessing.set_sharing_strategy("file_system")
 
-torch.multiprocessing.set_sharing_strategy("file_system")
-
+import torch
 import lightning as pl
 from torchmetrics.classification import MulticlassAccuracy, MulticlassRecall, MulticlassPrecision, MulticlassF1Score, MulticlassConfusionMatrix
 from torchmetrics import MetricCollection
@@ -15,7 +14,7 @@ from torchmetrics import MetricCollection
 
 class FashionMNISTModelMLP(pl.LightningModule):
     """
-    LightningModule for MNIST.
+    LightningModule for FMNIST.
     """
 
     def process_metrics(self, phase, y_pred, y, loss=None):
@@ -193,7 +192,7 @@ class FashionMNISTModelMLP(pl.LightningModule):
         return self.step(batch, "Validation")
 
     def on_validation_epoch_end(self):
-        self.log_metrics_by_epoch("Validation", print_cm=True, plot_cm=True)
+        self.log_metrics_by_epoch("Validation", print_cm=True, plot_cm=False)
 
     def test_step(self, batch, batch_idx):
         """

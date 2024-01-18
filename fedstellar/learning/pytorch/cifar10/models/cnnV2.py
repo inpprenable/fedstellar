@@ -10,14 +10,14 @@ import torch
 from fedstellar.learning.pytorch.fedstellarmodel import FedstellarModel
 
 
-class MNISTModelMLP(FedstellarModel):
+class CIFAR10ModelCNN_V2(FedstellarModel):
     """
     LightningModule for MNIST.
     """
 
     def __init__(
             self,
-            in_channels=1,
+            in_channels=3,
             out_channels=10,
             learning_rate=1e-3,
             metrics=None,
@@ -26,32 +26,41 @@ class MNISTModelMLP(FedstellarModel):
     ):
         super().__init__(in_channels, out_channels, learning_rate, metrics, confusion_matrix, seed)
 
-        self.example_input_array = torch.zeros(1, 1, 28, 28)
+        self.config = {
+            'beta1': 0.851436,
+            'beta2': 0.999689,
+            'amsgrad': True
+        }
+        
+        self.example_input_array = torch.rand(1, 3, 32, 32)
         self.learning_rate = learning_rate
         self.criterion = torch.nn.CrossEntropyLoss()
 
         # Define layers of the model
-        self.l1 = torch.nn.Linear(28 * 28, 256)
-        self.l2 = torch.nn.Linear(256, 128)
-        self.l3 = torch.nn.Linear(128, out_channels)
+        self.conv1 = torch.nn.Conv2d(in_channels, 32, 5, padding=2)
+        self.bn1 = torch.nn.BatchNorm2d(32)
+        self.conv2 = torch.nn.Conv2d(32, 64, 3, padding=1)
+        self.bn2 = torch.nn.BatchNorm2d(64)
+        self.conv3 = torch.nn.Conv2d(64, 128, 3, padding=1)
+        self.bn3 = torch.nn.BatchNorm2d(128)
+        self.pool = torch.nn.MaxPool2d(2, 2)
+        self.fc1 = torch.nn.Linear(128 * 4 * 4, 512)
+        self.fc2 = torch.nn.Linear(512, out_channels)
+        self.dropout = torch.nn.Dropout(0.5)
 
     def forward(self, x):
-        """Forward pass of the model."""
-        batch_size, channels, width, height = x.size()
-
-        # (b, 1, 28, 28) -> (b, 1*28*28)
-        x = x.view(batch_size, -1)
-        x = self.l1(x)
-        x = torch.relu(x)
-        x = self.l2(x)
-        x = torch.relu(x)
-        x = self.l3(x)
-        x = torch.log_softmax(x, dim=1)
+        x = self.pool(torch.relu(self.bn1(self.conv1(x))))
+        x = self.pool(torch.relu(self.bn2(self.conv2(x))))
+        x = self.pool(torch.relu(self.bn3(self.conv3(x))))
+        x = x.view(-1, 128 * 4 * 4)
+        x = torch.relu(self.fc1(x))
+        x = self.dropout(x)
+        x = self.fc2(x)
         return x
 
     def configure_optimizers(self):
         """ """
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate, betas=(self.config['beta1'], self.config['beta2']), amsgrad=self.config['amsgrad'])
         return optimizer
 
     def step(self, batch, phase):

@@ -7,6 +7,7 @@ import logging
 import math
 import os
 from datetime import datetime
+import traceback
 
 from fedstellar.utils.functions import print_msg_box
 from fedstellar.attacks.aggregation import create_attack
@@ -434,7 +435,7 @@ class Node(BaseNode):
                         raise ModelNotMatchingError("Not matching models")
                 else:
                     # Initialize model (try to handle concurrent initializations)
-                    logging.info(f"({self.addr}) add_model (gRPC) | Initializing model (executed by {request.source})")
+                    logging.info(f"({self.addr}) add_model (gRPC) | Initializing model (executed by {request.source}) | contributors={request.contributors}")
                     try:
                         self.__model_initialized_lock.release()
                         model = self.learner.decode_parameters(request.weights)
@@ -452,19 +453,25 @@ class Node(BaseNode):
 
             # Warning: these stops can cause a denegation of service attack
             except DecodingParamsError as e:
-                logging.error(f"({self.addr}) add_model (gRPC) | Error decoding parameters.")
+                logging.error(f"({self.addr}) add_model (gRPC) | Error decoding parameters: {e}")
+                # Log full traceback
+                logging.error(traceback.format_exc())
                 self.stop()
 
             except ModelNotMatchingError as e:
                 logging.error(f"({self.addr}) add_model (gRPC) | Models not matching.")
+                # Log full traceback
+                logging.error(traceback.format_exc())
                 self.stop()
 
             except Exception as e:
                 logging.error(f"({self.addr}) add_model (gRPC) | Unknown error adding model: {e}")
+                # Log full traceback
+                logging.error(traceback.format_exc())
                 self.stop()
 
         else:
-            logging.debug(
+            logging.info(
                 f"({self.addr}) add_model (gRPC) | Tried to add a model while learning is not running"
             )
 
@@ -528,7 +535,7 @@ class Node(BaseNode):
 
     def __start_reporter(self):
         while True:
-            time.sleep(3)
+            time.sleep(self.config.participant["REPORT_FREC"])
             self.__change_geo_location()
             self.__report_status_to_controller()
             self.__report_resources()
@@ -558,8 +565,9 @@ class Node(BaseNode):
 
         # If endpoint is not available, log the error
         if response.status_code != 200:
-            logging.error(f'Error received from controller: {response.status_code}')
-            logging.error(response.text)
+            logging.error(f'Error received from controller: {response.status_code} (probably there is overhead in the controller, trying again in the next round)')
+            logging.debug(response.text)
+            return
         
         try:
             self._neighbors.set_neighbors_location(response.json()["neigbours_location"])
@@ -850,9 +858,6 @@ class Node(BaseNode):
             logging.info(
                 f"({self.addr}) __wait_aggregated_model | Aggregation done for round {self.round}, including parameters in local model.")
             self.learner.set_parameters(params)
-            logging.debug(
-                f"({self.addr}) Broadcast aggregation done for round {self.round}"
-            )
             # Share that aggregation is done
             logging.info(
                 f"({self.addr}) __wait_aggregated_model | Broadcasting aggregation done for round {self.round}")
@@ -1167,6 +1172,7 @@ class Node(BaseNode):
             # Finish
             self.round = None
             self.totalrounds = None
+            logging.info(f"({self.addr}) Acquiring __model_initialized_lock")
             self.__model_initialized_lock.acquire()
             logging.info(f"({self.addr}) Federated Learning process has been completed.")
 
@@ -1273,9 +1279,10 @@ class Node(BaseNode):
             node,
             self.get_aggregated_models(node),
         )
-        model_function = lambda node: self.aggregator.get_partial_aggregation(
-            self.get_aggregated_models(node)
-        )
+        # model_function = lambda node: self.aggregator.get_partial_aggregation(
+        #    self.get_aggregated_models(node)
+        #)
+        model_function = lambda node: self.aggregator.get_local_model()
 
         # Gossip
         self.__gossip_model(candidate_condition, status_function, model_function)

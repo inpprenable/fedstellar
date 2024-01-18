@@ -414,7 +414,35 @@ class Aggregator:
         )
 
         return self.aggregate(dict_aux), nodes_aggregated, aggregation_weight
+    
+    def get_local_model(self):
+        """
+        Get my local model in __models.
+        """
+        if self.node_name in self.__models.keys():
+            return self.__models[self.node_name][0], [self.node_name], self.__models[self.node_name][1]
+        else:
+            return None
 
+    def print_model_size(self, model):
+        """
+        Get the size of the model.
+
+        Returns:
+            Size of the model.
+        """
+        total_params = 0
+        total_memory = 0
+        
+        for layer, param in model.items():
+            num_params = param.numel()
+            total_params += num_params
+            
+            memory_usage = param.element_size() * num_params
+            total_memory += memory_usage
+        
+        total_memory_in_mb = total_memory / (1024 ** 2)
+        logging.info(f"({self.node_name}) print_model_size | Model size: {total_memory_in_mb} MB")
 
 def create_malicious_aggregator(aggregator, attack):
     # It creates a partial function aggregate that wraps the aggregate method of the original aggregator. 

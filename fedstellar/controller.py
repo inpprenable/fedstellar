@@ -11,12 +11,14 @@ import textwrap
 import time
 import shutil
 from datetime import datetime
+import requests
 
 from dotenv import load_dotenv, set_key
 
 from fedstellar.config.config import Config
 from fedstellar.config.mender import Mender
 from fedstellar.utils.topologymanager import TopologyManager
+from fedstellar import __version__
 
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
@@ -99,6 +101,24 @@ class Controller:
         self.topologymanager = None
         self.n_nodes = 0
         self.mender = None if self.simulation else Mender()
+    
+    def check_version(self):
+        # Check version of Fedstellar (__version__ is defined in __init__.py) and compare with __version__ in https://raw.githubusercontent.com/enriquetomasmb/fedstellar/main/fedstellar/__init__.py
+        logging.info("Checking Fedstellar version...")
+        try:
+            r = requests.get("https://raw.githubusercontent.com/enriquetomasmb/fedstellar/main/fedstellar/__init__.py")
+            if r.status_code == 200:
+                version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', r.text, re.MULTILINE).group(1)
+                if version != __version__:
+                    logging.info(f"Your Fedstellar version is {__version__} and the latest version is {version}. Please update your Fedstellar version.")
+                    logging.info("You can update your Fedstellar version downloading the latest version from https://github.com/enriquetomasmb/fedstellar")
+                    sys.exit(0)
+                else:
+                    logging.info(f"Your Fedstellar version is {__version__} and it is the latest version.")
+        except Exception as e:
+            logging.error(f"Error while checking Fedstellar version: {e}")
+            sys.exit(0)
+
 
     def start(self):
         """
@@ -119,6 +139,9 @@ class Controller:
 
         # Load the environment variables
         load_dotenv(self.env_path)
+        
+        # Check version of Fedstellar
+        self.check_version()
 
         # Save the configuration in environment variables
         logging.info("Saving configuration in environment variables...")
@@ -609,8 +632,8 @@ class Controller:
             try:
                 # kill all the docker containers which contain the word "fedstellar"
                 commands = [
-                    """docker-compose -p waf down | Out-Null""",
-                    """docker-compose -p waf rm | Out-Null""",
+                    """docker compose -p waf down | Out-Null""",
+                    """docker compose -p waf rm | Out-Null""",
                 ]
 
                 for command in commands:
@@ -623,8 +646,8 @@ class Controller:
         else:
             try:
                 commands = [
-                    """docker-compose -p waf down > /dev/null 2>&1""",
-                    """docker-compose -p waf rm > /dev/null 2>&1""",
+                    """docker compose -p waf down > /dev/null 2>&1""",
+                    """docker compose -p waf rm > /dev/null 2>&1""",
                 ]
 
                 for command in commands:
@@ -644,6 +667,11 @@ class Controller:
         Controller.stop_statistics()
         Controller.stop_network()
         sys.exit(0)
+    
+    @staticmethod
+    def stop_nodes():
+        logging.info("Closing Fedstellar nodes... Please wait")
+        Controller.stop_participants()
 
     def load_configurations_and_start_nodes(self, additional_participants = None, schema_additional_participants=None):
         if not self.scenario_name:

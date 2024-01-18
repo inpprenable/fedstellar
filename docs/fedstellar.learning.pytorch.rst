@@ -44,6 +44,14 @@ fedstellar.learning.pytorch.fedstellardataset module
    :undoc-members:
    :show-inheritance:
 
+fedstellar.learning.pytorch.fedstellarmodel module
+--------------------------------------------------
+
+.. automodule:: fedstellar.learning.pytorch.fedstellarmodel
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 fedstellar.learning.pytorch.lightninglearner module
 ---------------------------------------------------
 

@@ -1,4 +1,4 @@
-__version__ = "0.1"
+__version__ = "2.0.0"
 __author__ = "Enrique Tomás Martínez Beltrán"
 __email__ = "enriquetomas@um.es"
 __status__ = "Development"
