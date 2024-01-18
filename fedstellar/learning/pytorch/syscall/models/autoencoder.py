@@ -170,7 +170,6 @@ class SyscallModelAutoencoder(pl.LightningModule):
         y_pred = logits.argmax(dim=1)
 
         # Get metrics for each batch and log them
-        self.log(f"{phase}/Loss", loss, prog_bar=True)
         self.process_metrics(phase, y_pred, labels, loss)
 
         return loss

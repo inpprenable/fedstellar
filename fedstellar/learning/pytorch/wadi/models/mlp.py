@@ -180,7 +180,6 @@ class WADIModelMLP(pl.LightningModule):
         loss = self.criterion(logits, labels.unsqueeze(1).float())
 
         # Get metrics for each batch and log them
-        self.log(f"{phase}/Loss", loss, prog_bar=True)
         self.process_metrics(phase, logits, labels, loss)
 
         return loss
