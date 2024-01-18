@@ -10,8 +10,8 @@ Prerequisites
 =============
 * Python 3.8 or higher (3.11 recommended)
 * pip3
-* Docker Engine 24.0.4 or higher (24.0.7 recommended)
-* Docker Compose 2.19.0 or higher (2.19.1 recommended)
+* Docker Engine 24.0.4 or higher (24.0.7 recommended, https://docs.docker.com/engine/install/)
+* Docker Compose 2.19.0 or higher (2.19.1 recommended, https://docs.docker.com/compose/install/)
 
 .. _deploy_venv:
 
