@@ -7,6 +7,7 @@ import logging
 import math
 import os
 from datetime import datetime
+import traceback
 
 from fedstellar.utils.functions import print_msg_box
 from fedstellar.attacks.aggregation import create_attack
@@ -453,14 +454,20 @@ class Node(BaseNode):
             # Warning: these stops can cause a denegation of service attack
             except DecodingParamsError as e:
                 logging.error(f"({self.addr}) add_model (gRPC) | Error decoding parameters: {e}")
+                # Log full traceback
+                logging.error(traceback.format_exc())
                 self.stop()
 
             except ModelNotMatchingError as e:
                 logging.error(f"({self.addr}) add_model (gRPC) | Models not matching.")
+                # Log full traceback
+                logging.error(traceback.format_exc())
                 self.stop()
 
             except Exception as e:
                 logging.error(f"({self.addr}) add_model (gRPC) | Unknown error adding model: {e}")
+                # Log full traceback
+                logging.error(traceback.format_exc())
                 self.stop()
 
         else:
@@ -1165,6 +1172,7 @@ class Node(BaseNode):
             # Finish
             self.round = None
             self.totalrounds = None
+            logging.info(f"({self.addr}) Acquiring __model_initialized_lock")
             self.__model_initialized_lock.acquire()
             logging.info(f"({self.addr}) Federated Learning process has been completed.")
 
