@@ -177,7 +177,6 @@ class FashionMNISTModelCNN(pl.LightningModule):
         loss = self.criterion(y_pred, labels)
 
         # Get metrics for each batch and log them
-        self.log(f"{phase}/Loss", loss, prog_bar=True)
         self.process_metrics(phase, y_pred, labels, loss)
 
         return loss

@@ -23,7 +23,7 @@ if [ "$DEBUG" = "True" ]; then
     gunicorn --worker-class eventlet --workers 1 --bind unix:/tmp/fedstellar.sock --access-logfile $SERVER_LOG --error-logfile $SERVER_LOG  --reload --reload-extra-file $FEDSTELLAR_FRONTEND_DIR --capture-output --log-level debug app:app &
 else
     echo "Starting Gunicorn in production mode..."
-    gunicorn --worker-class eventlet --workers 15 --bind unix:/tmp/fedstellar.sock --access-logfile $SERVER_LOG app:app &
+    gunicorn --worker-class eventlet --workers 1 --bind unix:/tmp/fedstellar.sock --access-logfile $SERVER_LOG app:app &
 fi
 
 # Iniciar TensorBoard

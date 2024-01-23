@@ -302,7 +302,7 @@ def fedstellar_scenario_monitoring(scenario_name):
                     nodes_config.append((node[2], node[3], node[4]))  # IP, Port, Role
                     if datetime.datetime.now() - datetime.datetime.strptime(
                         node[8], "%Y-%m-%d %H:%M:%S.%f"
-                    ) > datetime.timedelta(seconds=10):
+                    ) > datetime.timedelta(seconds=20):
                         nodes_status.append(False)
                         nodes_offline.append(node[2] + ":" + str(node[3]))
                     else:
