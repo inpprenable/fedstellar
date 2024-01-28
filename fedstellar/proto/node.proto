@@ -1,12 +1,3 @@
-//
-// This file is part of the Fedstellar platform (see https://github.com/enriquetomasmb/fedstellar).
-// Copyright (c) 2023 Enrique Tomás Martínez Beltrán.
-//
-
-// compile command:
-// pip instal grpcio-tools==1.60.0
-// python -m grpc_tools.protoc -I=fedstellar/proto --python_out=fedstellar/proto --grpc_python_out=fedstellar/proto fedstellar/proto/node.proto
-
 syntax = "proto3";
 import "google/protobuf/empty.proto";
 

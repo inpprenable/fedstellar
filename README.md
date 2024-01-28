@@ -29,7 +29,7 @@ The platform incorporates a modular architecture comprising three elements:
 
 
 <br><br>
-Fedstellar is developed by [Enrique Tomás Martínez Beltrán](https://enriquetomasmb.com) in collaboration with the [University of Murcia](https://www.um.es/en), [armasuisse](https://www.armasuisse.ch/en), and the [University of Zurich (UZH)](https://www.uzh.ch/).
+Fedstellar is currently being developed by [Enrique Tomás Martínez Beltrán](https://enriquetomasmb.com) in collaboration with the [University of Murcia](https://www.um.es/en), [armasuisse](https://www.armasuisse.ch/en), and the [University of Zurich (UZH)](https://www.uzh.ch/).
 
 <a href="https://um.es">
   <img src="docs/_static/umu.jpg" alt="University of Murcia" width="200" height="60">
@@ -41,7 +41,7 @@ Fedstellar is developed by [Enrique Tomás Martínez Beltrán](https://enriqueto
   <img src="docs/_static/uzh.jpg" alt="University of Zurich" width="200" height="60">
 </a>
 <br><br>
-For any questions, please contact Enrique Tomás Martínez Beltrán (<a href="mailto:enriquetomas@um.es">enriquetomas@um.es</a>).
+For any questions, please contact Enrique Tomás Martínez Beltrán (<a href="mailto:enriquetomas@um.es">enriquetomas@um.es</a>). If you are interested in knowing more about the base of this project, please visit the [p2pfl](https://pypi.org/project/p2pfl/) library.
 
 
 ## Support
@@ -64,65 +64,13 @@ Any contributions you make are **greatly appreciated**. To do so, follow the nex
 
 ## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the GNU GPLv3 License. See `LICENSE` for more information.
 
-## BibTeX Citation
+## Acknowledgements
 
-If you use Fedstellar in a scientific publication, we would appreciate using the following citations:
+We would like to thank the following projects for their contributions which have been adapted or extended in this project:
 
-```
-@article{MartinezBeltran:fedstellar:2024,
-	title        = {{Fedstellar: A Platform for Decentralized Federated Learning}},
-	author       = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and Perales G{\'o}mez, {\'A}ngel Luis and Feng, Chao and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
-	year         = 2024,
-	volume       = {242},
-	issn         = {0957-4174},
-	pages        = {122861},
-	journal      = {Expert Systems with Applications},
-  	doi          = {10.1016/j.eswa.2023.122861},
-	preprint     = {https://arxiv.org/abs/2306.09750}
-}
-```
-
-```
-@article{MartinezBeltran:DFL:2023,
-	title        = {{Decentralized Federated Learning: Fundamentals, State of the Art, Frameworks, Trends, and Challenges}},
-	author       = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and Quiles P{\'e}rez, Mario and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
-	year         = 2023,
-  	volume       = {25},
-  	number       = {4},
-  	pages        = {2983-3013},
-	journal      = {IEEE Communications Surveys & Tutorials},
-  	doi          = {10.1109/COMST.2023.3315746},
-	preprint     = {https://arxiv.org/abs/2211.08413}
-}
-```
-
-```
-@inproceedings{MartinezBeltran:fedstellar_demo:2023,
-	title        = {{Fedstellar: A Platform for Training Models in a Privacy-preserving and Decentralized Fashion}},
-	author       = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
-	year         = 2023,
-	month        = aug,
-	booktitle    = {Proceedings of the Thirty-Second International Joint Conference on Artificial Intelligence, {IJCAI-23}},
-	publisher    = {International Joint Conferences on Artificial Intelligence Organization},
-	pages        = {7154--7157},
-	doi          = {10.24963/ijcai.2023/838},
-	note         = {Demo Track},
-	editor       = {Edith Elkind}
-}
-```
-
-```
-@article{MartinezBeltran:DFL_mitigating_threats:2023,
-	title        = {{Mitigating Communications Threats in Decentralized Federated Learning through Moving Target Defense}},
-	author       = {Mart{\'i}nez Beltr{\'a}n, Enrique Tom{\'a}s and S{\'a}nchez S{\'a}nchez, Pedro Miguel and L{\'o}pez Bernal, Sergio and Bovet, G{\'e}r{\^o}me and Gil P{\'e}rez, Manuel and Mart{\'i}nez P{\'e}rez, Gregorio and Huertas Celdr{\'a}n, Alberto},
-	year         = 2023,
-	url      = {https://arxiv.org/abs/2307.11730},
-	journal      = {arXiv preprint arXiv:2307.11730}
-}
-```
-
-## Main Author
-
-* **Enrique Tomás Martínez Beltrán** - [Website](https://enriquetomasmb.com) - [Email](mailto:enriquetomas@um.es)
+* Version adapted from **p2pfl** library - [Pypi](https://pypi.org/project/p2pfl/)
+* Version adapted from **Tensorboard** - [Website](https://www.tensorflow.org/tensorboard) - [Github](https://github.com/tensorflow/tensorboard)
+* **ART (IBM)** - [Github](https://github.com/Trusted-AI/adversarial-robustness-toolbox)
+* **D3.js** - [Website](https://d3js.org) - [Github](https://github.com/d3/d3-force)

@@ -1,11 +1,8 @@
 __version__ = "2.0.0"
-__author__ = "Enrique Tomás Martínez Beltrán"
-__email__ = "enriquetomas@um.es"
 __status__ = "Development"
-__license__ = "MIT"
-__credits__ = ["Enrique Tomás Martínez Beltrán"]
+__license__ = "GPLv3"
+__credits__ = ["Enrique Tomás Martínez Beltrán & Pedro Guijas (base code from p2pfl)"]
 __maintainer__ = "Enrique Tomás Martínez Beltrán"
-__url__ = "https://enriquetomasmb.com"
 __description__ = "Fedstellar: A Platform for Decentralized Federated Learning"
 __long_description__ = "Fedstellar: A Platform for Decentralized Federated Learning"
 __long_description_content_type__ = "text/markdown"
