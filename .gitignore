@@ -141,3 +141,5 @@ data/
 docker-compose.yml
 /fedstellar/waf/grafana/*
 /fedstellar/waf/loki/*
+
+app/logs/server.log
