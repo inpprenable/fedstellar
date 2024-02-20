@@ -1,6 +1,5 @@
 import argparse
 import datetime
-import hashlib
 import io
 import json
 import os
@@ -23,14 +22,12 @@ from flask import (
     render_template,
     request,
     abort,
-    flash,
     send_file,
     make_response,
     jsonify,
     Response,
 )
 from flask_socketio import SocketIO
-from werkzeug.utils import secure_filename
 from fedstellar.frontend.database import (
     list_users,
     verify,
@@ -51,6 +48,8 @@ from fedstellar.frontend.database import (
     get_location_neighbors,
     update_node_record,
 )
+
+import logging
 
 import eventlet
 
@@ -115,7 +114,6 @@ def datetimeformat(value, format="%B %d, %Y %H:%M"):
 @app.route("/")
 def fedstellar_home():
     # Get alerts and news from API
-    import requests
 
     alerts = []
     # # Use custom headers
@@ -169,7 +167,7 @@ def send_from_directory(directory, filename, **options):
 def fedstellar_login():
     user_submitted = request.form.get("user").upper()
     if (user_submitted in list_users()) and verify(
-        user_submitted, request.form.get("password")
+            user_submitted, request.form.get("password")
     ):
         user_info = get_user_info(user_submitted)
         session["user"] = user_submitted
@@ -208,9 +206,9 @@ def fedstellar_add_user():
         if request.form.get("user").upper() in user_list:
             return redirect(url_for("fedstellar_admin"))
         elif (
-            " " in request.form.get("user")
-            or "'" in request.form.get("user")
-            or '"' in request.form.get("user")
+                " " in request.form.get("user")
+                or "'" in request.form.get("user")
+                or '"' in request.form.get("user")
         ):
             return redirect(url_for("fedstellar_admin"))
         else:
@@ -230,7 +228,7 @@ def fedstellar_update_user():
         user = request.form.get("user")
         password = request.form.get("password")
         role = request.form.get("role")
-        
+
         user_list = list_users()
         if user not in user_list:
             return redirect(url_for("fedstellar_admin"))
@@ -239,6 +237,7 @@ def fedstellar_update_user():
             return redirect(url_for("fedstellar_admin"))
     else:
         return abort(401)
+
 
 #                                                   #
 # -------------- Scenario management -------------- #
@@ -301,7 +300,7 @@ def fedstellar_scenario_monitoring(scenario_name):
                 for i, node in enumerate(nodes_list):
                     nodes_config.append((node[2], node[3], node[4]))  # IP, Port, Role
                     if datetime.datetime.now() - datetime.datetime.strptime(
-                        node[8], "%Y-%m-%d %H:%M:%S.%f"
+                            node[8], "%Y-%m-%d %H:%M:%S.%f"
                     ) > datetime.timedelta(seconds=20):
                         nodes_status.append(False)
                         nodes_offline.append(node[2] + ":" + str(node[3]))
@@ -324,14 +323,14 @@ def fedstellar_scenario_monitoring(scenario_name):
                 )
 
                 if os.path.exists(
-                    os.path.join(
-                        app.config["config_dir"], scenario_name, "topology.png"
-                    )
-                ):
-                    if os.path.getmtime(
                         os.path.join(
                             app.config["config_dir"], scenario_name, "topology.png"
                         )
+                ):
+                    if os.path.getmtime(
+                            os.path.join(
+                                app.config["config_dir"], scenario_name, "topology.png"
+                            )
                     ) < max(
                         [
                             os.path.getmtime(
@@ -495,29 +494,29 @@ def fedstellar_update_node(scenario_name):
                     )
 
             with open(
-                os.path.join(
-                    app.config["log_dir"],
-                    scenario_name,
-                    f'participant_{config["device_args"]["idx"]}_mobility.csv',
-                ),
-                "a+",
+                    os.path.join(
+                        app.config["log_dir"],
+                        scenario_name,
+                        f'participant_{config["device_args"]["idx"]}_mobility.csv',
+                    ),
+                    "a+",
             ) as f:
                 if (
-                    os.stat(
-                        os.path.join(
-                            app.config["log_dir"],
-                            scenario_name,
-                            f'participant_{config["device_args"]["idx"]}_mobility.csv',
-                        )
-                    ).st_size
-                    == 0
+                        os.stat(
+                            os.path.join(
+                                app.config["log_dir"],
+                                scenario_name,
+                                f'participant_{config["device_args"]["idx"]}_mobility.csv',
+                            )
+                        ).st_size
+                        == 0
                 ):
                     f.write("timestamp,round,neighbor,latitude,longitude,distance\n")
 
-                #f.write(
+                # f.write(
                 #    f"{timestamp},{str(config['federation_args']['round'])},{config['network_args']['ip'] + ':' + str(config['network_args']['port'])},{config['mobility_args']['latitude']},{config['mobility_args']['longitude']},None\n"
-                #)
-                
+                # )
+
                 for neighbour in config["network_args"]["neighbors"].split(" "):
                     if neighbour != "":
                         try:
@@ -525,24 +524,25 @@ def fedstellar_update_node(scenario_name):
                                 f"{timestamp},{str(config['federation_args']['round'])},{neighbour},{neigbours_location[neighbour][0]},{neigbours_location[neighbour][1]},{neigbours_location[neighbour][2]}\n"
                             )
                         except:
-                            f.write(f"{timestamp},{str(config['federation_args']['round'])},None,None,{neighbour},None\n")
-                            
+                            f.write(
+                                f"{timestamp},{str(config['federation_args']['round'])},None,None,{neighbour},None\n")
+
             node_update = {
-                    "scenario_name": scenario_name,
-                    "uid": config["device_args"]["uid"],
-                    "idx": config["device_args"]["idx"],
-                    "ip": config["network_args"]["ip"],
-                    "port": str(config["network_args"]["port"]),
-                    "role": config["device_args"]["role"],
-                    "neighbors": config["network_args"]["neighbors"],
-                    "latitude": config["mobility_args"]["latitude"],
-                    "longitude": config["mobility_args"]["longitude"],
-                    "timestamp": str(timestamp),
-                    "federation": config["scenario_args"]["federation"],
-                    "round": config["federation_args"]["round"],
-                    "name": config["scenario_args"]["name"],
-                    "status": True,
-                    "neigbours_location": neigbours_location,
+                "scenario_name": scenario_name,
+                "uid": config["device_args"]["uid"],
+                "idx": config["device_args"]["idx"],
+                "ip": config["network_args"]["ip"],
+                "port": str(config["network_args"]["port"]),
+                "role": config["device_args"]["role"],
+                "neighbors": config["network_args"]["neighbors"],
+                "latitude": config["mobility_args"]["latitude"],
+                "longitude": config["mobility_args"]["longitude"],
+                "timestamp": str(timestamp),
+                "federation": config["scenario_args"]["federation"],
+                "round": config["federation_args"]["round"],
+                "name": config["scenario_args"]["name"],
+                "status": True,
+                "neigbours_location": neigbours_location,
             }
 
             # Send notification to each connected users
@@ -578,7 +578,7 @@ def fedstellar_monitoring_log_x(scenario_name, id, number):
             # Open file maintaining the file format (for example, new lines)
             with open(logs, "r") as f:
                 # Read the last n lines of the file
-                lines = f.readlines()[-int(number) :]
+                lines = f.readlines()[-int(number):]
                 # Join the lines in a single string
                 lines = "".join(lines)
                 # Convert the ANSI escape codes to HTML
@@ -807,12 +807,12 @@ def fedstellar_scenario_deployment():
 
 
 def attack_node_assign(
-    nodes,
-    federation,
-    attack,
-    poisoned_node_percent,
-    poisoned_sample_percent,
-    poisoned_noise_percent,
+        nodes,
+        federation,
+        attack,
+        poisoned_node_percent,
+        poisoned_sample_percent,
+        poisoned_noise_percent,
 ):
     """Identify which nodes will be attacked"""
     import random
@@ -856,7 +856,9 @@ def attack_node_assign(
         attack_matrix.append([node, node_att, attack_sample_persent, poisoned_ratio])
     return nodes, attack_matrix
 
+
 import math
+
 
 def mobility_assign(nodes, mobile_participants_percent):
     """Assign mobility to nodes"""
@@ -878,6 +880,7 @@ def mobility_assign(nodes, mobile_participants_percent):
         nodes[node]["mobility"] = node_mob
     return nodes
 
+
 @app.route("/scenario/deployment/run", methods=["POST"])
 def fedstellar_scenario_deployment_run():
     from fedstellar.controller import Controller
@@ -896,7 +899,7 @@ def fedstellar_scenario_deployment_run():
             data = request.get_json()
             nodes = data["nodes"]
             scenario_name = f'fedstellar_{data["federation"]}_{datetime.datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}'
-            
+
             scenario_path = os.path.join(app.config["config_dir"], scenario_name)
             os.makedirs(scenario_path, exist_ok=True)
 
@@ -928,8 +931,7 @@ def fedstellar_scenario_deployment_run():
             )
             with open(controller_file, "w") as f:
                 json.dump(args_controller, f, sort_keys=False, indent=2)
-            
-            
+
             # Get attack info
             attack = data["attacks"]
             poisoned_node_percent = int(data["poisoned_node_percent"])
@@ -945,8 +947,7 @@ def fedstellar_scenario_deployment_run():
                 poisoned_sample_percent,
                 poisoned_noise_percent,
             )
-            
-            
+
             mobility_status = data["mobility"]
             if mobility_status:
                 # Mobility parameters (selecting mobile nodes)
@@ -1000,7 +1001,7 @@ def fedstellar_scenario_deployment_run():
                     "logginglevel"
                 ]
                 participant_config["aggregator_args"]["algorithm"] = data["agg_algorithm"]
-                
+
                 participant_config["adversarial_args"]["attacks"] = node_config[
                     "attacks"
                 ]
@@ -1036,7 +1037,6 @@ def fedstellar_scenario_deployment_run():
                     "scheme_mobility"
                 ]
                 participant_config["mobility_args"]["round_frequency"] = data["round_frequency"]
-                
 
                 with open(participant_file, "w") as f:
                     json.dump(participant_config, f, sort_keys=False, indent=2)
@@ -1051,11 +1051,13 @@ def fedstellar_scenario_deployment_run():
             )  # Generate an instance of controller in this new process
             try:
                 if mobility_status:
-                    additional_participants = data["additional_participants"]  # List of additional participants with dict("round": int). Example: [{"round": 1}, {"round": 2}]
+                    additional_participants = data[
+                        "additional_participants"]  # List of additional participants with dict("round": int). Example: [{"round": 1}, {"round": 2}]
                     schema_additional_participants = data["schema_additional_participants"]
                     print("additional_participants", additional_participants)
                     print("schema_additional_participants", schema_additional_participants)
-                    controller.load_configurations_and_start_nodes(additional_participants, schema_additional_participants)
+                    controller.load_configurations_and_start_nodes(additional_participants,
+                                                                   schema_additional_participants)
                 else:
                     controller.load_configurations_and_start_nodes()
             except subprocess.CalledProcessError as e:
