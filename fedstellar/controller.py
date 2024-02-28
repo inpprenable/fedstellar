@@ -886,14 +886,10 @@ class Controller:
                 volumes:
                     - {}:/fedstellar
                 extra_hosts:
-                    - "host.docker.internal:host-gateway"
+                    - "host.docker.internal:{}"
                 ipc: host
                 privileged: true
-                command:
-                    - /bin/bash
-                    - -c
-                    - |
-                        ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.11 /fedstellar/fedstellar/node_start.py {}
+                command: python3.11 /fedstellar/fedstellar/node_start.py {}
                 networks:
                     fedstellar-net-scenario:
                         ipv4_address: {}
@@ -912,14 +908,10 @@ class Controller:
                 volumes:
                     - {}:/fedstellar
                 extra_hosts:
-                    - "host.docker.internal:host-gateway"
+                    - "host.docker.internal:{}"
                 ipc: host
                 privileged: true
-                command:
-                    - /bin/bash
-                    - -c
-                    - |
-                        ifconfig && echo '{} host.docker.internal' >> /etc/hosts && python3.11 /fedstellar/fedstellar/node_start.py {}
+                command: python3.11 /fedstellar/fedstellar/node_start.py {}
                 deploy:
                     resources:
                         reservations:

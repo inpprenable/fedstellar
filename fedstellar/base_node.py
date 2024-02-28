@@ -17,12 +17,10 @@
 import logging
 import os
 import socket
-import sys
 from concurrent import futures
 from logging import Formatter, FileHandler
 
 import grpc
-
 from fedstellar.messages import NodeMessages
 from fedstellar.neighbors import Neighbors
 from fedstellar.proto import node_pb2
@@ -84,7 +82,8 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
             os.makedirs(self.log_dir)
         self.log_filename = f"{self.log_dir}/participant_{config.participant['device_args']['idx']}"
         os.makedirs(os.path.dirname(self.log_filename), exist_ok=True)
-        console_handler, file_handler, file_handler_only_debug, exp_errors_file_handler = self.setup_logging(self.log_filename)
+        console_handler, file_handler, file_handler_only_debug, exp_errors_file_handler = self.setup_logging(
+            self.log_filename)
 
         level = logging.DEBUG if config.participant["device_args"]["logging"] else logging.CRITICAL
         logging.basicConfig(level=level,
@@ -94,12 +93,11 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
                                 file_handler_only_debug,
                                 exp_errors_file_handler
                             ])
-        
+
         # Save the current configuration in config folder
         config_dir = config.participant['tracking_args']["config_dir"]
         with open(f"{config_dir}/participant_{config.participant['device_args']['idx']}.json", 'w') as f:
             f.write(config.to_json())
-
 
     def get_addr(self):
         """
@@ -123,7 +121,8 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
         log_console_format = f"{CYAN}[%(levelname)s] - %(asctime)s - {self.get_name()}{RESET}\n%(message)s"
 
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO if self.config.participant["device_args"]["logging"] else logging.CRITICAL)
+        console_handler.setLevel(
+            logging.INFO if self.config.participant["device_args"]["logging"] else logging.CRITICAL)
         console_handler.setFormatter(Formatter(log_console_format))
 
         file_handler = FileHandler('{}.log'.format(log_dir), mode='w')
@@ -131,13 +130,15 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
         file_handler.setFormatter(Formatter(info_file_format))
 
         file_handler_only_debug = FileHandler('{}_debug.log'.format(log_dir), mode='w')
-        file_handler_only_debug.setLevel(logging.DEBUG if self.config.participant["device_args"]["logging"] else logging.CRITICAL)
+        file_handler_only_debug.setLevel(
+            logging.DEBUG if self.config.participant["device_args"]["logging"] else logging.CRITICAL)
         # Add filter to file_handler_only_debug for only add debug messages
         file_handler_only_debug.addFilter(lambda record: record.levelno == logging.DEBUG)
         file_handler_only_debug.setFormatter(Formatter(debug_file_format))
 
         exp_errors_file_handler = FileHandler('{}_error.log'.format(log_dir), mode='w')
-        exp_errors_file_handler.setLevel(logging.WARNING if self.config.participant["device_args"]["logging"] else logging.CRITICAL)
+        exp_errors_file_handler.setLevel(
+            logging.WARNING if self.config.participant["device_args"]["logging"] else logging.CRITICAL)
         exp_errors_file_handler.setFormatter(Formatter(debug_file_format))
 
         return console_handler, file_handler, file_handler_only_debug, exp_errors_file_handler
@@ -182,7 +183,7 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
         logging.info(f"({self.addr}) gRPC started.")
         # Heartbeat and Gossip
         self._neighbors.start()
-        
+
     def grpc_wait(self):
         logging.info(f"({self.addr}) Waiting for gRPC to terminate...")
         self.__server.wait_for_termination()
@@ -254,7 +255,7 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
     #  GRPC - Remote Services  #
     ############################
 
-    def handshake(self, request, _):
+    def handshake(self, request: node_pb2.Message, _):
         """
         GRPC service. It is called when a node connects to another.
         """
@@ -266,14 +267,14 @@ class BaseNode(node_pb2_grpc.NodeServicesServicer):
                 error="Cannot add the node (duplicated or wrong direction)"
             )
 
-    def disconnect(self, request, _):
+    def disconnect(self, request: node_pb2.Message, _):
         """
         GRPC service. It is called when a node disconnects from another.
         """
         self._neighbors.remove(request.addr, disconnect_msg=False)
         return node_pb2.google_dot_protobuf_dot_empty__pb2.Empty()
 
-    def send_message(self, request, _):
+    def send_message(self, request: node_pb2.Message, _):
         """
         GRPC service. It is called when a node sends a message to another.
         More in detail, it is called when a neighbor use your stub to send a message to you.

@@ -329,7 +329,7 @@ class Node(BaseNode):
     def __model_initialized_callback(self, msg):
         self.__nei_status[msg.source] = -1
 
-    def __vote_train_set_callback(self, msg):
+    def __vote_train_set_callback(self, msg: node_pb2.Message):
         # check moment: round or round + 1 because of node async
         ########################################################
         ### try to improve clarity in message moment check

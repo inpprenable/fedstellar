@@ -17,13 +17,12 @@
 
 import logging
 import random
+import sys
 import threading
 import time
-import sys
 from datetime import datetime
 
 import grpc
-
 from fedstellar.messages import NodeMessages
 from fedstellar.proto import node_pb2, node_pb2_grpc
 
@@ -289,7 +288,9 @@ class Neighbors:
         # Cannot add duplicates
         self.__nei_lock.acquire()
         duplicated = addr in self.__neighbors.keys()
-        logging.info(f"({self.__self_addr}) Attempting to add DIRECT connection {addr} (duplicated={duplicated})") if not non_direct else logging.info(f"({self.__self_addr}) Attempting to add NON DIRECT connection {addr} (duplicated={duplicated})")
+        logging.info(
+            f"({self.__self_addr}) Attempting to add DIRECT connection {addr} (duplicated={duplicated})") if not non_direct else logging.info(
+            f"({self.__self_addr}) Attempting to add NON DIRECT connection {addr} (duplicated={duplicated})")
         self.__nei_lock.release()
         # Avoid adding if duplicated and not non_direct neighbor (otherwise, connect creating a channel)
         if duplicated:
@@ -308,7 +309,8 @@ class Neighbors:
 
             elif non_direct:
                 # Duplicated but the node wants to add it as a non-direct connected neighbor
-                logging.info(f"({self.__self_addr}) Cannot add a duplicate {addr} (undirected connection), already connected")
+                logging.info(
+                    f"({self.__self_addr}) Cannot add a duplicate {addr} (undirected connection), already connected")
                 return False
         else:
             # Add non-direct connected neighbors
@@ -382,14 +384,14 @@ class Neighbors:
             list: List of neighbor addresses.
         """
         neis = self.__neighbors.copy()
-        
+
         if only_direct and only_undirected:
             return list(neis.keys())
         elif only_direct:
             return [k for k, v in neis.items() if v[1] is not None]
         elif only_undirected:
             return [k for k, v in neis.items() if v[1] is None]
-        
+
         return list(neis.keys())
 
     def clear_neis(self):
@@ -438,7 +440,7 @@ class Neighbors:
         period = self.__config.participant["HEARTBEAT_PERIOD"]
         timeout = self.__config.participant["HEARTBEAT_TIMEOUT"]
         toggle = False
-        
+
         while not self.__heartbeat_terminate_flag.is_set():
             t = time.time()
 
@@ -477,19 +479,19 @@ class Neighbors:
     # Gossiping
     ####
 
-    def add_processed_msg(self, msg):
+    def add_processed_msg(self, msg_string: str):
         """
         Add a message to the list of processed messages.
 
         Args:
-            msg (node_pb2.Message): Message to add.
+            msg_string (node_pb2.Message): Message to add.
 
         Returns:
             bool: True if the message was added, False if it was already processed.
         """
         self.__processed_messages_lock.acquire()
         # Check if message was already processed
-        if msg in self.__processed_messages:
+        if msg_string in self.__processed_messages:
             self.__processed_messages_lock.release()
             return False
         # If there are more than X messages, remove the oldest one
@@ -497,11 +499,11 @@ class Neighbors:
             self.__processed_messages.pop(0)
         # Add message
         # logging.debug(f"({self.__self_addr}) Adding processed message\n{msg}")
-        self.__processed_messages.append(msg)
+        self.__processed_messages.append(msg_string)
         self.__processed_messages_lock.release()
         return True
 
-    def gossip(self, msg):
+    def gossip(self, msg: node_pb2.Message):
         """
         Add a message to the list of pending messages to gossip.
 
@@ -578,9 +580,9 @@ class Neighbors:
 
     def __str__(self):
         return str(self.__neighbors.keys())
-    
+
     def get_neighbors_location(self):
         return self.__neighbors_location
-    
+
     def set_neighbors_location(self, neighbors_location):
         self.__neighbors_location = neighbors_location
