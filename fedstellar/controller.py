@@ -4,21 +4,21 @@ import json
 import logging
 import os
 import re
+import shutil
 import signal
 import subprocess
 import sys
 import textwrap
 import time
-import shutil
 from datetime import datetime
+
 import requests
+from dotenv import load_dotenv
 
-from dotenv import load_dotenv, set_key
-
+from fedstellar import __version__
 from fedstellar.config.config import Config
 from fedstellar.config.mender import Mender
 from fedstellar.utils.topologymanager import TopologyManager
-from fedstellar import __version__
 
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
@@ -101,7 +101,7 @@ class Controller:
         self.topologymanager = None
         self.n_nodes = 0
         self.mender = None if self.simulation else Mender()
-    
+
     def check_version(self):
         # Check version of Fedstellar (__version__ is defined in __init__.py) and compare with __version__ in https://raw.githubusercontent.com/enriquetomasmb/fedstellar/main/fedstellar/__init__.py
         logging.info("Checking Fedstellar version...")
@@ -110,15 +110,16 @@ class Controller:
             if r.status_code == 200:
                 version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', r.text, re.MULTILINE).group(1)
                 if version != __version__:
-                    logging.info(f"Your Fedstellar version is {__version__} and the latest version is {version}. Please update your Fedstellar version.")
-                    logging.info("You can update your Fedstellar version downloading the latest version from https://github.com/enriquetomasmb/fedstellar")
+                    logging.info(
+                        f"Your Fedstellar version is {__version__} and the latest version is {version}. Please update your Fedstellar version.")
+                    logging.info(
+                        "You can update your Fedstellar version downloading the latest version from https://github.com/enriquetomasmb/fedstellar")
                     sys.exit(0)
                 else:
                     logging.info(f"Your Fedstellar version is {__version__} and it is the latest version.")
         except Exception as e:
             logging.error(f"Error while checking Fedstellar version: {e}")
             sys.exit(0)
-
 
     def start(self):
         """
@@ -139,9 +140,9 @@ class Controller:
 
         # Load the environment variables
         load_dotenv(self.env_path)
-        
+
         # Check version of Fedstellar
-        self.check_version()
+        # self.check_version()
 
         # Save the configuration in environment variables
         logging.info("Saving configuration in environment variables...")
@@ -153,7 +154,7 @@ class Controller:
 
         if self.waf:
             self.run_waf()
-        
+
         self.run_frontend()
 
         if self.mender:
@@ -193,19 +194,19 @@ class Controller:
         if self.waf:
             logging.info("Fedstellar WAF is running at port {}".format(self.waf_port))
             logging.info("Grafana Dashboard is running at port {}".format(self.grafana_port))
-        
+
         logging.info("Press Ctrl+C for exit from Fedstellar (global exit)")
         while True:
             time.sleep(1)
 
-    def run_waf(self):       
+    def run_waf(self):
         docker_compose_template = textwrap.dedent(
             """
             services:
             {}
         """
         )
-        
+
         waf_template = textwrap.dedent(
             """
             fedstellar-waf:
@@ -228,7 +229,7 @@ class Controller:
                         ipv4_address: {ip}
         """
         )
-        
+
         grafana_template = textwrap.dedent(
             """
             grafana:
@@ -257,7 +258,7 @@ class Controller:
                         ipv4_address: {ip}
         """
         )
-        
+
         loki_template = textwrap.dedent(
             """
             loki:
@@ -279,7 +280,7 @@ class Controller:
                         ipv4_address: {ip}
         """
         )
-        
+
         promtail_template = textwrap.dedent(
             """
             promtail:
@@ -304,7 +305,7 @@ class Controller:
         grafana_template = textwrap.indent(grafana_template, " " * 4)
         loki_template = textwrap.indent(loki_template, " " * 4)
         promtail_template = textwrap.indent(promtail_template, " " * 4)
-        
+
         network_template = textwrap.dedent(
             """
             networks:
@@ -317,7 +318,7 @@ class Controller:
                               gateway: {}
         """
         )
-        
+
         # Generate the Docker Compose file dynamically
         services = ""
         services += waf_template.format(
@@ -327,36 +328,36 @@ class Controller:
             gw="192.168.100.1",
             ip="192.168.100.200"
         )
-        
+
         services += grafana_template.format(
             log_path=os.environ["FEDSTELLAR_LOGS_DIR"],
             grafana_port=self.grafana_port,
-            loki_port=self.loki_port,  
-            ip="192.168.100.201"  
+            loki_port=self.loki_port,
+            ip="192.168.100.201"
         )
-        
+
         services += loki_template.format(
-            loki_port=self.loki_port,  
-            ip="192.168.100.202"  
+            loki_port=self.loki_port,
+            ip="192.168.100.202"
         )
-        
+
         services += promtail_template.format(
-            log_path=os.environ["FEDSTELLAR_LOGS_DIR"], 
-            ip="192.168.100.203" 
+            log_path=os.environ["FEDSTELLAR_LOGS_DIR"],
+            ip="192.168.100.203"
         )
-        
+
         docker_compose_file = docker_compose_template.format(services)
         docker_compose_file += network_template.format(
             "192.168.100.0/24", "192.168.100.1"
         )
-        
+
         # Write the Docker Compose file in waf directory
         with open(
-            f"{os.path.join(os.environ['FEDSTELLAR_ROOT'], 'fedstellar', 'waf', 'docker-compose.yml')}",
-            "w",
+                f"{os.path.join(os.environ['FEDSTELLAR_ROOT'], 'fedstellar', 'waf', 'docker-compose.yml')}",
+                "w",
         ) as f:
             f.write(docker_compose_file)
-            
+
         # Start the Docker Compose file, catch error if any
         try:
             subprocess.check_call(
@@ -440,7 +441,7 @@ class Controller:
                               gateway: {}
         """
         )
-        
+
         network_template_external = textwrap.dedent(
             """
             networks:
@@ -470,8 +471,8 @@ class Controller:
             )
         # Write the Docker Compose file in config directory
         with open(
-            f"{os.path.join(os.environ['FEDSTELLAR_ROOT'], 'fedstellar', 'frontend', 'docker-compose.yml')}",
-            "w",
+                f"{os.path.join(os.environ['FEDSTELLAR_ROOT'], 'fedstellar', 'frontend', 'docker-compose.yml')}",
+                "w",
         ) as f:
             f.write(docker_compose_file)
 
@@ -627,7 +628,7 @@ class Controller:
                 raise Exception("Error while killing docker containers: {}".format(e))
 
     @staticmethod
-    def stop_waf():    
+    def stop_waf():
         if sys.platform == "win32":
             try:
                 # kill all the docker containers which contain the word "fedstellar"
@@ -667,13 +668,13 @@ class Controller:
         Controller.stop_statistics()
         Controller.stop_network()
         sys.exit(0)
-    
+
     @staticmethod
     def stop_nodes():
         logging.info("Closing Fedstellar nodes... Please wait")
         Controller.stop_participants()
 
-    def load_configurations_and_start_nodes(self, additional_participants = None, schema_additional_participants=None):
+    def load_configurations_and_start_nodes(self, additional_participants=None, schema_additional_participants=None):
         if not self.scenario_name:
             self.scenario_name = f'fedstellar_{self.federation}_{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}'
         # Once the scenario_name is defined, we can update the config_dir
@@ -697,7 +698,7 @@ class Controller:
         participant_files.sort()
         if len(participant_files) == 0:
             raise ValueError("No participant files found in config folder")
-        
+
         self.config.set_participants_config(participant_files)
         self.n_nodes = len(participant_files)
         logging.info("Number of nodes: {}".format(self.n_nodes))
@@ -724,9 +725,9 @@ class Controller:
             participant_config["device_args"]["idx"] = i
             participant_config["device_args"]["uid"] = hashlib.sha1(
                 (
-                    str(participant_config["network_args"]["ip"])
-                    + str(participant_config["network_args"]["port"])
-                    + str(self.scenario_name)
+                        str(participant_config["network_args"]["ip"])
+                        + str(participant_config["network_args"]["port"])
+                        + str(self.scenario_name)
                 ).encode()
             ).hexdigest()
             if participant_config["mobility_args"]["random_geo"]:
@@ -735,7 +736,7 @@ class Controller:
                     participant_config["mobility_args"]["longitude"],
                 ) = TopologyManager.get_coordinates(random_geo=True)
             # If not, use the given coordinates in the frontend
-            
+
             participant_config["tracking_args"]["log_dir"] = self.log_dir
             participant_config["tracking_args"]["config_dir"] = self.config_dir
             participant_config["tracking_args"]["model_dir"] = self.model_dir
@@ -746,8 +747,10 @@ class Controller:
                     raise ValueError("Only one node can be start node")
             with open(f"{self.config_dir}/participant_" + str(i) + ".json", "w") as f:
                 json.dump(participant_config, f, sort_keys=False, indent=2)
-            
-            config_participants.append((participant_config["network_args"]["ip"], participant_config["network_args"]["port"], participant_config["device_args"]["role"]))
+
+            config_participants.append((participant_config["network_args"]["ip"],
+                                        participant_config["network_args"]["port"],
+                                        participant_config["device_args"]["role"]))
         if not is_start_node:
             raise ValueError("No start node found")
         self.config.set_participants_config(participant_files)
@@ -757,41 +760,42 @@ class Controller:
         self.topologymanager.draw_graph(
             path=f"{self.log_dir}/{self.scenario_name}/topology.png", plot=False
         )
-        
+
         # Include additional participants (if any) as copies of the last participant
         additional_participants_files = []
         if additional_participants:
-            import random
             last_participant_file = participant_files[-1]
             last_participant_index = len(participant_files)
-            
+
             for i, additional_participant in enumerate(additional_participants):
                 print("Adding additional participant {}...".format(i))
                 additional_participant_file = f"{self.config_dir}/participant_{last_participant_index + i}.json"
                 shutil.copy(last_participant_file, additional_participant_file)
-                
+
                 with open(additional_participant_file) as f:
                     participant_config = json.load(f)
-                
+
                 participant_config["scenario_args"]["n_nodes"] = self.n_nodes + i + 1
                 participant_config["device_args"]["idx"] = last_participant_index + i
                 participant_config["network_args"]["neighbors"] = ""
-                participant_config["network_args"]["ip"] = participant_config["network_args"]["ip"].rsplit('.', 1)[0] + '.' + str(int(participant_config["network_args"]["ip"].rsplit('.', 1)[1]) + 1)
+                participant_config["network_args"]["ip"] = participant_config["network_args"]["ip"].rsplit('.', 1)[
+                                                               0] + '.' + str(
+                    int(participant_config["network_args"]["ip"].rsplit('.', 1)[1]) + 1)
                 participant_config["device_args"]["uid"] = hashlib.sha1(
                     (
-                        str(participant_config["network_args"]["ip"])
-                        + str(participant_config["network_args"]["port"])
-                        + str(self.scenario_name)
+                            str(participant_config["network_args"]["ip"])
+                            + str(participant_config["network_args"]["port"])
+                            + str(self.scenario_name)
                     ).encode()
                 ).hexdigest()
                 participant_config["mobility_args"]["additional_node"]["status"] = True
                 participant_config["mobility_args"]["additional_node"]["round_start"] = additional_participant["round"]
-                
+
                 with open(additional_participant_file, "w") as f:
                     json.dump(participant_config, f, sort_keys=False, indent=2)
-                
+
                 additional_participants_files.append(additional_participant_file)
-        
+
         if additional_participants_files:
             self.config.add_participants_config(additional_participants_files)
 
@@ -942,6 +946,7 @@ class Controller:
                     external: true
         """
         )
+        # TODO CPU limit
 
         # Generate the Docker Compose file dynamically
         services = ""
@@ -994,7 +999,7 @@ class Controller:
 
             # Write the config file in config directory
             with open(
-                f"{self.config_dir}/participant_{node['device_args']['idx']}.json", "w"
+                    f"{self.config_dir}/participant_{node['device_args']['idx']}.json", "w"
             ) as f:
                 json.dump(node, f, indent=4)
         # Start the Docker Compose file, catch error if any
@@ -1017,7 +1022,7 @@ class Controller:
             raise e
 
     @classmethod
-    def remove_files_by_scenario(cls, scenario_name):    
+    def remove_files_by_scenario(cls, scenario_name):
 
         shutil.rmtree(os.path.join(os.environ["FEDSTELLAR_CONFIG_DIR"], scenario_name))
         try:

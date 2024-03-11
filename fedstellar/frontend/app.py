@@ -1079,7 +1079,6 @@ def fedstellar_scenario_deployment_run():
                 role=session["role"],
             )
             if request.path == "/api/scenario/deployment/run":
-                # TODO
                 return {
                     "scenario_name": controller.scenario_name,
                     "start_time": controller.start_date_scenario,
