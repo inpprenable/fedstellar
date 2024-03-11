@@ -144,4 +144,4 @@ docker-compose.yml
 
 app/logs/server.log!/app/logs/server.log
 /fedstellar/frontend/database_file/nodes.db
-!/fedstellar/frontend/database_file/scenarios.db
+/fedstellar/frontend/database_file/scenarios.db

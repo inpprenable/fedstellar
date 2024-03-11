@@ -49,8 +49,6 @@ from fedstellar.frontend.database import (
     update_node_record,
 )
 
-import logging
-
 import eventlet
 
 eventlet.monkey_patch()
@@ -264,7 +262,9 @@ def fedstellar_scenario():
                     scenario_completed=bool_completed,
                 )
             elif request.path == "/api/scenario/":
-                return jsonify(scenarios), 200
+                scenarios_dict = [dict(row) for row in scenarios]
+                scenarios_json = json.dumps(scenarios_dict)
+                return scenarios_json, 200
             else:
                 return abort(401)
 
@@ -881,6 +881,7 @@ def mobility_assign(nodes, mobile_participants_percent):
     return nodes
 
 
+@app.route("/api/scenario/deployment/run", methods=["POST"])
 @app.route("/scenario/deployment/run", methods=["POST"])
 def fedstellar_scenario_deployment_run():
     from fedstellar.controller import Controller
@@ -1077,7 +1078,23 @@ def fedstellar_scenario_deployment_run():
                 rounds=data["rounds"],
                 role=session["role"],
             )
-            return redirect(url_for("fedstellar_scenario"))
+            if request.path == "/api/scenario/deployment/run":
+                # TODO
+                return {
+                    "scenario_name": controller.scenario_name,
+                    "start_time": controller.start_date_scenario,
+                    "end_time": "",
+                    "status": "running",
+                    "title": data["scenario_title"],
+                    "description": data["scenario_description"],
+                    "network_subnet": data["network_subnet"],
+                    "model": data["model"],
+                    "dataset": data["dataset"],
+                    "rounds": data["rounds"],
+                    "role": session["role"],
+                }
+            else:
+                return redirect(url_for("fedstellar_scenario"))
         else:
             return abort(401)
     else:
