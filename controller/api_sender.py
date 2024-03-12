@@ -103,12 +103,34 @@ def get_status_scenario(session: requests.sessions.Session, scenario_name: str) 
         return None
 
 
-def is_running(session: requests.sessions.Session, scenario_name: str) -> bool:
+def get_running_scenario(session: requests.sessions.Session) -> Union[None, dict]:
+    """Get the status of a scenario on the server."""
+    # Don't work, need to be fixed
+    scenario_api = base_url + "/api/scenario/running"
+    response = session.get(scenario_api)
+    if response.status_code == 200:
+        # json["scenario_status"] into 3 states: running, completed or finished
+        return response.json()
+    else:
+        print("Error code " + str(response.status_code) + "in get_running_scenario")
+        print(response.text)
+        return None
+
+
+def is_running(session: requests.sessions.Session, scenario_name: str) -> Union[bool, None]:
     """Check if a scenario is running on the server."""
-    json_status = get_status_scenario(session, scenario_name)
-    if json_status is None:
-        return False
-    return json_status["scenario_status"] == "running"
+    scenario_api = base_url + f"/api/scenario/{scenario_name}/running"
+    response = session.get(scenario_api)
+    if response.status_code == 200:
+        # json["scenario_status"] into 3 states: running, completed or finished
+        response = response.json()
+        print("Checked")
+        return not (response is None or response["status"] != "running")
+
+    else:
+        print("Error code " + str(response.status_code))
+        print(response.text)
+        raise ConnectionError()
 
 
 def wait_until_finish(session: requests.sessions.Session, scenario_name: str, delay_time: int = 60):
@@ -129,19 +151,19 @@ if __name__ == '__main__':
     username = 'admin'
     password = 'admin'
     algo = "DFL"
-    nb_node = 5
+    nb_node = 3
     s = requests.Session()
     session_cookies = login(s, username, password)
     list_name_exp = list_scenarii(s)
     print(list_name_exp)
 
-    scenario = generate_json(nb_node, algo)
+    scenario = generate_json(nb_node, algo, rounds=1)
     json_return = create_scenario(s, scenario)
     scenario_name = json_return["scenario_name"]
     print(scenario_name)
-    time.sleep(10)
-    print(get_status_scenario(s, scenario_name))
-    time.sleep(10)
+    time.sleep(5)
+    # print(get_status_scenario(s, scenario_name))
+    wait_until_finish(s, scenario_name, 20)
     stop_scenario(s, scenario_name)
     print(list_name_exp)
     print(get_status_scenario(s, scenario_name))

@@ -1,13 +1,13 @@
 import datetime
 import hashlib
+import logging
 import sqlite3
-import datetime
-import hashlib
-import sqlite3
+from typing import Union
 
 user_db_file_location = "database_file/users.db"
 node_db_file_location = "database_file/nodes.db"
 scenario_db_file_location = "database_file/scenarios.db"
+
 
 def enable_wal_mode(db_file):
     with sqlite3.connect(db_file) as conn:
@@ -15,6 +15,7 @@ def enable_wal_mode(db_file):
         cursor.execute("PRAGMA journal_mode=WAL;")
         mode = cursor.fetchone()
         print(f"Journal mode: {mode[0]}")
+
 
 enable_wal_mode(user_db_file_location)
 enable_wal_mode(node_db_file_location)
@@ -71,13 +72,18 @@ def delete_user_from_db(user):
 def add_user(user, password, role):
     with sqlite3.connect(user_db_file_location) as conn:
         c = conn.cursor()
-        c.execute("INSERT INTO users VALUES (?, ?, ?)", (user.upper(), hashlib.sha256(password.encode()).hexdigest(), role))
+        c.execute("INSERT INTO users VALUES (?, ?, ?)",
+                  (user.upper(), hashlib.sha256(password.encode()).hexdigest(), role))
+
 
 def update_user(user, password, role):
     with sqlite3.connect(user_db_file_location) as conn:
         c = conn.cursor()
-        print(f"UPDATE users SET password = {hashlib.sha256(password.encode()).hexdigest()}, role = {role} WHERE user = {user.upper()}")
-        c.execute("UPDATE users SET password = ?, role = ? WHERE user = ?", (hashlib.sha256(password.encode()).hexdigest(), role, user.upper()))
+        print(
+            f"UPDATE users SET password = {hashlib.sha256(password.encode()).hexdigest()}, role = {role} WHERE user = {user.upper()}")
+        c.execute("UPDATE users SET password = ?, role = ? WHERE user = ?",
+                  (hashlib.sha256(password.encode()).hexdigest(), role, user.upper()))
+
 
 """
     Nodes Management
@@ -142,7 +148,7 @@ def get_location_neighbors(node_uid, scenario_name):
             ip_port_pairs = [(node.split(":")[0], node.split(":")[1]) for node in neighbors_list if ":" in node]
             placeholders = ", ".join(["(?, ?)" for _ in ip_port_pairs])
             command = f"SELECT ip, port, latitude, longitude FROM nodes WHERE scenario = ? AND (ip, port) IN ({placeholders});"
-            
+
             params = [scenario_name] + [item for sublist in ip_port_pairs for item in sublist]
             c.execute(command, params)
             result = c.fetchall()
@@ -156,8 +162,8 @@ def get_location_neighbors(node_uid, scenario_name):
         return []
 
 
-
-def update_node_record(node_uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, federation_round, scenario):
+def update_node_record(node_uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation,
+                       federation_round, scenario):
     # Check if the node record with node_uid and scenario already exists in the database
     # If it does, update the record
     # If it does not, create a new record
@@ -170,11 +176,15 @@ def update_node_record(node_uid, idx, ip, port, role, neighbors, latitude, longi
 
     if result is None:
         # Create a new record
-        _c.execute("INSERT INTO nodes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (node_uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, federation_round, scenario))
+        _c.execute("INSERT INTO nodes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+            node_uid, idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, federation_round,
+            scenario))
     else:
         # Update the record
         command = "UPDATE nodes SET idx = ?, ip = ?, port = ?, role = ?, neighbors = ?, latitude = ?, longitude = ?, timestamp = ?, federation = ?, round = ? WHERE uid = ? AND scenario = ?;"
-        _c.execute(command, (idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, federation_round, node_uid, scenario))
+        _c.execute(command, (
+            idx, ip, port, role, neighbors, latitude, longitude, timestamp, federation, federation_round, node_uid,
+            scenario))
 
     _conn.commit()
     _conn.close()
@@ -229,7 +239,20 @@ def get_all_scenarios_and_check_completed(sort_by="start_time"):
     return result
 
 
-def scenario_update_record(scenario_name, start_time, end_time, title, description, status, network_subnet, model, dataset, rounds, role):
+def check_and_get_status_running_scenario(scenario_name: str) -> Union[dict, None]:
+    first_check = dict(get_scenario_by_name(scenario_name, True))
+    logging.warning(first_check)
+    logging.warning(dict(first_check))
+    first_check = dict(first_check)
+    if first_check is None or not first_check["status"] == "running":
+        return first_check
+    if check_scenario_federation_completed(scenario_name):
+        scenario_set_status_to_completed(scenario_name)
+    return dict(get_scenario_by_name(scenario_name, True))
+
+
+def scenario_update_record(scenario_name, start_time, end_time, title, description, status, network_subnet, model,
+                           dataset, rounds, role):
     _conn = sqlite3.connect(scenario_db_file_location)
     _c = _conn.cursor()
 
@@ -239,11 +262,15 @@ def scenario_update_record(scenario_name, start_time, end_time, title, descripti
 
     if result is None:
         # Create a new record
-        _c.execute("INSERT INTO scenarios VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (scenario_name, start_time, end_time, title, description, status, network_subnet, model, dataset, rounds, role))
+        _c.execute("INSERT INTO scenarios VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+            scenario_name, start_time, end_time, title, description, status, network_subnet, model, dataset, rounds,
+            role))
     else:
         # Update the record
         command = "UPDATE scenarios SET start_time = ?, end_time = ?, title = ?, description = ?, status = ?, network_subnet = ?, model = ?, dataset = ?, rounds = ?, role = ? WHERE name = ?;"
-        _c.execute(command, (start_time, end_time, title, description, status, network_subnet, model, dataset, rounds, role, scenario_name))
+        _c.execute(command, (
+            start_time, end_time, title, description, status, network_subnet, model, dataset, rounds, role,
+            scenario_name))
 
     _conn.commit()
     _conn.close()
@@ -306,8 +333,11 @@ def get_completed_scenario():
 
     return result
 
-def get_scenario_by_name(scenario_name):
+
+def get_scenario_by_name(scenario_name, get_dict: bool = False):
     _conn = sqlite3.connect(scenario_db_file_location)
+    if get_dict:
+        _conn.row_factory = sqlite3.Row
     _c = _conn.cursor()
     command = "SELECT * FROM scenarios WHERE name = ?;"
     _c.execute(command, (scenario_name,))

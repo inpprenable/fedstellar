@@ -46,7 +46,7 @@ from fedstellar.frontend.database import (
     get_all_scenarios_and_check_completed,
     check_scenario_with_role,
     get_location_neighbors,
-    update_node_record,
+    update_node_record, check_and_get_status_running_scenario,
 )
 
 import eventlet
@@ -275,6 +275,19 @@ def fedstellar_scenario():
                 return jsonify({"scenarios_status": "not found in database"}), 200
             else:
                 return abort(401)
+    else:
+        return abort(401)
+
+
+@app.route("/api/scenario/<scenario_name>/running", methods=["GET"])
+def fedstellar_running_scenario(scenario_name: str):
+    if "user" in session.keys() or request.path == "/api/scenario/":
+        # Get all scenarios after checking if they are completed
+        scenario_running = check_and_get_status_running_scenario(scenario_name)
+        # Check if status of scenario_running is "completed"
+        if scenario_running is None:
+            return jsonify({"running_scenario": "None", "status": "finished"}), 200
+        return jsonify(dict(scenario_running)), 200
     else:
         return abort(401)
 
