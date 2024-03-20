@@ -7,8 +7,11 @@
 #SBATCH --time=04:00:00
 #SBATCH -p gpu
 
+conda activate fedstellar
 cd fedstellar || exit
-module load lang/Python
+#module load lang/Python
+module load lang/Anaconda3
+conda activate fedstellar
 . .venv/bin/activate
 python app/main.py > output.log &
 echo FedStellar has been launched
